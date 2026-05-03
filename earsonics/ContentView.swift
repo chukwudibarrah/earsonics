@@ -9,8 +9,9 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var appState = AppState.shared
-    @State private var showNowPlaying = false
+    @ObservedObject private var player = AudioPlayerService.shared
     @State private var selectedTab: Tab = .home
+    @State private var showNowPlaying = false
 
     enum Tab: Hashable {
         case home, artists, playlists, starred, search, settings
@@ -45,19 +46,21 @@ struct ContentView: View {
             }
             .environmentObject(appState)
 
-            // Mini player bar (visible when something is loaded)
-            if appState.player.currentSong != nil && !showNowPlaying {
-                MiniPlayerBar(showNowPlaying: $showNowPlaying)
-                    .environmentObject(appState)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            // Spotify-style bottom mini player
+            if player.currentSong != nil {
+                VStack {
+                    Spacer()
+                    MiniPlayerBar(onTap: { showNowPlaying = true })
+                        .environmentObject(appState)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.easeInOut(duration: 0.25), value: player.currentSong?.id)
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: appState.player.currentSong?.id)
         .fullScreenCover(isPresented: $showNowPlaying) {
             NowPlayingView()
                 .environmentObject(appState)
         }
-        // If no servers configured, go straight to settings
         .onAppear {
             if appState.serverStore.servers.isEmpty {
                 selectedTab = .settings

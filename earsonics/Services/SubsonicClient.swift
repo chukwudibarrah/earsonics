@@ -26,7 +26,18 @@ class SubsonicClient: ObservableObject {
             // fallback
             let iso2 = ISO8601DateFormatter()
             if let date = iso2.date(from: str) { return date }
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Bad date: \(str)")
+            
+            // Subsonic standard uses different custom date formats
+            let formatter1 = DateFormatter()
+            formatter1.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+            if let date = formatter1.date(from: str) { return date }
+            
+            let formatter2 = DateFormatter()
+            formatter2.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+            if let date = formatter2.date(from: str) { return date }
+
+            // Just fail gracefully without throwing a hard exception if possible
+            return Date(timeIntervalSince1970: 0) 
         }
         return d
     }()
@@ -294,6 +305,12 @@ enum SubsonicError: LocalizedError {
 // MARK: - Response Wrappers
 struct SubsonicResponse<T: Decodable>: Decodable {
     let subsonicResponse: T
+
+    // The actual JSON key is "subsonic-response" (hyphen), NOT underscore.
+    // convertFromSnakeCase only handles underscores, so we need explicit CodingKeys.
+    enum CodingKeys: String, CodingKey {
+        case subsonicResponse = "subsonic-response"
+    }
 }
 
 struct SubsonicError_: Decodable {

@@ -1,6 +1,7 @@
 {
   "images" : [
     {
+      "filename" : "appstore_icon.png",
       "idiom" : "tv"
     }
   ],

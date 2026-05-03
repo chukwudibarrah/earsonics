@@ -4,7 +4,6 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var vm = LibraryViewModel()
-    @State private var selectedAlbum: Album? = nil
 
     var body: some View {
         NavigationStack {
@@ -16,7 +15,7 @@ struct HomeView: View {
                         .font(.headline)
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 40) {
+                        VStack(alignment: .leading, spacing: 56) {
                             if !vm.recentAlbums.isEmpty {
                                 AlbumShelf(title: "Recently Played", albums: vm.recentAlbums)
                             }
@@ -28,16 +27,15 @@ struct HomeView: View {
                             }
                         }
                         .padding(.horizontal, 60)
-                        .padding(.vertical, 40)
+                        .padding(.vertical, 50)
+                        .padding(.bottom, 100) // space for mini player bar
                     }
                 }
             }
-            .navigationTitle("earsonics")
+            .navigationTitle("")
+            .toolbar(.hidden, for: .navigationBar)
             .task { await vm.loadHome() }
             .refreshable { await vm.loadHome() }
-            .navigationDestination(item: $selectedAlbum) { album in
-                AlbumDetailView(album: album)
-            }
         }
     }
 }
@@ -49,23 +47,26 @@ struct AlbumShelf: View {
     @State private var selectedAlbum: Album? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
             Text(title)
-                .font(.title2).bold()
-                .padding(.leading, 4)
+                .font(.title).bold()
+                .padding(.leading, 8)
+                .foregroundColor(.primary)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 24) {
+                HStack(spacing: 32) {
                     ForEach(albums) { album in
-                        AlbumCard(album: album)
-                            .onTapGesture { selectedAlbum = album }
+                        NavigationLink {
+                            AlbumDetailView(album: album)
+                        } label: {
+                            AlbumCard(album: album)
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 4)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 16)
             }
-        }
-        .navigationDestination(item: $selectedAlbum) { album in
-            AlbumDetailView(album: album)
         }
     }
 }
@@ -76,28 +77,32 @@ struct AlbumCard: View {
     @FocusState private var focused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            CoverArtView(id: album.coverArt, size: 300)
-                .frame(width: 220, height: 220)
-                .scaleEffect(focused ? 1.07 : 1.0)
-                .shadow(radius: focused ? 16 : 4)
-                .animation(.easeInOut(duration: 0.15), value: focused)
+        VStack(alignment: .leading, spacing: 12) {
+            CoverArtView(id: album.coverArt, size: 400)
+                .frame(width: 280, height: 280)
+                .cornerRadius(12)
+                .scaleEffect(focused ? 1.06 : 1.0)
+                .shadow(color: .black.opacity(focused ? 0.6 : 0.2), radius: focused ? 24 : 8, y: focused ? 12 : 4)
+                .animation(.easeInOut(duration: 0.18), value: focused)
 
-            Text(album.name)
-                .font(.callout).bold()
-                .lineLimit(1)
-                .frame(width: 220, alignment: .leading)
-            if let artist = album.artist {
-                Text(artist)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-                    .frame(width: 220, alignment: .leading)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(album.name)
+                    .font(.headline)
+                    .bold()
+                    .lineLimit(2)
+                    .frame(width: 280, alignment: .leading)
+                    .foregroundColor(focused ? .white : .primary)
+                if let artist = album.artist {
+                    Text(artist)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                        .frame(width: 280, alignment: .leading)
+                }
             }
         }
         .focusable()
         .focused($focused)
-        .buttonStyle(.plain)
     }
 }
 

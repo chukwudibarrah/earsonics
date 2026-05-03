@@ -3,34 +3,26 @@ import SwiftUI
 
 struct ServerManagementView: View {
     @EnvironmentObject var appState: AppState
-    @State private var showAddServer = false
-    @State private var editingServer: Server? = nil
-    @FocusState private var focusedServerID: UUID?
 
     var body: some View {
         NavigationStack {
             List {
                 Section("Servers") {
                     ForEach(appState.serverStore.servers) { server in
-                        ServerRow(server: server, isActive: server.id == appState.serverStore.activeServerID)
-                            .contextMenu {
-                                Button {
-                                    editingServer = server
-                                } label: { Label("Edit", systemImage: "pencil") }
-                                Button(role: .destructive) {
-                                    appState.serverStore.delete(server)
-                                } label: { Label("Delete", systemImage: "trash") }
-                            }
-                            .onTapGesture {
-                                appState.serverStore.activeServerID = server.id
-                                appState.syncActiveServer()
-                            }
+                        NavigationLink {
+                            ServerDetailView(server: server)
+                        } label: {
+                            ServerRow(server: server, isActive: server.id == appState.serverStore.activeServerID)
+                        }
                     }
                 }
 
                 Section {
-                    Button {
-                        showAddServer = true
+                    NavigationLink {
+                        ServerEditView(mode: .add) { newServer in
+                            appState.serverStore.add(newServer)
+                            appState.syncActiveServer()
+                        }
                     } label: {
                         Label("Add Server", systemImage: "plus.circle.fill")
                             .font(.headline)
@@ -38,22 +30,61 @@ struct ServerManagementView: View {
                 }
             }
             .navigationTitle("Servers")
-            .sheet(isPresented: $showAddServer) {
-                ServerEditView(mode: .add) { newServer in
-                    appState.serverStore.add(newServer)
-                    appState.syncActiveServer()
-                }
-            }
-            .sheet(item: $editingServer) { server in
-                ServerEditView(mode: .edit(server)) { updated in
-                    appState.serverStore.update(updated)
-                    appState.syncActiveServer()
-                }
-            }
         }
     }
 }
 
+// MARK: - Server Detail
+struct ServerDetailView: View {
+    let server: Server
+    @EnvironmentObject var appState: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        Form {
+            Section("Status") {
+                if appState.serverStore.activeServerID == server.id {
+                    Label("Active Server", systemImage: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                } else {
+                    Text("Inactive").foregroundColor(.secondary)
+                }
+            }
+
+            Section("Server Information") {
+                LabeledContent("Name", value: server.name)
+                LabeledContent("URL", value: server.baseURL)
+                LabeledContent("Username", value: server.username)
+            }
+
+            Section("Actions") {
+                Button("Set as Active Server") {
+                    appState.serverStore.activeServerID = server.id
+                    appState.syncActiveServer()
+                }
+                .disabled(appState.serverStore.activeServerID == server.id)
+
+                NavigationLink("Edit Server Details") {
+                    ServerEditView(mode: .edit(server)) { updated in
+                        appState.serverStore.update(updated)
+                        appState.syncActiveServer()
+                    }
+                }
+
+                Button(role: .destructive) {
+                    appState.serverStore.delete(server)
+                    dismiss()
+                } label: {
+                    Text("Delete Server")
+                        .foregroundColor(.red)
+                }
+            }
+        }
+        .navigationTitle(server.name)
+    }
+}
+
+// MARK: - Server Row
 struct ServerRow: View {
     let server: Server
     let isActive: Bool
@@ -114,67 +145,65 @@ struct ServerEditView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section("Server Details") {
-                    LabeledContent("Name") {
-                        TextField("My Navidrome", text: $name)
-                            .multilineTextAlignment(.trailing)
-                    }
-                    LabeledContent("URL") {
-                        TextField("https://music.example.com", text: $url)
-                            .multilineTextAlignment(.trailing)
-                            .autocapitalization(.none)
-                            .keyboardType(.URL)
+        Form {
+            Section("Server Details") {
+                LabeledContent("Name") {
+                    TextField("My Navidrome", text: $name)
+                        .multilineTextAlignment(.trailing)
+                }
+                LabeledContent("URL") {
+                    TextField("https://music.example.com", text: $url)
+                        .multilineTextAlignment(.trailing)
+                        .autocapitalization(.none)
+                        .keyboardType(.URL)
+                }
+            }
+
+            Section("Credentials") {
+                LabeledContent("Username") {
+                    TextField("Username", text: $username)
+                        .multilineTextAlignment(.trailing)
+                        .autocapitalization(.none)
+                }
+                LabeledContent("Password") {
+                    SecureField("Password", text: $password)
+                        .multilineTextAlignment(.trailing)
+                }
+            }
+
+            Section {
+                Button {
+                    Task { await testConnection() }
+                } label: {
+                    HStack {
+                        if isTesting {
+                            ProgressView().scaleEffect(0.8).padding(.trailing, 8)
+                        }
+                        Text(isTesting ? "Testing..." : "Test Connection")
                     }
                 }
+                .disabled(isTesting || !isValid)
 
-                Section("Credentials") {
-                    LabeledContent("Username") {
-                        TextField("Username", text: $username)
-                            .multilineTextAlignment(.trailing)
-                            .autocapitalization(.none)
-                    }
-                    LabeledContent("Password") {
-                        SecureField("Password", text: $password)
-                            .multilineTextAlignment(.trailing)
-                    }
-                }
-
-                Section {
-                    Button {
-                        Task { await testConnection() }
-                    } label: {
-                        HStack {
-                            if isTesting {
-                                ProgressView().scaleEffect(0.8)
-                            }
-                            Text(isTesting ? "Testing..." : "Test Connection")
-                        }
-                    }
-                    .disabled(isTesting || !isValid)
-
-                    if let result = testResult {
-                        HStack {
-                            Image(systemName: testSuccess == true ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundColor(testSuccess == true ? .green : .red)
-                            Text(result)
-                                .foregroundColor(testSuccess == true ? .green : .red)
-                        }
+                if let result = testResult {
+                    HStack {
+                        Image(systemName: testSuccess == true ? "checkmark.circle.fill" : "xmark.circle.fill")
+                            .foregroundColor(testSuccess == true ? .green : .red)
+                        Text(result)
+                            .foregroundColor(testSuccess == true ? .green : .red)
+                            .font(.caption)
+                            .lineLimit(3)
                     }
                 }
             }
-            .navigationTitle(mode.title)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+
+            Section {
+                Button("Save") {
+                    save()
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { save() }
-                        .disabled(!isValid)
-                }
+                .disabled(!isValid)
             }
         }
+        .navigationTitle(mode.title)
     }
 
     private func testConnection() async {

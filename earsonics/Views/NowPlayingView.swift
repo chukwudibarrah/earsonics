@@ -3,24 +3,57 @@ import SwiftUI
 
 struct NowPlayingView: View {
     @EnvironmentObject var appState: AppState
+    @ObservedObject private var player = AudioPlayerService.shared
+    @Environment(\.dismiss) private var dismiss
     @State private var showQueue = false
     @State private var showLyrics = false
     @State private var lyrics: [StructuredLyrics] = []
     @State private var plainLyrics: Lyrics? = nil
     @State private var lyricsLoading = false
-
-    var player: AudioPlayerService { appState.player }
+    @State private var isStarred: Bool = false
 
     var body: some View {
         ZStack {
-            // Background blur from cover art
+            // Solid opaque base — prevents album detail bleeding through on tvOS
+            Color.black.ignoresSafeArea()
+
+            // Blurred cover art background on top of solid black
             CoverArtView(id: player.currentSong?.coverArt, size: 100)
-                .scaleEffect(1.5)
-                .blur(radius: 40)
-                .opacity(0.4)
+                .scaleEffect(1.8)
+                .blur(radius: 60)
+                .opacity(0.5)
                 .ignoresSafeArea()
 
-            if showQueue {
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.down.circle.fill")
+                            .font(.largeTitle)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(40)
+                }
+                Spacer()
+            }
+            .zIndex(10)
+
+            if player.currentSong == nil {
+                // Empty state
+                VStack(spacing: 24) {
+                    Image(systemName: "music.note.tv")
+                        .font(.system(size: 100))
+                        .foregroundColor(.secondary)
+                    Text("Nothing Playing")
+                        .font(.largeTitle).bold()
+                    Text("Browse your library and start playing music.")
+                        .font(.title3)
+                        .foregroundColor(.secondary)
+                }
+            } else if showQueue {
                 QueueView { showQueue = false }
                     .transition(.move(edge: .trailing))
             } else if showLyrics {
@@ -35,78 +68,105 @@ struct NowPlayingView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: showQueue)
         .animation(.easeInOut(duration: 0.3), value: showLyrics)
+        .animation(.easeInOut(duration: 0.3), value: player.currentSong?.id)
         .onChange(of: player.currentSong?.id) { _ in
+            showQueue = false
+            showLyrics = false
+            isStarred = player.currentSong?.starred != nil
             Task { await loadLyrics() }
         }
-        .task { await loadLyrics() }
+        .task {
+            isStarred = player.currentSong?.starred != nil
+            await loadLyrics()
+        }
     }
 
+    // MARK: - Main Player Layout
     var mainPlayerView: some View {
-        HStack(spacing: 80) {
-            // Cover Art
-            VStack {
-                Spacer()
-                CoverArtView(id: player.currentSong?.coverArt, size: 600)
-                    .frame(width: 400, height: 400)
-                    .cornerRadius(20)
-                    .shadow(radius: 30)
-                Spacer()
-            }
+        HStack(alignment: .center, spacing: 80) {
+            // Left: Cover Art
+            CoverArtView(id: player.currentSong?.coverArt, size: 600)
+                .frame(width: 420, height: 420)
+                .cornerRadius(20)
+                .shadow(color: .black.opacity(0.6), radius: 40, y: 20)
 
-            // Controls
-            VStack(alignment: .leading, spacing: 24) {
+            // Right: Controls
+            VStack(alignment: .leading, spacing: 28) {
+
                 // Track info
-                VStack(alignment: .leading, spacing: 8) {
-                    if let song = player.currentSong {
-                        HStack {
-                            Text(song.title)
-                                .font(.largeTitle).bold()
-                                .lineLimit(2)
+                if let song = player.currentSong {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(alignment: .top) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(song.title)
+                                    .font(.largeTitle).bold()
+                                    .lineLimit(2)
+                                Text(song.artist ?? "")
+                                    .font(.title2)
+                                    .foregroundColor(.secondary)
+                                Text(song.album ?? "")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                            }
                             Spacer()
-                            FormatBadge(song: song)
-                            StarButton(isStarred: song.starred != nil, songId: song.id)
+                            VStack(spacing: 8) {
+                                FormatBadge(song: song)
+                                StarButton(isStarred: isStarred, songId: song.id) { newVal in
+                                    isStarred = newVal
+                                }
+                            }
                         }
-                        Text(song.artist ?? "").font(.title3).foregroundColor(.secondary)
-                        Text(song.album ?? "").font(.headline).foregroundColor(.secondary)
-                    } else {
-                        Text("Nothing Playing").font(.largeTitle).foregroundColor(.secondary)
                     }
                 }
 
-                // Progress bar
-                VStack(spacing: 8) {
+                // Progress bar + timestamps
+                VStack(spacing: 10) {
                     ProgressSlider(value: player.currentTime, total: player.duration) { newVal in
                         player.seek(to: newVal)
                     }
                     HStack {
-                        Text(formatTime(player.currentTime)).font(.caption).foregroundColor(.secondary)
+                        Text(formatTime(player.currentTime))
+                            .font(.callout.monospacedDigit())
+                            .foregroundColor(.secondary)
                         Spacer()
-                        Text(formatTime(player.duration)).font(.caption).foregroundColor(.secondary)
+                        if player.isBuffering {
+                            HStack(spacing: 6) {
+                                ProgressView().scaleEffect(0.7)
+                                Text("Buffering").font(.callout).foregroundColor(.secondary)
+                            }
+                        }
+                        Spacer()
+                        Text(formatTime(player.duration))
+                            .font(.callout.monospacedDigit())
+                            .foregroundColor(.secondary)
                     }
                 }
 
-                // Main controls
-                HStack(spacing: 40) {
+                // Main transport controls
+                HStack(spacing: 44) {
                     // Shuffle
                     Button { player.toggleShuffle() } label: {
                         Image(systemName: "shuffle")
                             .font(.title2)
-                            .foregroundColor(player.isShuffled ? .accentColor : .white)
+                            .foregroundColor(player.isShuffled ? .accentColor : .white.opacity(0.7))
                     }
                     .buttonStyle(.plain)
 
                     // Previous
                     Button { player.skipPrevious() } label: {
-                        Image(systemName: "backward.fill").font(.largeTitle)
+                        Image(systemName: "backward.fill")
+                            .font(.system(size: 36))
                     }
                     .buttonStyle(.plain)
 
-                    // Play/Pause
+                    // Play / Pause
                     Button { player.togglePlayPause() } label: {
                         ZStack {
-                            Circle().fill(Color.white).frame(width: 80, height: 80)
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: 88, height: 88)
                             Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                                .font(.title)
+                                .font(.system(size: 34))
                                 .foregroundColor(.black)
                         }
                     }
@@ -114,62 +174,67 @@ struct NowPlayingView: View {
 
                     // Next
                     Button { player.skipNext() } label: {
-                        Image(systemName: "forward.fill").font(.largeTitle)
+                        Image(systemName: "forward.fill")
+                            .font(.system(size: 36))
                     }
                     .buttonStyle(.plain)
 
                     // Repeat
                     Button { player.cycleRepeat() } label: {
-                        Image(systemName: player.repeatMode.icon)
-                            .font(.title2)
-                            .foregroundColor(player.repeatMode != .off ? .accentColor : .white)
-                            .overlay(
-                                player.repeatMode == .one ?
-                                    Text("1").font(.caption2).offset(x: 6, y: -6) : nil
-                                , alignment: .topTrailing
-                            )
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: player.repeatMode.icon)
+                                .font(.title2)
+                                .foregroundColor(player.repeatMode != .off ? .accentColor : .white.opacity(0.7))
+                                .frame(width: 36, height: 36)
+                            if player.repeatMode == .one {
+                                Text("1")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(3)
+                                    .background(Color.accentColor)
+                                    .clipShape(Circle())
+                                    .offset(x: 8, y: -6)
+                            }
+                        }
                     }
                     .buttonStyle(.plain)
                 }
 
-                // Secondary actions
-                HStack(spacing: 24) {
+                // Secondary actions: Queue & Lyrics
+                HStack(spacing: 20) {
                     Button {
-                        withAnimation { showQueue.toggle() }
+                        withAnimation { showQueue = true }
                     } label: {
-                        Label("Queue", systemImage: "list.bullet")
+                        Label("Queue", systemImage: "list.bullet.indent")
                             .font(.callout)
-                            .padding(.horizontal, 16).padding(.vertical, 10)
-                            .background(Color.white.opacity(0.15))
-                            .cornerRadius(8)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(Color.white.opacity(0.12))
+                            .cornerRadius(10)
                     }
                     .buttonStyle(.plain)
 
                     Button {
-                        withAnimation { showLyrics.toggle() }
+                        withAnimation { showLyrics = true }
                     } label: {
                         Label("Lyrics", systemImage: "text.quote")
                             .font(.callout)
-                            .padding(.horizontal, 16).padding(.vertical, 10)
-                            .background(Color.white.opacity(0.15))
-                            .cornerRadius(8)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(Color.white.opacity(0.12))
+                            .cornerRadius(10)
                     }
                     .buttonStyle(.plain)
                     .disabled(lyrics.isEmpty && plainLyrics?.value == nil)
-
-                    if player.isBuffering {
-                        HStack(spacing: 8) {
-                            ProgressView().scaleEffect(0.8)
-                            Text("Buffering...").font(.callout).foregroundColor(.secondary)
-                        }
-                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(80)
+        .padding(.horizontal, 80)
+        .padding(.vertical, 60)
     }
 
+    // MARK: - Helpers
     private func loadLyrics() async {
         guard let song = player.currentSong else { return }
         lyricsLoading = true
@@ -182,7 +247,8 @@ struct NowPlayingView: View {
 
     private func formatTime(_ seconds: Double) -> String {
         guard seconds.isFinite && seconds >= 0 else { return "--:--" }
-        let m = Int(seconds) / 60; let s = Int(seconds) % 60
+        let m = Int(seconds) / 60
+        let s = Int(seconds) % 60
         return String(format: "%d:%02d", m, s)
     }
 }
@@ -192,38 +258,40 @@ struct ProgressSlider: View {
     let value: Double
     let total: Double
     let onSeek: (Double) -> Void
-    @State private var isDragging = false
-    @State private var dragValue: Double = 0
+    @FocusState private var isFocused: Bool
 
     var progress: Double {
         guard total > 0 else { return 0 }
-        return (isDragging ? dragValue : value) / total
+        return min(1, max(0, value / total))
     }
 
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule().fill(Color.white.opacity(0.2)).frame(height: 6)
                 Capsule()
-                    .fill(Color.white)
-                    .frame(width: geo.size.width * CGFloat(max(0, min(1, progress))), height: 6)
+                    .fill(Color.white.opacity(isFocused ? 0.35 : 0.2))
+                    .frame(height: isFocused ? 10 : 6)
+                Capsule()
+                    .fill(isFocused ? Color.accentColor : Color.white)
+                    .frame(width: geo.size.width * CGFloat(progress), height: isFocused ? 10 : 6)
                 Circle()
                     .fill(Color.white)
-                    .frame(width: 20, height: 20)
-                    .offset(x: geo.size.width * CGFloat(max(0, min(1, progress))) - 10)
+                    .frame(width: isFocused ? 26 : 18, height: isFocused ? 26 : 18)
+                    .shadow(radius: 4)
+                    .offset(x: geo.size.width * CGFloat(progress) - (isFocused ? 13 : 9))
             }
-            .focusable()
-            .focused($isFocused)
-            .onMoveCommand { direction in
-                if direction == .left {
-                    onSeek(max(0, value - 10))
-                } else if direction == .right {
-                    onSeek(min(total, value + 10))
-                }
+            .animation(.easeInOut(duration: 0.15), value: isFocused)
+        }
+        .frame(height: 30)
+        .focusable()
+        .focused($isFocused)
+        .onMoveCommand { direction in
+            let step: Double = 10
+            switch direction {
+            case .left:  onSeek(max(0, value - step))
+            case .right: onSeek(min(total, value + step))
+            default: break
             }
         }
-        .frame(height: 20)
     }
-
-    @FocusState private var isFocused: Bool
 }
