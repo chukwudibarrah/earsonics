@@ -6,10 +6,9 @@ struct StarredView: View {
     @State private var starredSongs: [Song] = []
     @State private var starredAlbums: [Album] = []
     @State private var starredArtists: [Artist] = []
+    @State private var playlists: [Playlist] = []
     @State private var isLoading = true
     @State private var selectedTab: StarredTab = .songs
-    @State private var selectedAlbum: Album? = nil
-    @State private var selectedArtist: Artist? = nil
 
     enum StarredTab: String, CaseIterable {
         case songs = "Songs"
@@ -39,12 +38,20 @@ struct StarredView: View {
                             if starredSongs.isEmpty {
                                 EmptyStarredView(type: "Songs")
                             } else {
-                                List {
-                                    ForEach(Array(starredSongs.enumerated()), id: \.element.id) { idx, song in
-                                        SongRow(song: song, index: idx) {
-                                            appState.player.load(songs: starredSongs, startIndex: idx)
+                                ScrollView {
+                                    LazyVStack(spacing: 2) {
+                                        ForEach(Array(starredSongs.enumerated()), id: \.element.id) { idx, song in
+                                            Button {
+                                                appState.player.load(songs: starredSongs, startIndex: idx)
+                                            } label: {
+                                                SongRow(song: song, index: idx, playlists: playlists)
+                                            }
+                                            .buttonStyle(.card)
                                         }
                                     }
+                                    .padding(.horizontal, 60)
+                                    .padding(.vertical, 20)
+                                    .padding(.bottom, 100)
                                 }
                             }
                         case .albums:
@@ -54,8 +61,12 @@ struct StarredView: View {
                                 ScrollView {
                                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 24)], spacing: 32) {
                                         ForEach(starredAlbums) { album in
-                                            AlbumCard(album: album)
-                                                .onTapGesture { selectedAlbum = album }
+                                            NavigationLink {
+                                                AlbumDetailView(album: album)
+                                            } label: {
+                                                AlbumCard(album: album)
+                                            }
+                                            .buttonStyle(.card)
                                         }
                                     }
                                     .padding(60)
@@ -65,9 +76,19 @@ struct StarredView: View {
                             if starredArtists.isEmpty {
                                 EmptyStarredView(type: "Artists")
                             } else {
-                                List(starredArtists) { artist in
-                                    ArtistRow(artist: artist)
-                                        .onTapGesture { selectedArtist = artist }
+                                ScrollView {
+                                    LazyVStack(spacing: 4) {
+                                        ForEach(starredArtists) { artist in
+                                            NavigationLink {
+                                                ArtistDetailView(artist: artist)
+                                            } label: {
+                                                ArtistRow(artist: artist)
+                                            }
+                                            .buttonStyle(.card)
+                                        }
+                                    }
+                                    .padding(.horizontal, 60)
+                                    .padding(.vertical, 20)
                                 }
                             }
                         }
@@ -77,18 +98,19 @@ struct StarredView: View {
             }
             .navigationTitle("Favourites")
             .task { await loadStarred() }
-            .navigationDestination(item: $selectedAlbum) { AlbumDetailView(album: $0) }
-            .navigationDestination(item: $selectedArtist) { ArtistDetailView(artist: $0) }
         }
     }
 
     private func loadStarred() async {
         isLoading = true
-        if let (artists, albums, songs) = try? await SubsonicClient.shared.getStarred() {
+        async let starredLoad = SubsonicClient.shared.getStarred()
+        async let playlistLoad = SubsonicClient.shared.getPlaylists()
+        if let (artists, albums, songs) = try? await starredLoad {
             starredArtists = artists
             starredAlbums  = albums
             starredSongs   = songs
         }
+        playlists = (try? await playlistLoad) ?? []
         isLoading = false
     }
 }

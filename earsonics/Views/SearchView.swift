@@ -6,9 +6,8 @@ struct SearchView: View {
     @State private var query: String = ""
     @State private var results: SearchResult = SearchResult(artists: [], albums: [], songs: [])
     @State private var isSearching = false
-    @State private var selectedAlbum: Album? = nil
-    @State private var selectedArtist: Artist? = nil
     @State private var searchTask: Task<Void, Never>? = nil
+    @State private var playlists: [Playlist] = []
 
     var body: some View {
         NavigationStack {
@@ -18,7 +17,7 @@ struct SearchView: View {
                     TextField("Search songs, albums, artists...", text: $query)
                         .font(.title3)
                         .autocapitalization(.none)
-                        .onChange(of: query) { newValue in
+                        .onChange(of: query) { _, newValue in
                             searchTask?.cancel()
                             guard !newValue.isEmpty else {
                                 results = SearchResult(artists: [], albums: [], songs: [])
@@ -58,8 +57,12 @@ struct SearchView: View {
                             if !results.artists.isEmpty {
                                 ResultSection(title: "Artists") {
                                     ForEach(results.artists) { artist in
-                                        ArtistRow(artist: artist)
-                                            .onTapGesture { selectedArtist = artist }
+                                        NavigationLink {
+                                            ArtistDetailView(artist: artist)
+                                        } label: {
+                                            ArtistRow(artist: artist)
+                                        }
+                                        .buttonStyle(.card)
                                     }
                                 }
                             }
@@ -68,8 +71,12 @@ struct SearchView: View {
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack(spacing: 24) {
                                             ForEach(results.albums) { album in
-                                                AlbumCard(album: album)
-                                                    .onTapGesture { selectedAlbum = album }
+                                                NavigationLink {
+                                                    AlbumDetailView(album: album)
+                                                } label: {
+                                                    AlbumCard(album: album)
+                                                }
+                                                .buttonStyle(.card)
                                             }
                                         }
                                         .padding(.horizontal, 4)
@@ -79,9 +86,12 @@ struct SearchView: View {
                             if !results.songs.isEmpty {
                                 ResultSection(title: "Songs") {
                                     ForEach(Array(results.songs.enumerated()), id: \.element.id) { idx, song in
-                                        SongRow(song: song, index: idx) {
+                                        Button {
                                             appState.player.load(songs: results.songs, startIndex: idx)
+                                        } label: {
+                                            SongRow(song: song, index: idx, playlists: playlists)
                                         }
+                                        .buttonStyle(.card)
                                     }
                                 }
                             }
@@ -100,8 +110,7 @@ struct SearchView: View {
                 }
             }
             .navigationTitle("Search")
-            .navigationDestination(item: $selectedAlbum) { AlbumDetailView(album: $0) }
-            .navigationDestination(item: $selectedArtist) { ArtistDetailView(artist: $0) }
+            .task { playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? [] }
         }
     }
 

@@ -44,7 +44,7 @@ struct FormatBadge: View {
             Text(suffix)
                 .font(.caption2).bold()
                 .padding(.horizontal, 6).padding(.vertical, 3)
-                .background(song.isLossless ? Color.green.opacity(0.8) : Color.blue.opacity(0.6))
+                .background(song.isLossless ? Color.green : Color.blue)
                 .foregroundColor(.white)
                 .clipShape(Capsule())
         }

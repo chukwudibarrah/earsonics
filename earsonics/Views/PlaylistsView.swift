@@ -7,7 +7,6 @@ struct PlaylistsView: View {
     @State private var isLoading = true
     @State private var showCreate = false
     @State private var newPlaylistName = ""
-    @State private var selectedPlaylist: Playlist? = nil
 
     var body: some View {
         NavigationStack {
@@ -22,19 +21,31 @@ struct PlaylistsView: View {
                         Text("Create a playlist to get started").foregroundColor(.secondary)
                     }
                 } else {
-                    List(playlists) { playlist in
-                        PlaylistRow(playlist: playlist) {
-                            Task { await loadPlaylists() }
-                        }
-                        .onTapGesture { selectedPlaylist = playlist }
-                        .contextMenu {
-                            Button(role: .destructive) {
-                                Task {
-                                    try? await SubsonicClient.shared.deletePlaylist(id: playlist.id)
-                                    await loadPlaylists()
+                    ScrollView {
+                        LazyVStack(spacing: 8) {
+                            ForEach(playlists) { playlist in
+                                NavigationLink {
+                                    PlaylistDetailView(playlist: playlist)
+                                        .environmentObject(appState)
+                                } label: {
+                                    PlaylistRow(playlist: playlist) {
+                                        Task { await loadPlaylists() }
+                                    }
                                 }
-                            } label: { Label("Delete", systemImage: "trash") }
+                                .buttonStyle(.card)
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        Task {
+                                            try? await SubsonicClient.shared.deletePlaylist(id: playlist.id)
+                                            await loadPlaylists()
+                                        }
+                                    } label: { Label("Delete Playlist", systemImage: "trash") }
+                                }
+                            }
                         }
+                        .padding(.horizontal, 80)
+                        .padding(.vertical, 24)
+                        .padding(.bottom, 120)
                     }
                 }
             }
@@ -47,7 +58,7 @@ struct PlaylistsView: View {
                 }
             }
             .task { await loadPlaylists() }
-            .alert("New Playlist", isPresented: $showCreate) {
+            .alert("New playlist", isPresented: $showCreate) {
                 TextField("Name", text: $newPlaylistName)
                 Button("Create") {
                     Task {
@@ -60,9 +71,6 @@ struct PlaylistsView: View {
                 }
                 Button("Cancel", role: .cancel) { newPlaylistName = "" }
             }
-            .navigationDestination(item: $selectedPlaylist) { playlist in
-                PlaylistDetailView(playlist: playlist)
-            }
         }
     }
 
@@ -73,36 +81,39 @@ struct PlaylistsView: View {
     }
 }
 
+// MARK: - Playlist Row
 struct PlaylistRow: View {
     let playlist: Playlist
     let onRefresh: () -> Void
-    @FocusState private var focused: Bool
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 24) {
             CoverArtView(id: playlist.coverArt, size: 100)
-                .frame(width: 60, height: 60)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(playlist.name).font(.headline)
-                HStack(spacing: 8) {
+                .frame(width: 80, height: 80)
+                .cornerRadius(10)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(playlist.name)
+                    .font(.title3).bold()
+                HStack(spacing: 12) {
                     if let count = playlist.songCount {
-                        Text("\(count) tracks").font(.caption).foregroundColor(.secondary)
+                        Label("\(count) tracks", systemImage: "music.note")
+                            .font(.callout)
                     }
                     if let owner = playlist.owner {
-                        Text("by \(owner)").font(.caption).foregroundColor(.secondary)
+                        Text("by \(owner)")
+                            .font(.callout)
                     }
                 }
             }
+
             Spacer()
-            Image(systemName: "chevron.right").foregroundColor(.secondary)
+
+            Image(systemName: "chevron.right")
+                .font(.callout)
         }
-        .padding(.vertical, 4)
-        .focusable()
-        .focused($focused)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(focused ? Color.white.opacity(0.1) : Color.clear)
-        )
+        .padding(.horizontal, 24)
+        .padding(.vertical, 18)
     }
 }
 
@@ -114,6 +125,7 @@ struct PlaylistDetailView: View {
     @State private var isLoading = true
     @State private var isEditing = false
     @State private var editName = ""
+    @State private var playlists: [Playlist] = [] // for add-to-playlist from songs
 
     var songs: [Song] { loadedPlaylist?.songs ?? [] }
 
@@ -135,10 +147,14 @@ struct PlaylistDetailView: View {
                     Button {
                         if !songs.isEmpty { appState.player.load(songs: songs, startIndex: 0) }
                     } label: {
-                        Label("Play", systemImage: "play.fill")
-                            .padding(.horizontal, 20).padding(.vertical, 10)
-                            .background(Color.accentColor).foregroundColor(.white)
-                            .cornerRadius(10)
+                        HStack(spacing: 8) {
+                            Image(systemName: "play.fill")
+                            Text("Play")
+                        }
+                        .font(.callout).bold()
+                        .padding(.horizontal, 20).padding(.vertical, 10)
+                        .background(Color.accentColor.opacity(0.8)).foregroundColor(.white)
+                        .cornerRadius(10)
                     }
                     .buttonStyle(.plain)
 
@@ -146,10 +162,14 @@ struct PlaylistDetailView: View {
                         var shuffled = songs; shuffled.shuffle()
                         appState.player.load(songs: shuffled, startIndex: 0)
                     } label: {
-                        Label("Shuffle", systemImage: "shuffle")
-                            .padding(.horizontal, 20).padding(.vertical, 10)
-                            .background(Color.white.opacity(0.15)).foregroundColor(.white)
-                            .cornerRadius(10)
+                        HStack(spacing: 8) {
+                            Image(systemName: "shuffle")
+                            Text("Shuffle")
+                        }
+                        .font(.callout).bold()
+                        .padding(.horizontal, 20).padding(.vertical, 10)
+                        .background(Color.white.opacity(0.15)).foregroundColor(.white)
+                        .cornerRadius(10)
                     }
                     .buttonStyle(.plain)
 
@@ -172,9 +192,12 @@ struct PlaylistDetailView: View {
                 ScrollView {
                     LazyVStack(spacing: 2) {
                         ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
-                            SongRow(song: song, index: idx) {
+                            Button {
                                 appState.player.load(songs: songs, startIndex: idx)
+                            } label: {
+                                SongRow(song: song, index: idx, playlists: playlists)
                             }
+                            .buttonStyle(.card)
                             .contextMenu {
                                 Button(role: .destructive) {
                                     Task {
@@ -187,11 +210,15 @@ struct PlaylistDetailView: View {
                         }
                     }
                     .padding(.vertical, 8)
+                    .padding(.bottom, 100)
                 }
             }
         }
         .padding(60)
-        .task { await reload() }
+        .task {
+            await reload()
+            playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []
+        }
         .alert("Rename Playlist", isPresented: $isEditing) {
             TextField("Name", text: $editName)
             Button("Save") {

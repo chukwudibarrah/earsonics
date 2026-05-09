@@ -76,7 +76,7 @@ struct SyncedLyricsView: View {
                 .padding(.horizontal, 60)
                 .padding(.vertical, 40)
             }
-            .onChange(of: currentLineIndex) { newIdx in
+            .onChange(of: currentLineIndex) { _, newIdx in
                 withAnimation(.easeInOut(duration: 0.5)) {
                     proxy.scrollTo(max(0, newIdx - 3), anchor: .top)
                 }

@@ -1,0 +1,662 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme earsonics -destination "generic/platform=tvOS Simulator" clean build
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+** CLEAN SUCCEEDED **
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'earsonics' in project 'earsonics' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/macdaddy/xxappsxx/earsonics/earsonics/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: c59f6b5f69a6fc32534159eb36914753
+Build description path: /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/XCBuildData/c59f6b5f69a6fc32534159eb36914753.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk /Users/macdaddy/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/appletvsimulator26.4-23L236-11f4d1e4fa50bf500d4b8df235a2802e.sdkstatcache
+    cd /Users/macdaddy/xxappsxx/earsonics/earsonics.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -o /Users/macdaddy/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/appletvsimulator26.4-23L236-11f4d1e4fa50bf500d4b8df235a2802e.sdkstatcache
+
+CreateBuildDirectory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products
+    cd /Users/macdaddy/xxappsxx/earsonics/earsonics.xcodeproj
+    builtin-create-build-directory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products
+
+CreateBuildDirectory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex
+    cd /Users/macdaddy/xxappsxx/earsonics/earsonics.xcodeproj
+    builtin-create-build-directory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex
+
+CreateBuildDirectory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator
+    cd /Users/macdaddy/xxappsxx/earsonics/earsonics.xcodeproj
+    builtin-create-build-directory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator
+
+CreateBuildDirectory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /Users/macdaddy/xxappsxx/earsonics/earsonics.xcodeproj
+    builtin-create-build-directory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /Users/macdaddy/xxappsxx/earsonics/earsonics.xcodeproj
+    builtin-create-build-directory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-appletvsimulator
+    cd /Users/macdaddy/xxappsxx/earsonics/earsonics.xcodeproj
+    builtin-create-build-directory /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-appletvsimulator
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics-c19b8956210f97700170c7d879da1417-VFS-appletvsimulator/all-product-headers.yaml
+    cd /Users/macdaddy/xxappsxx/earsonics/earsonics.xcodeproj
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics-c19b8956210f97700170c7d879da1417-VFS-appletvsimulator/all-product-headers.yaml
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.hmap (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.hmap
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-own-target-headers.hmap (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-project-headers.hmap (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-project-headers.hmap
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/empty-earsonics.plist (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/empty-earsonics.plist
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-all-target-headers.hmap (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-all-non-framework-target-headers.hmap (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.DependencyStaticMetadataFileList (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-generated-files.hmap (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-generated-files.hmap
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.DependencyMetadataFileList (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibInstallName-normal-x86_64.txt (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibInstallName-normal-x86_64.txt
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibPath-normal-x86_64.txt (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibPath-normal-x86_64.txt
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibPath-normal-arm64.txt (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibInstallName-normal-arm64.txt (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibInstallName-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics_const_extract_protocols.json (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.SwiftFileList (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.SwiftFileList
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.SwiftConstValuesFileList (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.LinkFileList (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.LinkFileList
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics-OutputFileMap.json (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics_const_extract_protocols.json (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics-OutputFileMap.json (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.LinkFileList (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.LinkFileList
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.SwiftFileList (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.SwiftFileList
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.SwiftConstValuesFileList (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.SwiftConstValuesFileList
+
+MkDir /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /bin/mkdir -p /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app
+
+WriteAuxiliaryFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/Entitlements-Simulated.plist (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    write-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/Entitlements-Simulated.plist
+
+ProcessProductPackaging "" /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+    Entitlements:
+    
+    {
+    "application-identifier" = "F777FR4486.com.wonderworks.earsonics";
+}
+    
+    builtin-productPackagingUtility -entitlements -format xml -o /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent
+
+ProcessProductPackagingDER /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent.der (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /usr/bin/derq query -f xml -i /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent -o /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent.der --raw
+
+GenerateAssetSymbols /Users/macdaddy/xxappsxx/earsonics/earsonics/Assets.xcassets (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/macdaddy/xxappsxx/earsonics/earsonics/Assets.xcassets --compile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app --output-format human-readable-text --notices --warnings --export-dependency-info /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_dependencies --output-partial-info-plist /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_generated_info.plist --app-icon App\ Icon\ \&\ Top\ Shelf\ Image --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --development-region en --leaderboard-identifier-prefix earsonics.game-center.leaderboard. --leaderboard-set-identifier-prefix earsonics.game-center.leaderboard-set. --target-device tv --minimum-deployment-target 26.4 --platform appletvsimulator --bundle-identifier com.wonderworks.earsonics --generate-swift-asset-symbols /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/GeneratedAssetSymbols.h
+/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+Ld /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/Binary/__preview.dylib normal x86_64 (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target x86_64-apple-tvos26.4-simulator -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -O0 -L/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -install_name @rpath/earsonics.debug.dylib -Xlinker -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics_dependency_info.dat -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __entitlements -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __ents_der -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent.der -Xlinker -no_adhoc_codesign -o /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/Binary/__preview.dylib
+
+MkDir /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_output/thinned (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /bin/mkdir -p /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_output/thinned
+
+Ld /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/Binary/__preview.dylib normal arm64 (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-tvos26.4-simulator -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -O0 -L/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -install_name @rpath/earsonics.debug.dylib -Xlinker -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics_dependency_info.dat -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __entitlements -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __ents_der -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent.der -Xlinker -no_adhoc_codesign -o /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/Binary/__preview.dylib
+
+MkDir /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_output/unthinned (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /bin/mkdir -p /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_output/unthinned
+
+CompileAssetCatalogVariant thinned /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app /Users/macdaddy/xxappsxx/earsonics/earsonics/Assets.xcassets (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/macdaddy/xxappsxx/earsonics/earsonics/Assets.xcassets --compile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_generated_info.plist_thinned --app-icon App\ Icon\ \&\ Top\ Shelf\ Image --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --development-region en --leaderboard-identifier-prefix earsonics.game-center.leaderboard. --leaderboard-set-identifier-prefix earsonics.game-center.leaderboard-set. --target-device tv --minimum-deployment-target 26.4 --platform appletvsimulator
+/* com.apple.actool.compilation-results */
+/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_generated_info.plist_thinned
+/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_output/thinned/Assets.car
+
+
+CreateUniversalBinary /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/__preview.dylib normal arm64\ x86_64 (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/lipo -create /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/Binary/__preview.dylib /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/Binary/__preview.dylib -output /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/__preview.dylib
+
+SwiftDriver earsonics normal arm64 com.apple.xcode.tools.swift.compiler (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name earsonics -Onone @/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -target arm64-apple-tvos26.4-simulator -g -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -emit-localized-strings -emit-localized-strings-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/appletvsimulator26.4-23L236-11f4d1e4fa50bf500d4b8df235a2802e.sdkstatcache -output-file-map /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics_const_extract_protocols.json -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-generated-files.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-own-target-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-all-target-headers.hmap -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-project-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/include -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources-normal/arm64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/arm64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics-Swift.h -working-directory /Users/macdaddy/xxappsxx/earsonics -experimental-emit-module-separately -disable-cmo
+
+SwiftDriver earsonics normal x86_64 com.apple.xcode.tools.swift.compiler (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name earsonics -Onone @/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -target x86_64-apple-tvos26.4-simulator -g -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -emit-localized-strings -emit-localized-strings-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/appletvsimulator26.4-23L236-11f4d1e4fa50bf500d4b8df235a2802e.sdkstatcache -output-file-map /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics_const_extract_protocols.json -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-generated-files.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-own-target-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-all-target-headers.hmap -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-project-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/include -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources-normal/x86_64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/x86_64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics-Swift.h -working-directory /Users/macdaddy/xxappsxx/earsonics -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ CoverArtView.swift,\ FocusStyle.swift,\ StarButton.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/CoverArtView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/FocusStyle.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/StarButton.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/CoverArtView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/FocusStyle.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/StarButton.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 Compiling\ SubsonicClient.swift,\ AppState.swift,\ LibraryViewModel.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Services/SubsonicClient.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/ViewModels/AppState.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/ViewModels/LibraryViewModel.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Services/SubsonicClient.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/ViewModels/AppState.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/ViewModels/LibraryViewModel.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 Compiling\ AlbumDetailView.swift,\ ArtistsView.swift,\ HomeView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/AlbumDetailView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/ArtistsView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/HomeView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/AlbumDetailView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/ArtistsView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/HomeView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 Compiling\ ServerManagementView.swift,\ SettingsView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/ServerManagementView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/SettingsView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/ServerManagementView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/SettingsView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 Compiling\ QueueView.swift,\ SearchView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/QueueView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/SearchView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/QueueView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/SearchView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ earsonics (in target 'earsonics' from project 'earsonics')
+
+EmitSwiftModule normal arm64 (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 Compiling\ LyricsView.swift,\ MiniPlayerBar.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/LyricsView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/MiniPlayerBar.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/LyricsView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/MiniPlayerBar.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 Compiling\ StarredView.swift,\ ContentView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/StarredView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/ContentView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/StarredView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/ContentView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 Compiling\ NowPlayingView.swift,\ PlaylistsView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/NowPlayingView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/PlaylistsView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/NowPlayingView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/PlaylistsView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftEmitModule normal x86_64 Emitting\ module\ for\ earsonics (in target 'earsonics' from project 'earsonics')
+
+EmitSwiftModule normal x86_64 (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for earsonics (in target 'earsonics' from project 'earsonics')
+
+SwiftDriver\ Compilation\ Requirements earsonics normal arm64 com.apple.xcode.tools.swift.compiler (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name earsonics -Onone @/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -target arm64-apple-tvos26.4-simulator -g -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -emit-localized-strings -emit-localized-strings-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/appletvsimulator26.4-23L236-11f4d1e4fa50bf500d4b8df235a2802e.sdkstatcache -output-file-map /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics_const_extract_protocols.json -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-generated-files.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-own-target-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-all-target-headers.hmap -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-project-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/include -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources-normal/arm64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/arm64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics-Swift.h -working-directory /Users/macdaddy/xxappsxx/earsonics -experimental-emit-module-separately -disable-cmo
+
+SwiftDriverJobDiscovery normal arm64 Compiling CoverArtView.swift, FocusStyle.swift, StarButton.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 Compiling\ MediaModels.swift,\ Server.swift,\ AudioPlayerService.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Models/MediaModels.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Models/Server.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Services/AudioPlayerService.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Models/MediaModels.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Models/Server.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Services/AudioPlayerService.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling LyricsView.swift, MiniPlayerBar.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 Compiling\ ServerManagementView.swift,\ SettingsView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/ServerManagementView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/SettingsView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/ServerManagementView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/SettingsView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+Copy /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/arm64-apple-tvos-simulator.swiftmodule /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.swiftmodule (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.swiftmodule /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/arm64-apple-tvos-simulator.swiftmodule
+
+SwiftDriverJobDiscovery normal arm64 Compiling ServerManagementView.swift, SettingsView.swift (in target 'earsonics' from project 'earsonics')
+
+Copy /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/arm64-apple-tvos-simulator.swiftdoc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.swiftdoc (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.swiftdoc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/arm64-apple-tvos-simulator.swiftdoc
+
+Copy /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/arm64-apple-tvos-simulator.abi.json /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.abi.json (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.abi.json /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/arm64-apple-tvos-simulator.abi.json
+
+Copy /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/Project/arm64-apple-tvos-simulator.swiftsourceinfo /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.swiftsourceinfo (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.swiftsourceinfo /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/Project/arm64-apple-tvos-simulator.swiftsourceinfo
+
+SwiftCompile normal x86_64 Compiling\ QueueView.swift,\ SearchView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/QueueView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/SearchView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/QueueView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/SearchView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 Compiling\ CoverArtView.swift,\ FocusStyle.swift,\ StarButton.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/CoverArtView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/FocusStyle.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/StarButton.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/CoverArtView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/FocusStyle.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/Shared/StarButton.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling QueueView.swift, SearchView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 Compiling\ earsonicsApp.swift,\ GeneratedAssetSymbols.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/earsonicsApp.swift /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/earsonicsApp.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling StarredView.swift, ContentView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 Compiling\ LyricsView.swift,\ MiniPlayerBar.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/LyricsView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/MiniPlayerBar.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/LyricsView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/MiniPlayerBar.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling SubsonicClient.swift, AppState.swift, LibraryViewModel.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 Compiling\ AlbumDetailView.swift,\ ArtistsView.swift,\ HomeView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/AlbumDetailView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/ArtistsView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/HomeView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/AlbumDetailView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/ArtistsView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/HomeView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftDriverJobDiscovery normal x86_64 Compiling earsonicsApp.swift, GeneratedAssetSymbols.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 Compiling\ SubsonicClient.swift,\ AppState.swift,\ LibraryViewModel.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Services/SubsonicClient.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/ViewModels/AppState.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/ViewModels/LibraryViewModel.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Services/SubsonicClient.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/ViewModels/AppState.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/ViewModels/LibraryViewModel.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling AlbumDetailView.swift, ArtistsView.swift, HomeView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 Compiling\ NowPlayingView.swift,\ PlaylistsView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/NowPlayingView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/PlaylistsView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/NowPlayingView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/PlaylistsView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftDriverJobDiscovery normal x86_64 Compiling CoverArtView.swift, FocusStyle.swift, StarButton.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 Compiling\ earsonicsApp.swift,\ GeneratedAssetSymbols.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/earsonicsApp.swift /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/earsonicsApp.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftDriverJobDiscovery normal x86_64 Emitting module for earsonics (in target 'earsonics' from project 'earsonics')
+
+SwiftDriver\ Compilation\ Requirements earsonics normal x86_64 com.apple.xcode.tools.swift.compiler (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name earsonics -Onone @/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -target x86_64-apple-tvos26.4-simulator -g -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -emit-localized-strings -emit-localized-strings-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/appletvsimulator26.4-23L236-11f4d1e4fa50bf500d4b8df235a2802e.sdkstatcache -output-file-map /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics_const_extract_protocols.json -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-generated-files.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-own-target-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-all-target-headers.hmap -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-project-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/include -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources-normal/x86_64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/x86_64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics-Swift.h -working-directory /Users/macdaddy/xxappsxx/earsonics -experimental-emit-module-separately -disable-cmo
+
+SwiftDriverJobDiscovery normal arm64 Compiling earsonicsApp.swift, GeneratedAssetSymbols.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 Compiling\ MediaModels.swift,\ Server.swift,\ AudioPlayerService.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Models/MediaModels.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Models/Server.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Services/AudioPlayerService.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Models/MediaModels.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Models/Server.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal arm64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Services/AudioPlayerService.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftMergeGeneratedHeaders /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/earsonics-Swift.h /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics-Swift.h /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics-Swift.h (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-swiftHeaderTool -arch arm64 /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics-Swift.h -arch x86_64 /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics-Swift.h -o /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/earsonics-Swift.h
+
+SwiftDriverJobDiscovery normal arm64 Compiling NowPlayingView.swift, PlaylistsView.swift (in target 'earsonics' from project 'earsonics')
+
+Copy /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/x86_64-apple-tvos-simulator.swiftmodule /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.swiftmodule (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.swiftmodule /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/x86_64-apple-tvos-simulator.swiftmodule
+
+Copy /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/x86_64-apple-tvos-simulator.swiftdoc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.swiftdoc (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.swiftdoc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/x86_64-apple-tvos-simulator.swiftdoc
+
+Copy /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/x86_64-apple-tvos-simulator.abi.json /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.abi.json (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.abi.json /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/x86_64-apple-tvos-simulator.abi.json
+
+Copy /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/Project/x86_64-apple-tvos-simulator.swiftsourceinfo /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.swiftsourceinfo (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.swiftsourceinfo /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.swiftmodule/Project/x86_64-apple-tvos-simulator.swiftsourceinfo
+
+SwiftCompile normal x86_64 Compiling\ StarredView.swift,\ ContentView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/StarredView.swift /Users/macdaddy/xxappsxx/earsonics/earsonics/ContentView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/Views/StarredView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftCompile normal x86_64 /Users/macdaddy/xxappsxx/earsonics/earsonics/ContentView.swift (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+
+SwiftDriverJobDiscovery normal x86_64 Compiling ServerManagementView.swift, SettingsView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling QueueView.swift, SearchView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling LyricsView.swift, MiniPlayerBar.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling MediaModels.swift, Server.swift, AudioPlayerService.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling StarredView.swift, ContentView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling SubsonicClient.swift, AppState.swift, LibraryViewModel.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftDriverJobDiscovery normal x86_64 Compiling AlbumDetailView.swift, ArtistsView.swift, HomeView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftDriverJobDiscovery normal arm64 Compiling MediaModels.swift, Server.swift, AudioPlayerService.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftDriver\ Compilation earsonics normal arm64 com.apple.xcode.tools.swift.compiler (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name earsonics -Onone @/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -target arm64-apple-tvos26.4-simulator -g -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -emit-localized-strings -emit-localized-strings-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/appletvsimulator26.4-23L236-11f4d1e4fa50bf500d4b8df235a2802e.sdkstatcache -output-file-map /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics_const_extract_protocols.json -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-generated-files.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-own-target-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-all-target-headers.hmap -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-project-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/include -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources-normal/arm64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/arm64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics-Swift.h -working-directory /Users/macdaddy/xxappsxx/earsonics -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/Binary/earsonics.debug.dylib normal arm64 (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-tvos26.4-simulator -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -O0 -L/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-appletvsimulator -L/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-appletvsimulator -F/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -filelist /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.LinkFileList -install_name @rpath/earsonics.debug.dylib -Xlinker -rpath -Xlinker @executable_path/Frameworks -Xlinker -dead_strip -Xlinker -object_path_lto -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics_dependency_info.dat -fobjc-link-runtime -fprofile-instr-generate -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/appletvsimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.swiftmodule @/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics-linker-args.resp -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -Xlinker -no_adhoc_codesign -o /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/Binary/earsonics.debug.dylib
+
+SwiftDriverJobDiscovery normal x86_64 Compiling NowPlayingView.swift, PlaylistsView.swift (in target 'earsonics' from project 'earsonics')
+
+SwiftDriver\ Compilation earsonics normal x86_64 com.apple.xcode.tools.swift.compiler (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name earsonics -Onone @/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -target x86_64-apple-tvos26.4-simulator -g -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -emit-localized-strings -emit-localized-strings-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64 -c -j10 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/appletvsimulator26.4-23L236-11f4d1e4fa50bf500d4b8df235a2802e.sdkstatcache -output-file-map /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics_const_extract_protocols.json -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-generated-files.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-own-target-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-all-target-headers.hmap -Xcc -iquote -Xcc /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-project-headers.hmap -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/include -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources-normal/x86_64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources/x86_64 -Xcc -I/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics-Swift.h -working-directory /Users/macdaddy/xxappsxx/earsonics -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/Binary/earsonics.debug.dylib normal x86_64 (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target x86_64-apple-tvos26.4-simulator -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -O0 -L/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-appletvsimulator -L/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-appletvsimulator -F/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -filelist /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.LinkFileList -install_name @rpath/earsonics.debug.dylib -Xlinker -rpath -Xlinker @executable_path/Frameworks -Xlinker -dead_strip -Xlinker -object_path_lto -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics_dependency_info.dat -fobjc-link-runtime -fprofile-instr-generate -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/appletvsimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.swiftmodule @/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics-linker-args.resp -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -Xlinker -no_adhoc_codesign -o /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/Binary/earsonics.debug.dylib
+
+ConstructStubExecutorLinkFileList /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-ExecutorLinkFileList-normal-arm64.txt (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    construct-stub-executor-link-file-list /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/Binary/earsonics.debug.dylib /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-ExecutorLinkFileList-normal-arm64.txt
+note: Using stub executor library with Swift entry point. (in target 'earsonics' from project 'earsonics')
+
+Ld /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/Binary/earsonics normal arm64 (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-tvos26.4-simulator -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -O0 -L/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker @executable_path/Frameworks -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibPath-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibInstallName-normal-arm64.txt -Xlinker -filelist -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-ExecutorLinkFileList-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __entitlements -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __ents_der -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent.der /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/Binary/earsonics.debug.dylib -Xlinker -no_adhoc_codesign -o /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/Binary/earsonics
+
+ConstructStubExecutorLinkFileList /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-ExecutorLinkFileList-normal-x86_64.txt (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    construct-stub-executor-link-file-list /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/Binary/earsonics.debug.dylib /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-ExecutorLinkFileList-normal-x86_64.txt
+note: Using stub executor library with Swift entry point. (in target 'earsonics' from project 'earsonics')
+
+CreateUniversalBinary /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/earsonics.debug.dylib normal arm64\ x86_64 (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/lipo -create /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/Binary/earsonics.debug.dylib /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/Binary/earsonics.debug.dylib -output /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/earsonics.debug.dylib
+
+Ld /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/Binary/earsonics normal x86_64 (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target x86_64-apple-tvos26.4-simulator -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk -O0 -L/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -F/Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker @executable_path/Frameworks -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibPath-normal-x86_64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-DebugDylibInstallName-normal-x86_64.txt -Xlinker -filelist -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics-ExecutorLinkFileList-normal-x86_64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __entitlements -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __ents_der -Xlinker /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.app-Simulated.xcent.der /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/Binary/earsonics.debug.dylib -Xlinker -no_adhoc_codesign -o /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/Binary/earsonics
+
+CreateUniversalBinary /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/earsonics normal arm64\ x86_64 (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/lipo -create /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/Binary/earsonics /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/Binary/earsonics -output /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/earsonics
+
+LinkAssetCatalog /Users/macdaddy/xxappsxx/earsonics/earsonics/Assets.xcassets (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-linkAssetCatalog --thinned /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_output/thinned --thinned-dependencies /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_generated_info.plist_thinned --unthinned /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_output/unthinned --unthinned-dependencies /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_generated_info.plist_unthinned --output /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app --plist-output /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_generated_info.plist
+note: Emplaced /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/Assets.car (in target 'earsonics' from project 'earsonics')
+
+ProcessInfoPlistFile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/Info.plist /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/empty-earsonics.plist (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-infoPlistUtility /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/empty-earsonics.plist -producttype com.apple.product-type.application -genpkginfo /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/PkgInfo -expandbuildsettings -format binary -platform appletvsimulator -additionalcontentfile /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/assetcatalog_generated_info.plist -o /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/Info.plist
+
+CopySwiftLibs /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/earsonics.debug.dylib --scan-folder /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/Frameworks --scan-folder /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/PlugIns --scan-folder /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/SystemExtensions --scan-folder /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/Extensions --platform appletvsimulator --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ExtractAppIntentsMetadata (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name earsonics --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/AppleTVSimulator.platform/Developer/SDKs/AppleTVSimulator26.4.sdk --xcode-version 17E202 --platform-family tvOS --deployment-target 26.4 --bundle-identifier com.wonderworks.earsonics --output /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app --target-triple arm64-apple-tvos26.4-simulator --target-triple x86_64-apple-tvos26.4-simulator --binary-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/earsonics --dependency-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics_dependency_info.dat --dependency-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics_dependency_info.dat --stringsdata-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --stringsdata-file /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.SwiftFileList --source-file-list /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.SwiftFileList --metadata-file-list /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.DependencyMetadataFileList --static-metadata-file-list /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/earsonics.DependencyStaticMetadataFileList --swift-const-vals-list /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/arm64/earsonics.SwiftConstValuesFileList --swift-const-vals-list /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Intermediates.noindex/earsonics.build/Debug-appletvsimulator/earsonics.build/Objects-normal/x86_64/earsonics.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2026-05-08 20:36:43.839 appintentsmetadataprocessor[65263:1728718] Starting appintentsmetadataprocessor export
+2026-05-08 20:36:43.844 appintentsmetadataprocessor[65263:1728718] warning: Metadata extraction skipped. No AppIntents.framework dependency found.
+
+CodeSign /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/earsonics.debug.dylib (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/earsonics.debug.dylib
+
+CodeSign /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/__preview.dylib (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app/__preview.dylib
+
+CodeSign /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app
+
+RegisterExecutionPolicyException /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-RegisterExecutionPolicyException /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app
+
+Validate /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    builtin-validationUtility /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app -shallow-bundle -infoplist-subpath Info.plist
+
+Touch /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app (in target 'earsonics' from project 'earsonics')
+    cd /Users/macdaddy/xxappsxx/earsonics
+    /usr/bin/touch -c /Users/macdaddy/Library/Developer/Xcode/DerivedData/earsonics-bohdegfjhptvmbakilaqgupwrtsg/Build/Products/Debug-appletvsimulator/earsonics.app
+
+** BUILD SUCCEEDED **
+

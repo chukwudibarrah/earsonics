@@ -4,130 +4,144 @@ import SwiftUI
 struct NowPlayingView: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject private var player = AudioPlayerService.shared
-    @Environment(\.dismiss) private var dismiss
+    var dismiss: () -> Void = {}
     @State private var showQueue = false
     @State private var showLyrics = false
     @State private var lyrics: [StructuredLyrics] = []
     @State private var plainLyrics: Lyrics? = nil
     @State private var lyricsLoading = false
     @State private var isStarred: Bool = false
+    @State private var playlists: [Playlist] = []
+    @State private var showNewPlaylistAlert = false
+    @State private var newPlaylistName = ""
 
     var body: some View {
         ZStack {
-            // Solid opaque base — prevents album detail bleeding through on tvOS
             Color.black.ignoresSafeArea()
 
-            // Blurred cover art background on top of solid black
             CoverArtView(id: player.currentSong?.coverArt, size: 100)
                 .scaleEffect(1.8)
                 .blur(radius: 60)
-                .opacity(0.5)
+                .opacity(0.45)
                 .ignoresSafeArea()
 
-            VStack {
-                HStack {
-                    Spacer()
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "chevron.down.circle.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    .buttonStyle(.plain)
-                    .padding(40)
-                }
-                Spacer()
-            }
-            .zIndex(10)
-
             if player.currentSong == nil {
-                // Empty state
                 VStack(spacing: 24) {
                     Image(systemName: "music.note.tv")
-                        .font(.system(size: 100))
-                        .foregroundColor(.secondary)
-                    Text("Nothing Playing")
-                        .font(.largeTitle).bold()
+                        .font(.system(size: 100)).foregroundColor(.secondary)
+                    Text("Nothing playing").font(.largeTitle).bold()
                     Text("Browse your library and start playing music.")
-                        .font(.title3)
-                        .foregroundColor(.secondary)
+                        .font(.title3).foregroundColor(.secondary)
                 }
             } else if showQueue {
                 QueueView { showQueue = false }
                     .transition(.move(edge: .trailing))
+                    .onExitCommand { showQueue = false }
             } else if showLyrics {
                 LyricsView(structured: lyrics, plain: plainLyrics, currentTime: player.currentTime) {
                     showLyrics = false
                 }
                 .transition(.move(edge: .trailing))
+                .onExitCommand { showLyrics = false }
             } else {
-                mainPlayerView
-                    .transition(.opacity)
+                mainPlayerView.transition(.opacity)
             }
         }
         .animation(.easeInOut(duration: 0.3), value: showQueue)
         .animation(.easeInOut(duration: 0.3), value: showLyrics)
-        .animation(.easeInOut(duration: 0.3), value: player.currentSong?.id)
-        .onChange(of: player.currentSong?.id) { _ in
-            showQueue = false
-            showLyrics = false
+        .onChange(of: player.currentSong?.id) {
+            showQueue = false; showLyrics = false
             isStarred = player.currentSong?.starred != nil
             Task { await loadLyrics() }
         }
         .task {
             isStarred = player.currentSong?.starred != nil
+            playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []
             await loadLyrics()
+        }
+        .alert("New playlist", isPresented: $showNewPlaylistAlert) {
+            TextField("Playlist name", text: $newPlaylistName)
+            Button("Create") {
+                if !newPlaylistName.isEmpty {
+                    Task {
+                        if let song = player.currentSong {
+                            if let newPl = try? await SubsonicClient.shared.createPlaylist(name: newPlaylistName, songIds: [song.id]) {
+                                playlists.append(newPl)
+                            }
+                        }
+                        newPlaylistName = ""
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {
+                newPlaylistName = ""
+            }
         }
     }
 
     // MARK: - Main Player Layout
     var mainPlayerView: some View {
-        HStack(alignment: .center, spacing: 80) {
+        HStack(alignment: .center, spacing: 60) {
             // Left: Cover Art
             CoverArtView(id: player.currentSong?.coverArt, size: 600)
-                .frame(width: 420, height: 420)
+                .frame(width: 400, height: 400)
                 .cornerRadius(20)
                 .shadow(color: .black.opacity(0.6), radius: 40, y: 20)
 
-            // Right: Controls
-            VStack(alignment: .leading, spacing: 28) {
+            // Right: Info + Controls
+            VStack(alignment: .leading, spacing: 24) {
 
-                // Track info
-                if let song = player.currentSong {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack(alignment: .top) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(song.title)
-                                    .font(.largeTitle).bold()
-                                    .lineLimit(2)
-                                Text(song.artist ?? "")
-                                    .font(.title2)
-                                    .foregroundColor(.secondary)
-                                Text(song.album ?? "")
-                                    .font(.headline)
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            VStack(spacing: 8) {
-                                FormatBadge(song: song)
-                                StarButton(isStarred: isStarred, songId: song.id) { newVal in
-                                    isStarred = newVal
+                // Track info + dismiss button row
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        if let song = player.currentSong {
+                            Text(song.title)
+                                .font(.largeTitle).bold().lineLimit(2)
+                            Text(song.artist ?? "")
+                                .font(.title2).foregroundColor(.secondary)
+                            Text(song.album ?? "")
+                                .font(.headline).foregroundColor(.secondary)
+                        }
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 12) {
+                        // Dismiss — clearly interactive button, no allowsHitTesting wrapping
+                        Button { dismiss() } label: {
+                            Image(systemName: "chevron.down.circle.fill")
+                                .font(.title).foregroundColor(.white.opacity(0.7))
+                        }
+                        .buttonStyle(.plain)
+
+//                        if let song = player.currentSong { FormatBadge(song: song) }
+
+                        // Star button — tappable
+                        Button {
+                            Task {
+                                if let song = player.currentSong {
+                                    if isStarred {
+                                        try? await SubsonicClient.shared.unstar(songId: song.id)
+                                        isStarred = false
+                                    } else {
+                                        try? await SubsonicClient.shared.star(songId: song.id)
+                                        isStarred = true
+                                    }
                                 }
                             }
+                        } label: {
+                            Image(systemName: isStarred ? "heart.fill" : "heart")
+                                .foregroundColor(isStarred ? .red : .white.opacity(0.7))
+                                .font(.title2)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
 
                 // Progress bar + timestamps
-                VStack(spacing: 10) {
-                    ProgressSlider(value: player.currentTime, total: player.duration) { newVal in
-                        player.seek(to: newVal)
-                    }
+                VStack(spacing: 8) {
+                    ProgressSlider(value: player.currentTime, total: player.duration) { player.seek(to: $0) }
                     HStack {
                         Text(formatTime(player.currentTime))
-                            .font(.callout.monospacedDigit())
-                            .foregroundColor(.secondary)
+                            .font(.callout.monospacedDigit()).foregroundColor(.secondary)
                         Spacer()
                         if player.isBuffering {
                             HStack(spacing: 6) {
@@ -137,104 +151,68 @@ struct NowPlayingView: View {
                         }
                         Spacer()
                         Text(formatTime(player.duration))
-                            .font(.callout.monospacedDigit())
-                            .foregroundColor(.secondary)
+                            .font(.callout.monospacedDigit()).foregroundColor(.secondary)
                     }
                 }
 
-                // Main transport controls
-                HStack(spacing: 44) {
-                    // Shuffle
-                    Button { player.toggleShuffle() } label: {
-                        Image(systemName: "shuffle")
-                            .font(.title2)
-                            .foregroundColor(player.isShuffled ? .accentColor : .white.opacity(0.7))
-                    }
-                    .buttonStyle(.plain)
+                // Transport controls — use .buttonStyle(.plain) + .focusable()
+                // They live inside a full-screen view with TabView disabled,
+                // so the focus engine will find ONLY these buttons
+                HStack(spacing: 60) {
+                    TransportButton(icon: "shuffle", isToggled: player.isShuffled) { player.toggleShuffle() }
+                    TransportButton(icon: "backward.fill") { player.skipPrevious() }
+                    PlayPauseButton(isPlaying: player.isPlaying) { player.togglePlayPause() }
+                    TransportButton(icon: "forward.fill") { player.skipNext() }
+                    RepeatTransportButton(mode: player.repeatMode) { player.cycleRepeat() }
+                }
 
-                    // Previous
-                    Button { player.skipPrevious() } label: {
-                        Image(systemName: "backward.fill")
-                            .font(.system(size: 36))
+                // Secondary: Queue + Lyrics + Add to playlist
+                HStack(spacing: 80) {
+                    SecondaryActionButton(title: "Queue", icon: "list.bullet.indent") {
+                        withAnimation { showQueue = true }
                     }
-                    .buttonStyle(.plain)
+                    SecondaryActionButton(title: "Lyrics", icon: "text.quote") {
+                        withAnimation { showLyrics = true }
+                    }
+                    .disabled(lyrics.isEmpty && plainLyrics?.value == nil)
 
-                    // Play / Pause
-                    Button { player.togglePlayPause() } label: {
-                        ZStack {
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 88, height: 88)
-                            Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                                .font(.system(size: 34))
-                                .foregroundColor(.black)
+                    Menu {
+                        Button {
+                            newPlaylistName = ""
+                            showNewPlaylistAlert = true
+                        } label: {
+                            Label("New playlist...", systemImage: "plus.circle")
                         }
-                    }
-                    .buttonStyle(.plain)
-
-                    // Next
-                    Button { player.skipNext() } label: {
-                        Image(systemName: "forward.fill")
-                            .font(.system(size: 36))
-                    }
-                    .buttonStyle(.plain)
-
-                    // Repeat
-                    Button { player.cycleRepeat() } label: {
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: player.repeatMode.icon)
-                                .font(.title2)
-                                .foregroundColor(player.repeatMode != .off ? .accentColor : .white.opacity(0.7))
-                                .frame(width: 36, height: 36)
-                            if player.repeatMode == .one {
-                                Text("1")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .padding(3)
-                                    .background(Color.accentColor)
-                                    .clipShape(Circle())
-                                    .offset(x: 8, y: -6)
+                        if !playlists.isEmpty {
+                            Divider()
+                            ForEach(playlists) { playlist in
+                                Button {
+                                    if let song = player.currentSong {
+                                        Task {
+                                            try? await SubsonicClient.shared.updatePlaylist(
+                                                id: playlist.id, songIdsToAdd: [song.id])
+                                        }
+                                    }
+                                } label: {
+                                    Label(playlist.name, systemImage: "music.note.list")
+                                }
                             }
                         }
-                    }
-                    .buttonStyle(.plain)
-                }
-
-                // Secondary actions: Queue & Lyrics
-                HStack(spacing: 20) {
-                    Button {
-                        withAnimation { showQueue = true }
                     } label: {
-                        Label("Queue", systemImage: "list.bullet.indent")
+                        Label("Add to playlist", systemImage: "text.badge.plus")
                             .font(.callout)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.12))
-                            .cornerRadius(10)
+                            .padding(.horizontal, 5).padding(.vertical, 12)
+//                            .background(RoundedRectangle(cornerRadius: 5).fill(Color.clear))
+//                            .foregroundColor(.white.opacity(0.97))
                     }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        withAnimation { showLyrics = true }
-                    } label: {
-                        Label("Lyrics", systemImage: "text.quote")
-                            .font(.callout)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.12))
-                            .cornerRadius(10)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(lyrics.isEmpty && plainLyrics?.value == nil)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 80)
-        .padding(.vertical, 60)
+        .padding(.vertical, 50)
     }
 
-    // MARK: - Helpers
     private func loadLyrics() async {
         guard let song = player.currentSong else { return }
         lyricsLoading = true
@@ -247,9 +225,110 @@ struct NowPlayingView: View {
 
     private func formatTime(_ seconds: Double) -> String {
         guard seconds.isFinite && seconds >= 0 else { return "--:--" }
-        let m = Int(seconds) / 60
-        let s = Int(seconds) % 60
-        return String(format: "%d:%02d", m, s)
+        return String(format: "%d:%02d", Int(seconds) / 60, Int(seconds) % 60)
+    }
+}
+
+// MARK: - Secondary Action Button
+struct SecondaryActionButton: View {
+    let title: String
+    let icon: String
+    let action: () -> Void
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: icon)
+                .font(.callout)
+                .padding(.horizontal, 20).padding(.vertical, 12)
+                .background(RoundedRectangle(cornerRadius: 10)
+                    .fill(Color.clear))
+                .foregroundColor(isFocused ? .accentColor : .white.opacity(0.85))
+                .scaleEffect(isFocused ? 1.06 : 1.0)
+                .animation(.easeInOut(duration: 0.12), value: isFocused)
+        }
+        .buttonStyle(.plain)
+        .focused($isFocused)
+    }
+}
+
+// MARK: - Transport Button
+struct TransportButton: View {
+    let icon: String
+    var isToggled: Bool = false
+    let action: () -> Void
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 30))
+                .foregroundColor((isFocused || isToggled) ? .accentColor : .white.opacity(0.85))
+                .frame(width: 72, height: 72)
+                .background(Color.clear)
+                .clipShape(Circle())
+                .scaleEffect(isFocused ? 1.12 : 1.0)
+                .animation(.easeInOut(duration: 0.12), value: isFocused)
+        }
+        .buttonStyle(.plain)
+        .focused($isFocused)
+    }
+}
+
+// MARK: - Play/Pause Button
+struct PlayPauseButton: View {
+    let isPlaying: Bool
+    let action: () -> Void
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                Circle()
+                    .fill(Color.clear)
+                    .frame(width: 86, height: 86)
+                    .scaleEffect(isFocused ? 1.1 : 1.0)
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 36, weight: .black))
+                    .foregroundColor(isFocused ? .accentColor : .white.opacity(0.85))
+            }
+            .animation(.easeInOut(duration: 0.12), value: isFocused)
+        }
+        .buttonStyle(.plain)
+        .focused($isFocused)
+    }
+}
+
+// MARK: - Repeat Button
+struct RepeatTransportButton: View {
+    let mode: RepeatMode
+    let action: () -> Void
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        Button(action: action) {
+            ZStack(alignment: .topTrailing) {
+                ZStack {
+                    Circle()
+                        .fill(Color.clear)
+                        .frame(width: 72, height: 72)
+                    Image(systemName: mode.icon)
+                        .font(.system(size: 30))
+                        .foregroundColor((isFocused || mode != .off) ? .accentColor : .white.opacity(0.85))
+                }
+                .scaleEffect(isFocused ? 1.12 : 1.0)
+                if mode == .one {
+                    Text("1")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white).padding(3)
+                        .background(Color.accentColor).clipShape(Circle())
+                        .offset(x: -16, y: 16)
+                }
+            }
+            .animation(.easeInOut(duration: 0.12), value: isFocused)
+        }
+        .buttonStyle(.plain)
+        .focused($isFocused)
     }
 }
 
@@ -268,28 +347,24 @@ struct ProgressSlider: View {
     var body: some View {
         GeometryReader { geo in
             ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.white.opacity(isFocused ? 0.35 : 0.2))
+                Capsule().fill(Color.white.opacity(isFocused ? 0.35 : 0.2))
                     .frame(height: isFocused ? 10 : 6)
-                Capsule()
-                    .fill(isFocused ? Color.accentColor : Color.white)
+                Capsule().fill(isFocused ? Color.accentColor : Color.white)
                     .frame(width: geo.size.width * CGFloat(progress), height: isFocused ? 10 : 6)
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: isFocused ? 26 : 18, height: isFocused ? 26 : 18)
+                Circle().fill(Color.white)
+                    .frame(width: isFocused ? 26 : 16, height: isFocused ? 26 : 16)
                     .shadow(radius: 4)
-                    .offset(x: geo.size.width * CGFloat(progress) - (isFocused ? 13 : 9))
+                    .offset(x: geo.size.width * CGFloat(progress) - (isFocused ? 13 : 8))
             }
-            .animation(.easeInOut(duration: 0.15), value: isFocused)
+            .animation(.easeInOut(duration: 0.12), value: isFocused)
         }
         .frame(height: 30)
         .focusable()
         .focused($isFocused)
         .onMoveCommand { direction in
-            let step: Double = 10
             switch direction {
-            case .left:  onSeek(max(0, value - step))
-            case .right: onSeek(min(total, value + step))
+            case .left:  onSeek(max(0, value - 10))
+            case .right: onSeek(min(total, value + 10))
             default: break
             }
         }

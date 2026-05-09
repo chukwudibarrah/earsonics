@@ -34,9 +34,8 @@ class AudioPlayerService: NSObject, ObservableObject {
     @Published var isBuffering: Bool = false
     @Published var repeatMode: RepeatMode = .off
     @Published var isShuffled: Bool = false
-    @Published var gaplessCrossfade: Double = 0   // seconds, 0 = true gapless
+    @Published var gaplessCrossfade: Double = 0
 
-    // Reference to the server for URL building
     var server: Server? {
         didSet { rebuildPlayerItems() }
     }
@@ -46,7 +45,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         return queue[currentIndex]
     }
 
-    private var originalQueue: [Song] = []  // for shuffle restore
+    private var originalQueue: [Song] = []
 
     override init() {
         super.init()
@@ -57,19 +56,20 @@ class AudioPlayerService: NSObject, ObservableObject {
 
     // MARK: - Audio Session
     private func configureAudioSession() {
+        #if os(tvOS)
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             print("Audio session error: \(error)")
         }
+        #endif
     }
 
     // MARK: - Player setup
     private func setupPlayer() {
         player.automaticallyWaitsToMinimizeStalling = true
 
-        // Observe status
         player.publisher(for: \.timeControlStatus)
             .receive(on: RunLoop.main)
             .sink { [weak self] status in
@@ -79,7 +79,6 @@ class AudioPlayerService: NSObject, ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Time observer - update every 0.5s
         timeObserver = player.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
             queue: .main
@@ -87,20 +86,19 @@ class AudioPlayerService: NSObject, ObservableObject {
             guard let self else { return }
             Task { @MainActor in
                 self.currentTime = time.seconds
-                if let dur = self.player.currentItem?.duration, !dur.isIndefinite {
+                if let dur = self.player.currentItem?.duration,
+                   dur.isNumeric, dur.seconds > 0 {
                     self.duration = dur.seconds
                 }
             }
         }
 
-        // Observe item changes for queue advancement
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(playerItemDidFinish),
             name: .AVPlayerItemDidPlayToEndTime,
             object: nil
         )
-
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(playerItemFailed),
@@ -109,22 +107,13 @@ class AudioPlayerService: NSObject, ObservableObject {
         )
     }
 
-    // MARK: - Remote Command Center (for Siri Remote on tvOS)
+    // MARK: - Remote Command Center
     private func setupRemoteCommandCenter() {
         let cc = MPRemoteCommandCenter.shared()
-
-        cc.playCommand.addTarget { [weak self] _ in
-            self?.play(); return .success
-        }
-        cc.pauseCommand.addTarget { [weak self] _ in
-            self?.pause(); return .success
-        }
-        cc.nextTrackCommand.addTarget { [weak self] _ in
-            self?.skipNext(); return .success
-        }
-        cc.previousTrackCommand.addTarget { [weak self] _ in
-            self?.skipPrevious(); return .success
-        }
+        cc.playCommand.addTarget { [weak self] _ in self?.play(); return .success }
+        cc.pauseCommand.addTarget { [weak self] _ in self?.pause(); return .success }
+        cc.nextTrackCommand.addTarget { [weak self] _ in self?.skipNext(); return .success }
+        cc.previousTrackCommand.addTarget { [weak self] _ in self?.skipPrevious(); return .success }
         cc.changePlaybackPositionCommand.addTarget { [weak self] event in
             guard let e = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
             self?.seek(to: e.positionTime)
@@ -132,7 +121,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         }
     }
 
-    // MARK: - Load songs
+    // MARK: - Load songs (pre-loads ALL items for true gapless)
     func load(songs: [Song], startIndex: Int = 0) {
         originalQueue = songs
         if isShuffled {
@@ -151,48 +140,44 @@ class AudioPlayerService: NSObject, ObservableObject {
         updateNowPlaying()
     }
 
+    // MARK: - Rebuild: loads all remaining songs into AVQueuePlayer upfront
+    // This is the key to gapless — AVQueuePlayer pre-buffers the next item.
+    // We call pause() only here (structural change), never during natural advance.
     func rebuildPlayerItems() {
         guard let srv = server else { return }
+        let wasPlaying = isPlaying
         player.pause()
         player.removeAllItems()
         playerItems = []
 
+        // Load from currentIndex to end so all upcoming tracks are pre-queued
         let songsFromCurrent = Array(queue.dropFirst(currentIndex))
-        let items = songsFromCurrent.compactMap { song -> AVPlayerItem? in
+        let items: [AVPlayerItem] = songsFromCurrent.compactMap { song in
             guard let url = SubsonicClient.shared.streamURL(songId: song.id, server: srv) else { return nil }
             let item = AVPlayerItem(url: url)
-            // For gapless: preload
-            item.preferredForwardBufferDuration = 10
+            item.preferredForwardBufferDuration = 60  // 60s pre-buffer for gapless
             return item
         }
         playerItems = items
         for item in items { player.insert(item, after: nil) }
+        if wasPlaying { player.play() }
     }
 
     // MARK: - Playback controls
-    func play() {
-        player.play()
-        isPlaying = true
-        updateNowPlaying()
-    }
-
-    func pause() {
-        player.pause()
-        isPlaying = false
-        updateNowPlaying()
-    }
-
-    func togglePlayPause() {
-        isPlaying ? pause() : play()
-    }
+    func play() { player.play(); updateNowPlaying() }
+    func pause() { player.pause(); updateNowPlaying() }
+    func togglePlayPause() { isPlaying ? pause() : play() }
 
     func skipNext() {
         let nextIndex = currentIndex + 1
         if nextIndex < queue.count {
+            // Scrobble current before advancing
+            let prev = queue[currentIndex]
+            Task { try? await SubsonicClient.shared.scrobble(id: prev.id, server: self.server) }
             currentIndex = nextIndex
+            // AVQueuePlayer already has all items pre-queued — just advance
             player.advanceToNextItem()
             updateNowPlaying()
-            prependItemsIfNeeded()
         } else if repeatMode == .all {
             load(songs: queue, startIndex: 0)
         }
@@ -203,7 +188,7 @@ class AudioPlayerService: NSObject, ObservableObject {
             seek(to: 0)
         } else if currentIndex > 0 {
             currentIndex -= 1
-            rebuildPlayerItems()
+            rebuildPlayerItems()  // must rebuild: AVQueuePlayer has no go-back API
             player.play()
             updateNowPlaying()
         } else if repeatMode == .all {
@@ -214,6 +199,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     func seek(to seconds: Double) {
         let time = CMTime(seconds: seconds, preferredTimescale: 600)
         player.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero)
+        updateNowPlaying()
     }
 
     func playFromQueue(index: Int) {
@@ -227,13 +213,14 @@ class AudioPlayerService: NSObject, ObservableObject {
         queue.append(song)
         if let srv = server, let url = SubsonicClient.shared.streamURL(songId: song.id, server: srv) {
             let item = AVPlayerItem(url: url)
+            item.preferredForwardBufferDuration = 60
             player.insert(item, after: nil)
         }
     }
 
     func addToQueueNext(_ song: Song) {
-        let insertIndex = currentIndex + 1
-        queue.insert(song, at: min(insertIndex, queue.count))
+        let insertIndex = min(currentIndex + 1, queue.count)
+        queue.insert(song, at: insertIndex)
         rebuildPlayerItems()
     }
 
@@ -283,7 +270,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         player.actionAtItemEnd = repeatMode == .one ? .none : .advance
     }
 
-    // MARK: - Observers
+    // MARK: - Item finished (natural gapless advance — no rebuild needed)
     @objc private func playerItemDidFinish(_ notification: Notification) {
         Task { @MainActor in
             if self.repeatMode == .one {
@@ -291,43 +278,27 @@ class AudioPlayerService: NSObject, ObservableObject {
                 self.player.play()
                 return
             }
+            // Scrobble
+            let prevSong = self.queue[self.currentIndex]
+            Task { try? await SubsonicClient.shared.scrobble(id: prevSong.id, server: self.server) }
+
             let nextIndex = self.currentIndex + 1
             if nextIndex < self.queue.count {
+                // AVQueuePlayer has already advanced to next item (gapless)
+                // We just update our index and metadata
                 self.currentIndex = nextIndex
                 self.updateNowPlaying()
-                self.prependItemsIfNeeded()
-                Task {
-                    if let song = self.currentSong {
-                        try? await SubsonicClient.shared.scrobble(id: song.id, server: self.server)
-                    }
-                }
             } else if self.repeatMode == .all {
                 self.load(songs: self.queue, startIndex: 0)
             } else {
                 self.isPlaying = false
+                self.updateNowPlaying()
             }
         }
     }
 
     @objc private func playerItemFailed(_ notification: Notification) {
         print("Player item failed: \(notification.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] ?? "unknown")")
-    }
-
-    // Pre-insert items for truly gapless
-    private func prependItemsIfNeeded() {
-        // AVQueuePlayer handles gapless natively; just ensure next items are queued
-        let remaining = player.items().count
-        if remaining < 3 {
-            let nextNeeded = currentIndex + remaining
-            guard nextNeeded < queue.count, let srv = server else { return }
-            for i in nextNeeded..<min(nextNeeded + 2, queue.count) {
-                let song = queue[i]
-                if let url = SubsonicClient.shared.streamURL(songId: song.id, server: srv) {
-                    let item = AVPlayerItem(url: url)
-                    player.insert(item, after: nil)
-                }
-            }
-        }
     }
 
     // MARK: - Now Playing Info
@@ -344,9 +315,7 @@ class AudioPlayerService: NSObject, ObservableObject {
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? 1.0 : 0.0,
             MPMediaItemPropertyPlaybackDuration: song.duration.map { Double($0) } ?? 0
         ]
-        if let track = song.track {
-            info[MPMediaItemPropertyAlbumTrackNumber] = track
-        }
+        if let track = song.track { info[MPMediaItemPropertyAlbumTrackNumber] = track }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 }

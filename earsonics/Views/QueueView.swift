@@ -34,10 +34,14 @@ struct QueueView: View {
             ScrollView {
                 LazyVStack(spacing: 2) {
                     ForEach(Array(player.queue.enumerated()), id: \.element.id) { idx, song in
-                        QueueRow(song: song, index: idx,
-                                 isCurrent: idx == player.currentIndex) {
+                        Button {
                             player.playFromQueue(index: idx)
+                        } label: {
+                            QueueRow(song: song, index: idx, isCurrent: idx == player.currentIndex) {
+                                player.playFromQueue(index: idx)
+                            }
                         }
+                        .buttonStyle(.card)
                     }
                 }
                 .padding(.vertical, 12)
@@ -53,7 +57,7 @@ struct QueueRow: View {
     let isCurrent: Bool
     let onTap: () -> Void
     @EnvironmentObject var appState: AppState
-    @FocusState private var focused: Bool
+    @Environment(\.isFocused) private var focused
 
     var body: some View {
         HStack(spacing: 16) {
@@ -83,25 +87,16 @@ struct QueueRow: View {
 
             FormatBadge(song: song)
 
-            Button {
-                appState.player.queue.remove(at: index)
-                appState.player.rebuildPlayerItems()
-            } label: {
-                Image(systemName: "xmark.circle").foregroundColor(.secondary)
-            }
-            .buttonStyle(.plain)
-            .opacity(isCurrent ? 0 : 1)
-
             Text(song.durationFormatted).font(.callout).foregroundColor(.secondary)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(focused || isCurrent ? Color.white.opacity(0.12) : Color.clear)
+                .fill(isCurrent ? Color.accentColor.opacity(0.15) : (focused ? Color.focusFill : Color.clear))
         )
-        .focusable()
-        .focused($focused)
+        .animation(.easeInOut(duration: 0.12), value: focused)
+        .focusEffectDisabled()
         .onTapGesture { onTap() }
     }
 }

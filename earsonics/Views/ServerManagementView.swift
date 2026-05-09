@@ -24,7 +24,7 @@ struct ServerManagementView: View {
                             appState.syncActiveServer()
                         }
                     } label: {
-                        Label("Add Server", systemImage: "plus.circle.fill")
+                        Label("Add server", systemImage: "plus.circle.fill")
                             .font(.headline)
                     }
                 }
@@ -44,7 +44,7 @@ struct ServerDetailView: View {
         Form {
             Section("Status") {
                 if appState.serverStore.activeServerID == server.id {
-                    Label("Active Server", systemImage: "checkmark.circle.fill")
+                    Label("Active server", systemImage: "checkmark.circle.fill")
                         .foregroundColor(.green)
                 } else {
                     Text("Inactive").foregroundColor(.secondary)
@@ -58,13 +58,13 @@ struct ServerDetailView: View {
             }
 
             Section("Actions") {
-                Button("Set as Active Server") {
+                Button("Set as Active server") {
                     appState.serverStore.activeServerID = server.id
                     appState.syncActiveServer()
                 }
                 .disabled(appState.serverStore.activeServerID == server.id)
 
-                NavigationLink("Edit Server Details") {
+                NavigationLink("Edit server details") {
                     ServerEditView(mode: .edit(server)) { updated in
                         appState.serverStore.update(updated)
                         appState.syncActiveServer()
@@ -75,7 +75,7 @@ struct ServerDetailView: View {
                     appState.serverStore.delete(server)
                     dismiss()
                 } label: {
-                    Text("Delete Server")
+                    Text("Delete server")
                         .foregroundColor(.red)
                 }
             }
@@ -92,19 +92,19 @@ struct ServerRow: View {
     var body: some View {
         HStack(spacing: 16) {
             Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(isActive ? .green : .gray)
+                .foregroundColor(isActive ? .accentColor : .primary)
                 .font(.title2)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 16) {
                 Text(server.name).font(.headline)
                 Text(server.baseURL).font(.caption).foregroundColor(.secondary)
                 Text("User: \(server.username)").font(.caption2).foregroundColor(.secondary)
             }
             Spacer()
             if isActive {
-                Text("Active").font(.caption).foregroundColor(.green)
+                Text("Active").font(.caption).foregroundColor(.secondary)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 10)
     }
 }
 
@@ -146,7 +146,7 @@ struct ServerEditView: View {
 
     var body: some View {
         Form {
-            Section("Server Details") {
+            Section("Server details") {
                 LabeledContent("Name") {
                     TextField("My Navidrome", text: $name)
                         .multilineTextAlignment(.trailing)
@@ -179,7 +179,7 @@ struct ServerEditView: View {
                         if isTesting {
                             ProgressView().scaleEffect(0.8).padding(.trailing, 8)
                         }
-                        Text(isTesting ? "Testing..." : "Test Connection")
+                        Text(isTesting ? "Testing..." : "Test connection")
                     }
                 }
                 .disabled(isTesting || !isValid)
@@ -238,8 +238,8 @@ struct ServerEditView: View {
 private extension ServerEditView.Mode {
     var title: String {
         switch self {
-        case .add: return "Add Server"
-        case .edit: return "Edit Server"
+        case .add: return "Add server"
+        case .edit: return "Edit server"
         }
     }
 }

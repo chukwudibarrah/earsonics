@@ -8,6 +8,7 @@ struct AlbumDetailView: View {
     @State private var loadedAlbum: Album? = nil
     @State private var isLoading = true
     @State private var isStarred: Bool = false
+    @State private var playlists: [Playlist] = []
 
     var songs: [Song] { loadedAlbum?.songs ?? [] }
 
@@ -27,22 +28,36 @@ struct AlbumDetailView: View {
                     .font(.headline).bold()
                     .lineLimit(3)
                     .minimumScaleFactor(0.8)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 if let artist = album.artist {
                     Text(artist)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 HStack(spacing: 8) {
-                    if let year = album.year { Text(String(format: "%d", year)).foregroundColor(.secondary) }
-                    if let genre = album.genre { Text(genre).foregroundColor(.secondary) }
-                    if let count = album.songCount { Text("\(count) tracks").foregroundColor(.secondary) }
+                    if let year = album.year { 
+                        Text(String(format: "%d", year)).foregroundColor(.secondary)
+                        if album.genre != nil || album.songCount != nil {
+                            Text("•").foregroundColor(.secondary)
+                        }
+                    }
+                    if let genre = album.genre { 
+                        Text(genre).foregroundColor(.secondary)
+                        if album.songCount != nil {
+                            Text("•").foregroundColor(.secondary)
+                        }
+                    }
+                    if let count = album.songCount { 
+                        Text("\(count) tracks").foregroundColor(.secondary) 
+                    }
                 }
-                .font(.callout)
+                .font(.body)
 
-                // Play / Shuffle stacked vertically — guaranteed no truncation
-                VStack(spacing: 10) {
+                // Actions
+                VStack(spacing: 14) {
                     Button {
                         if isThisAlbumPlaying {
                             player.togglePlayPause()
@@ -50,43 +65,53 @@ struct AlbumDetailView: View {
                             appState.player.load(songs: songs, startIndex: 0)
                         }
                     } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: isThisAlbumPlaying && player.isPlaying ? "pause.fill" : "play.fill")
-                            Text(isThisAlbumPlaying && player.isPlaying ? "Pause" : "Play")
-                                .lineLimit(1)
-                        }
-                        .font(.callout).bold()
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.accentColor)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                        Label(isThisAlbumPlaying && player.isPlaying ? "Pause" : "Play", systemImage: isThisAlbumPlaying && player.isPlaying ? "pause.fill" : "play.fill")
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
 
                     Button {
                         var shuffled = songs
                         shuffled.shuffle()
                         appState.player.load(songs: shuffled, startIndex: 0)
                     } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "shuffle")
-                            Text("Shuffle")
-                                .lineLimit(1)
-                        }
-                        .font(.callout).bold()
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.white.opacity(0.15))
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                        Label("Shuffle", systemImage: "shuffle")
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
-                }
 
-                // Star on its own row so it doesn't crowd the buttons
-                StarButton(isStarred: isStarred, albumId: album.id) { newVal in
-                    isStarred = newVal
+                    Button {
+                        Task {
+                            if isStarred {
+                                try? await SubsonicClient.shared.unstar(albumId: album.id)
+                                isStarred = false
+                            } else {
+                                try? await SubsonicClient.shared.star(albumId: album.id)
+                                isStarred = true
+                            }
+                        }
+                    } label: {
+                        Label(isStarred ? "Unstar" : "Star", systemImage: isStarred ? "heart.fill" : "heart")
+                            .frame(maxWidth: .infinity)
+                            .foregroundColor(isStarred ? .red : .primary)
+                    }
+
+                    if !playlists.isEmpty {
+                        Menu {
+                            ForEach(playlists) { playlist in
+                                Button {
+                                    Task {
+                                        let ids = songs.map { $0.id }
+                                        try? await SubsonicClient.shared.updatePlaylist(
+                                            id: playlist.id, songIdsToAdd: ids)
+                                    }
+                                } label: {
+                                    Label("Add to \(playlist.name)", systemImage: "music.note.list")
+                                }
+                            }
+                        } label: {
+                            Label("Add to playlist", systemImage: "text.badge.plus")
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
                 }
 
                 Spacer()
@@ -101,22 +126,30 @@ struct AlbumDetailView: View {
                 ScrollView {
                     LazyVStack(spacing: 2) {
                         ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
-                            SongRow(song: song, index: idx, onTap: {
+                            Button {
                                 appState.player.load(songs: songs, startIndex: idx)
-                            })
+                            } label: {
+                                SongRow(song: song, index: idx, playlists: playlists)
+                            }
+                            .buttonStyle(.card)
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)   // prevent top card from clipping on first focus
+                    .padding(.bottom, 120)
                 }
             }
         }
         .padding(60)
         .task {
             isLoading = true
-            if let detailed = try? await SubsonicClient.shared.getAlbum(id: album.id) {
+            async let albumLoad = SubsonicClient.shared.getAlbum(id: album.id)
+            async let playlistLoad = SubsonicClient.shared.getPlaylists()
+            if let detailed = try? await albumLoad {
                 loadedAlbum = detailed
                 isStarred = detailed.starred != nil
             }
+            playlists = (try? await playlistLoad) ?? []
             isLoading = false
         }
     }
@@ -126,15 +159,14 @@ struct AlbumDetailView: View {
 struct SongRow: View {
     let song: Song
     let index: Int
-    let onTap: () -> Void
+    var playlists: [Playlist] = []
     @EnvironmentObject var appState: AppState
-    @FocusState private var focused: Bool
     @State private var isStarred: Bool
 
-    init(song: Song, index: Int, onTap: @escaping () -> Void) {
+    init(song: Song, index: Int, playlists: [Playlist] = []) {
         self.song = song
         self.index = index
-        self.onTap = onTap
+        self.playlists = playlists
         _isStarred = State(initialValue: song.starred != nil)
     }
 
@@ -152,13 +184,12 @@ struct SongRow: View {
                         .font(.caption2)
                 } else {
                     Text(String(format: "%d", song.track ?? (index + 1)))
-                        .foregroundColor(.secondary)
                         .font(.caption)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                 }
             }
-            .frame(width: 36, alignment: .center)
+            .frame(width: 32, alignment: .center)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.title)
@@ -169,7 +200,6 @@ struct SongRow: View {
                 if let artist = song.artist {
                     Text(artist)
                         .font(.caption2)
-                        .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -178,33 +208,56 @@ struct SongRow: View {
 
             FormatBadge(song: song)
 
-            StarButton(isStarred: isStarred, songId: song.id) { newVal in isStarred = newVal }
-
-            // Add to queue button
-            Button {
-                appState.player.addToQueue(song)
-            } label: {
-                Image(systemName: "text.badge.plus")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .buttonStyle(.plain)
+            // Plain image, NOT a button, to prevent focus trapping
+            Image(systemName: isStarred ? "heart.fill" : "heart")
+                .foregroundColor(isStarred ? .red : .primary.opacity(0.8))
+                .font(.callout)
 
             Text(song.durationFormatted)
                 .font(.caption.monospacedDigit())
-                .foregroundColor(.secondary)
                 .fixedSize()
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(focused ? Color.white.opacity(0.12) : Color.clear)
-        )
-        .focusable()
-        .focused($focused)
         .onPlayPauseCommand { appState.player.togglePlayPause() }
-        .onTapGesture { onTap() }
-        .animation(.easeInOut(duration: 0.1), value: focused)
+        // Context menu: Star + Play Next + Add to Queue + Add to playlist
+        .contextMenu {
+            Button {
+                Task {
+                    if isStarred {
+                        try? await SubsonicClient.shared.unstar(songId: song.id)
+                        isStarred = false
+                    } else {
+                        try? await SubsonicClient.shared.star(songId: song.id)
+                        isStarred = true
+                    }
+                }
+            } label: {
+                Label(isStarred ? "Unstar" : "Star", systemImage: isStarred ? "heart.slash" : "heart")
+            }
+            Button {
+                appState.player.addToQueueNext(song)
+            } label: {
+                Label("Play Next", systemImage: "text.insert")
+            }
+            Button {
+                appState.player.addToQueue(song)
+            } label: {
+                Label("Add to Queue", systemImage: "text.badge.plus")
+            }
+            if !playlists.isEmpty {
+                Divider()
+                ForEach(playlists) { playlist in
+                    Button {
+                        Task {
+                            try? await SubsonicClient.shared.updatePlaylist(
+                                id: playlist.id, songIdsToAdd: [song.id])
+                        }
+                    } label: {
+                        Label("Add to \(playlist.name)", systemImage: "music.note.list")
+                    }
+                }
+            }
+        }
     }
 }

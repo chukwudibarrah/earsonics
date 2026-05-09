@@ -14,7 +14,7 @@ struct SettingsView: View {
                         ServerManagementView()
                     } label: {
                         HStack {
-                            Label("Manage Servers", systemImage: "server.rack")
+                            Label("Manage servers", systemImage: "server.rack")
                             Spacer()
                             if let server = appState.serverStore.activeServer {
                                 Text(server.name).foregroundColor(.secondary).font(.callout)
@@ -33,7 +33,7 @@ struct SettingsView: View {
                         Button {
                             Task { await appState.testConnection(server: server) }
                         } label: {
-                            Label("Test Connection", systemImage: "arrow.clockwise")
+                            Label("Test connection", systemImage: "arrow.clockwise")
                         }
                     }
                 }
@@ -45,28 +45,29 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     }
 
-                    VStack(alignment: .leading, spacing: 8) {
+                    Button {
+                        gaplessCrossfade = gaplessCrossfade >= 10 ? 0 : gaplessCrossfade + 0.5
+                        appState.player.gaplessCrossfade = gaplessCrossfade
+                    } label: {
                         HStack {
-                            Text("Gapless Crossfade")
-                            Spacer()
-                            Button {
-                                gaplessCrossfade = gaplessCrossfade >= 10 ? 0 : gaplessCrossfade + 0.5
-                                appState.player.gaplessCrossfade = gaplessCrossfade
-                            } label: {
-                                Text(gaplessCrossfade == 0 ? "Off (True Gapless)" : String(format: "%.1fs", gaplessCrossfade))
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Gapless crossfade")
+                                Text("0 = true gapless (recommended for live albums)")
+                                    .font(.caption)
                             }
+                            Spacer()
+                            Text(gaplessCrossfade == 0 ? "Off (true gapless)" : String(format: "%.1fs", gaplessCrossfade))
+                                .foregroundColor(.secondary)
                         }
-                        Text("0 = true gapless (recommended for live albums)")
-                            .font(.caption).foregroundColor(.secondary)
                     }
                 }
 
                 // About section
                 Section("About") {
-                    LabeledContent("App", value: "earsonics")
-                    LabeledContent("Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0")
-                    LabeledContent("Protocol", value: "Subsonic / Navidrome")
-                    LabeledContent("Platform", value: "Apple TV")
+                    HStack { Text("App"); Spacer(); Text("earsonics").foregroundColor(.secondary) }
+                    HStack { Text("Version"); Spacer(); Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0").foregroundColor(.secondary) }
+                    HStack { Text("Protocol"); Spacer(); Text("Subsonic / Navidrome").foregroundColor(.secondary) }
+                    HStack { Text("Platform"); Spacer(); Text("Apple TV").foregroundColor(.secondary) }
                 }
             }
             .navigationTitle("Settings")

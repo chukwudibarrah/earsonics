@@ -9,8 +9,8 @@ struct CoverArtView: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.25))
+            RoundedRectangle(cornerRadius: 10)
+//                .fill(Color.gray.opacity(0.25))
             if let img = image {
                 img
                     .resizable()
@@ -21,10 +21,10 @@ struct CoverArtView: View {
             } else {
                 Image(systemName: "music.note")
                     .font(.system(size: 40))
-                    .foregroundColor(.gray)
+//                    .foregroundColor(.gray)
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .task(id: id) { await loadImage() }
     }
 

@@ -1,39 +1,48 @@
 // Views/HomeView.swift
 import SwiftUI
 
+// CardlessButtonStyle is defined in Views/Shared/FocusStyle.swift
+
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var vm = LibraryViewModel()
+    @State private var navPath = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        // Use path-based NavigationStack so we can push programmatically
+        // from a plain Button — no NavigationLink card effect
+        NavigationStack(path: $navPath) {
             Group {
                 if !appState.isConnected && appState.serverStore.servers.isEmpty {
                     NoServerView()
                 } else if vm.isLoading && vm.recentAlbums.isEmpty {
-                    ProgressView("Loading Library...")
+                    ProgressView("Loading library...")
                         .font(.headline)
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 56) {
+                        VStack(alignment: .leading, spacing: 60) {
                             if !vm.recentAlbums.isEmpty {
-                                AlbumShelf(title: "Recently Played", albums: vm.recentAlbums)
+                                AlbumShelf(title: "Recently played", albums: vm.recentAlbums, navPath: $navPath)
                             }
                             if !vm.newestAlbums.isEmpty {
-                                AlbumShelf(title: "Newly Added", albums: vm.newestAlbums)
+                                AlbumShelf(title: "Newly added", albums: vm.newestAlbums, navPath: $navPath)
                             }
                             if !vm.randomAlbums.isEmpty {
-                                AlbumShelf(title: "Discover", albums: vm.randomAlbums)
+                                AlbumShelf(title: "Discover", albums: vm.randomAlbums, navPath: $navPath)
                             }
                         }
-                        .padding(.horizontal, 60)
-                        .padding(.vertical, 50)
-                        .padding(.bottom, 100) // space for mini player bar
+                        // NO horizontal padding here — each shelf manages its own
+                        .padding(.vertical, 40)
+                        .padding(.bottom, 120)
                     }
                 }
             }
             .navigationTitle("")
             .toolbar(.hidden, for: .navigationBar)
+            // Destination registered here — triggered by navPath.append(album)
+            .navigationDestination(for: Album.self) { album in
+                AlbumDetailView(album: album)
+            }
             .task { await vm.loadHome() }
             .refreshable { await vm.loadHome() }
         }
@@ -44,29 +53,57 @@ struct HomeView: View {
 struct AlbumShelf: View {
     let title: String
     let albums: [Album]
-    @State private var selectedAlbum: Album? = nil
+    @Binding var navPath: NavigationPath
+    @State private var playlists: [Playlist] = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 16) {
             Text(title)
-                .font(.title).bold()
-                .padding(.leading, 8)
-                .foregroundColor(.primary)
+                .font(.title2).fontWeight(.medium)
+                .padding(.leading, 60)
+                .foregroundColor(.primary.opacity(0.28))
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 32) {
+                HStack(spacing: 24) {
                     ForEach(albums) { album in
-                        NavigationLink {
-                            AlbumDetailView(album: album)
+                        Button {
+                            navPath.append(album)
                         } label: {
                             AlbumCard(album: album)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.card)
+                        .contextMenu {
+                            Button {
+                                AudioPlayerService.shared.load(songs: album.songs ?? [], startIndex: 0)
+                            } label: {
+                                Label("Play", systemImage: "play.fill")
+                            }
+                            if !playlists.isEmpty {
+                                Divider()
+                                ForEach(playlists) { playlist in
+                                    Button {
+                                        Task {
+                                            // Get the album detail to get all song IDs, if needed
+                                            guard let detailed = try? await SubsonicClient.shared.getAlbum(id: album.id),
+                                                  let songs = detailed.songs else { return }
+                                            let songIds = songs.map { $0.id }
+                                            try? await SubsonicClient.shared.updatePlaylist(
+                                                id: playlist.id, songIdsToAdd: songIds)
+                                        }
+                                    } label: {
+                                        Label("Add to \(playlist.name)", systemImage: "music.note.list")
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 16)
+                .padding(.horizontal, 60)   // wide enough for card scale at edges
+                .padding(.vertical, 60)
             }
+        }
+        .task {
+            playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []
         }
     }
 }
@@ -74,35 +111,29 @@ struct AlbumShelf: View {
 // MARK: - Album Card
 struct AlbumCard: View {
     let album: Album
-    @FocusState private var focused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            CoverArtView(id: album.coverArt, size: 400)
-                .frame(width: 280, height: 280)
-                .cornerRadius(12)
-                .scaleEffect(focused ? 1.06 : 1.0)
-                .shadow(color: .black.opacity(focused ? 0.6 : 0.2), radius: focused ? 24 : 8, y: focused ? 12 : 4)
-                .animation(.easeInOut(duration: 0.18), value: focused)
+        VStack(alignment: .leading, spacing: 30) {
+            CoverArtView(id: album.coverArt, size: 260)
+                .frame(width: 360, height: 360)
+//                .cornerRadius(10)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(album.name)
-                    .font(.headline)
-                    .bold()
+                    .font(.caption).bold()
                     .lineLimit(2)
-                    .frame(width: 280, alignment: .leading)
-                    .foregroundColor(focused ? .white : .primary)
+                    .multilineTextAlignment(.leading)
                 if let artist = album.artist {
                     Text(artist)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .font(.caption2)
                         .lineLimit(1)
-                        .frame(width: 280, alignment: .leading)
+                        .foregroundStyle(.secondary)
                 }
             }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 8)
         }
-        .focusable()
-        .focused($focused)
+        .frame(width: 360)
     }
 }
 
@@ -113,7 +144,7 @@ struct NoServerView: View {
             Image(systemName: "server.rack")
                 .font(.system(size: 80))
                 .foregroundColor(.secondary)
-            Text("No Server Configured")
+            Text("No server configured")
                 .font(.title).bold()
             Text("Go to Settings to add your Navidrome/Subsonic server.")
                 .foregroundColor(.secondary)

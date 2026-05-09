@@ -7,125 +7,38 @@ struct MiniPlayerBar: View {
     var onTap: () -> Void
 
     var body: some View {
-        guard let song = player.currentSong else { return AnyView(EmptyView()) }
-        return AnyView(content(song: song))
-    }
-
-    @ViewBuilder
-    private func content(song: Song) -> some View {
-        HStack(spacing: 0) {
-
-            // Song info — tappable to open full Now Playing
+        if let song = player.currentSong {
             Button(action: onTap) {
-                HStack(spacing: 16) {
-                    CoverArtView(id: song.coverArt, size: 80)
-                        .frame(width: 48, height: 48)
+                HStack(spacing: 14) {
+                    CoverArtView(id: song.coverArt, size: 120)
+                        .frame(width: 44, height: 44)
                         .cornerRadius(6)
+                        .shadow(radius: 4)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(song.title)
-                            .font(.callout).bold()
+                            .font(.caption2).bold()
                             .lineLimit(1)
-                            .foregroundColor(.white)
                         Text(song.artist ?? "")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.65))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
+                    .frame(maxWidth: 200, alignment: .leading)
 
-                    Spacer()
+                    Spacer(minLength: 0)
+
+                    Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.callout)
+                        .foregroundColor(.accentColor)
                 }
-                .padding(.leading, 24)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .frame(width: 360, height: 80)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+                .shadow(color: .black.opacity(0.4), radius: 12, y: 4)
             }
-            .buttonStyle(.plain)
-            .frame(maxWidth: .infinity)
-
-            // Transport controls
-            HStack(spacing: 8) {
-                // Previous
-                MiniControlButton(icon: "backward.fill") {
-                    player.skipPrevious()
-                }
-
-                // Play / Pause
-                MiniControlButton(
-                    icon: player.isPlaying ? "pause.fill" : "play.fill",
-                    prominent: true
-                ) {
-                    player.togglePlayPause()
-                }
-
-                // Next
-                MiniControlButton(icon: "forward.fill") {
-                    player.skipNext()
-                }
-            }
-            .padding(.trailing, 24)
-
-            // Progress indicator + format badge
-            VStack(alignment: .trailing, spacing: 4) {
-                FormatBadge(song: song)
-                if player.duration > 0 {
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(Color.white.opacity(0.2)).frame(height: 3)
-                            Capsule()
-                                .fill(Color.accentColor)
-                                .frame(
-                                    width: geo.size.width * CGFloat(min(1, player.currentTime / player.duration)),
-                                    height: 3
-                                )
-                        }
-                    }
-                    .frame(width: 120, height: 3)
-                }
-            }
-            .padding(.trailing, 30)
+            .buttonStyle(.card)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 80)
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
-        )
-        .padding(.horizontal, 40)
-        .padding(.bottom, 20)
-    }
-}
-
-// MARK: - Mini Control Button
-private struct MiniControlButton: View {
-    let icon: String
-    var prominent: Bool = false
-    let action: () -> Void
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                if prominent {
-                    Circle()
-                        .fill(focused ? Color.accentColor : Color.white.opacity(0.9))
-                        .frame(width: 52, height: 52)
-                    Image(systemName: icon)
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(focused ? .white : .black)
-                } else {
-                    Circle()
-                        .fill(focused ? Color.white.opacity(0.25) : Color.white.opacity(0.08))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                }
-            }
-            .scaleEffect(focused ? 1.1 : 1.0)
-            .animation(.easeInOut(duration: 0.12), value: focused)
-        }
-        .buttonStyle(.plain)
-        .focusable()
-        .focused($focused)
     }
 }
