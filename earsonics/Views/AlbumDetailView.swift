@@ -37,7 +37,7 @@ struct AlbumDetailView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                HStack(spacing: 8) {
+                HStack(spacing: 5) {
                     if let year = album.year { 
                         Text(String(format: "%d", year)).foregroundColor(.secondary)
                         if album.genre != nil || album.songCount != nil {
@@ -57,7 +57,7 @@ struct AlbumDetailView: View {
                 .font(.body)
 
                 // Actions
-                VStack(spacing: 14) {
+                VStack(spacing: 12) {
                     Button {
                         if isThisAlbumPlaying {
                             player.togglePlayPause()
@@ -140,7 +140,8 @@ struct AlbumDetailView: View {
                 }
             }
         }
-        .padding(60)
+//        .padding(60)
+        .padding(.top, 100) // add padding to top of tracklist
         .task {
             isLoading = true
             async let albumLoad = SubsonicClient.shared.getAlbum(id: album.id)
@@ -206,7 +207,7 @@ struct SongRow: View {
 
             Spacer()
 
-            FormatBadge(song: song)
+//            FormatBadge(song: song)
 
             // Plain image, NOT a button, to prevent focus trapping
             Image(systemName: isStarred ? "heart.fill" : "heart")

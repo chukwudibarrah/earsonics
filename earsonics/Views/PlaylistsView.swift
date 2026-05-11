@@ -49,7 +49,6 @@ struct PlaylistsView: View {
                     }
                 }
             }
-            .navigationTitle("Playlists")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button { showCreate = true } label: {
@@ -100,10 +99,6 @@ struct PlaylistRow: View {
                         Label("\(count) tracks", systemImage: "music.note")
                             .font(.callout)
                     }
-                    if let owner = playlist.owner {
-                        Text("by \(owner)")
-                            .font(.callout)
-                    }
                 }
             }
 
@@ -143,43 +138,27 @@ struct PlaylistDetailView: View {
                     Text(comment).foregroundColor(.secondary).font(.callout)
                 }
 
-                HStack(spacing: 12) {
+                // Actions
+                VStack(spacing: 14) {
                     Button {
                         if !songs.isEmpty { appState.player.load(songs: songs, startIndex: 0) }
                     } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "play.fill")
-                            Text("Play")
-                        }
-                        .font(.callout).bold()
-                        .padding(.horizontal, 20).padding(.vertical, 10)
-                        .background(Color.accentColor.opacity(0.8)).foregroundColor(.white)
-                        .cornerRadius(10)
+                        Label("Play", systemImage: "play.fill")
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
 
                     Button {
                         var shuffled = songs; shuffled.shuffle()
                         appState.player.load(songs: shuffled, startIndex: 0)
                     } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "shuffle")
-                            Text("Shuffle")
-                        }
-                        .font(.callout).bold()
-                        .padding(.horizontal, 20).padding(.vertical, 10)
-                        .background(Color.white.opacity(0.15)).foregroundColor(.white)
-                        .cornerRadius(10)
+                        Label("Shuffle", systemImage: "shuffle")
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
 
                     Button { isEditing = true } label: {
-                        Image(systemName: "pencil")
-                            .padding(12)
-                            .background(Color.white.opacity(0.15))
-                            .cornerRadius(10)
+                        Label("Rename", systemImage: "pencil")
+                            .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.plain)
                 }
 
                 Spacer()
@@ -209,8 +188,9 @@ struct PlaylistDetailView: View {
                             }
                         }
                     }
-                    .padding(.vertical, 8)
-                    .padding(.bottom, 100)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    .padding(.bottom, 120)
                 }
             }
         }

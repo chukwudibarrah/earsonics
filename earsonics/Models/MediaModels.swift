@@ -71,7 +71,7 @@ struct Playlist: Identifiable, Codable, Hashable {
     let changed: Date?
 
     enum CodingKeys: String, CodingKey {
-        case id, name, comment, owner, songCount, duration, coverArt, songs, created, changed
+        case id, name, comment, owner, songCount, duration, coverArt, songs = "entry", created, changed
     }
 }
 

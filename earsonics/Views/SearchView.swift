@@ -9,6 +9,8 @@ struct SearchView: View {
     @State private var searchTask: Task<Void, Never>? = nil
     @State private var playlists: [Playlist] = []
 
+    var goHome: () -> Void = {}
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -109,7 +111,13 @@ struct SearchView: View {
                     }
                 }
             }
-            .navigationTitle("Search")
+            .onExitCommand {
+                if !query.isEmpty {
+                    query = ""
+                } else {
+                    goHome()
+                }
+            }
             .task { playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? [] }
         }
     }

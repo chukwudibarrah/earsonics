@@ -38,7 +38,7 @@ struct ContentView: View {
                     .tabItem { Label("Favourites", systemImage: "heart.fill") }
                     .tag(Tab.starred)
 
-                SearchView()
+                SearchView(goHome: { selectedTab = .home })
                     .tabItem { Label("Search", systemImage: "magnifyingglass") }
                     .tag(Tab.search)
 

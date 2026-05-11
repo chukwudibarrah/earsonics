@@ -16,7 +16,7 @@ struct ArtistsView: View {
         NavigationStack {
             Group {
                 if vm.isLoading && vm.artists.isEmpty {
-                    ProgressView("Loading Artists...")
+                    ProgressView("Loading artists...")
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 2) {
@@ -37,7 +37,6 @@ struct ArtistsView: View {
                     .searchable(text: $searchText, prompt: "Search artists")
                 }
             }
-            .navigationTitle("Artists")
             .task { if vm.artists.isEmpty { await vm.loadHome() } }
         }
     }
@@ -84,66 +83,76 @@ struct ArtistDetailView: View {
 
     var body: some View {
         NavigationStack(path: $navPath) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 40) {
-                    // Header
-                    HStack(spacing: 40) {
-                        CoverArtView(id: artist.coverArt, size: 400)
-                            .frame(width: 200, height: 200)
-                            .cornerRadius(100)
+            ZStack(alignment: .top) {
+                // Background artist name
+                Text(artist.name)
+                    .font(.system(size: 240, weight: .black))
+                    .foregroundColor(.white.opacity(0.05))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.2)
+                    .padding(.top, 40)
+                    .ignoresSafeArea()
 
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(artist.name).font(.largeTitle).bold()
-                            if let count = artist.albumCount {
-                                Text("\(count) Albums").foregroundColor(.secondary)
-                            }
-                            HStack(spacing: 16) {
-                                Button {
-                                    let allSongs = albums.flatMap { $0.songs ?? [] }
-                                    if !allSongs.isEmpty {
-                                        appState.player.load(songs: allSongs, startIndex: 0)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 40) {
+                        // Header
+                        HStack(spacing: 40) {
+                            CoverArtView(id: artist.coverArt, size: 400)
+                                .frame(width: 200, height: 200)
+                                .cornerRadius(100)
+
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(artist.name).font(.largeTitle).bold()
+                                if let count = artist.albumCount {
+                                    Text("\(count) albums").foregroundColor(.secondary)
+                                }
+                                HStack(spacing: 16) {
+                                    Button {
+                                        let allSongs = albums.flatMap { $0.songs ?? [] }
+                                        if !allSongs.isEmpty {
+                                            appState.player.load(songs: allSongs, startIndex: 0)
+                                        }
+                                    } label: {
+                                        Label("Play all", systemImage: "play.fill")
                                     }
-                                } label: {
-                                    Label("Play All", systemImage: "play.fill")
-                                }
 
-                                StarButton(isStarred: isStarred, artistId: artist.id) { newVal in
-                                    isStarred = newVal
+                                    StarButton(isStarred: isStarred, artistId: artist.id) { newVal in
+                                        isStarred = newVal
+                                    }
                                 }
                             }
-                        }
-                        Spacer()
-                    }
-                    .padding(.horizontal, 60)
-
-                    // Albums grid — Button + CardlessButtonStyle, no NavigationLink card
-                    if isLoading {
-                        ProgressView().frame(maxWidth: .infinity)
-                    } else {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 24)], spacing: 32) {
-                            ForEach(albums) { album in
-                                Button {
-                                    navPath.append(album)
-                                } label: {
-                                    AlbumCard(album: album)
-                                }
-                                .buttonStyle(.card)
-                            }
+                            Spacer()
                         }
                         .padding(.horizontal, 60)
+
+                        // Albums grid — Button + CardlessButtonStyle, no NavigationLink card
+                        if isLoading {
+                            ProgressView().frame(maxWidth: .infinity)
+                        } else {
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 350), spacing: 24)], spacing: 32) {
+                                ForEach(albums) { album in
+                                    Button {
+                                        navPath.append(album)
+                                    } label: {
+                                        AlbumCard(album: album)
+                                    }
+                                    .buttonStyle(.card)
+                                }
+                            }
+                            .padding(.horizontal, 60)
+                        }
                     }
+                    .padding(.vertical, 60)
+                    .padding(.bottom, 100)
                 }
-                .padding(.vertical, 40)
-                .padding(.bottom, 100)
-            }
-            .navigationTitle(artist.name)
-            .navigationDestination(for: Album.self) { album in
-                AlbumDetailView(album: album)
-            }
-            .task {
-                isLoading = true
-                albums = (try? await SubsonicClient.shared.getArtistAlbums(artistId: artist.id)) ?? []
-                isLoading = false
+                .navigationDestination(for: Album.self) { album in
+                    AlbumDetailView(album: album)
+                }
+                .task {
+                    isLoading = true
+                    albums = (try? await SubsonicClient.shared.getArtistAlbums(artistId: artist.id)) ?? []
+                    isLoading = false
+                }
             }
         }
     }

@@ -37,7 +37,6 @@ struct HomeView: View {
                     }
                 }
             }
-            .navigationTitle("")
             .toolbar(.hidden, for: .navigationBar)
             // Destination registered here — triggered by navPath.append(album)
             .navigationDestination(for: Album.self) { album in

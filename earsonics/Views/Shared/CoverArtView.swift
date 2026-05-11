@@ -9,7 +9,7 @@ struct CoverArtView: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 10)
+//            RoundedRectangle(cornerRadius: 10)
 //                .fill(Color.gray.opacity(0.25))
             if let img = image {
                 img

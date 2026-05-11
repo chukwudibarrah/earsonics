@@ -34,7 +34,6 @@ class AudioPlayerService: NSObject, ObservableObject {
     @Published var isBuffering: Bool = false
     @Published var repeatMode: RepeatMode = .off
     @Published var isShuffled: Bool = false
-    @Published var gaplessCrossfade: Double = 0
 
     var server: Server? {
         didSet { rebuildPlayerItems() }

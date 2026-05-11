@@ -96,7 +96,6 @@ struct StarredView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .navigationTitle("Favourites")
             .task { await loadStarred() }
         }
     }
@@ -120,7 +119,7 @@ struct EmptyStarredView: View {
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "heart").font(.system(size: 60)).foregroundColor(.secondary)
-            Text("No Starred \(type)").font(.title)
+            Text("No starred \(type)").font(.title)
             Text("Tap the heart icon to save your favourites.").foregroundColor(.secondary)
         }
     }

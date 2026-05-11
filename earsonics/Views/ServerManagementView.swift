@@ -16,6 +16,7 @@ struct ServerManagementView: View {
                         }
                     }
                 }
+                .padding(.bottom, 30)
 
                 Section {
                     NavigationLink {
@@ -25,9 +26,10 @@ struct ServerManagementView: View {
                         }
                     } label: {
                         Label("Add server", systemImage: "plus.circle.fill")
-                            .font(.headline)
+                            .font(.callout)
                     }
                 }
+                .padding(.top, 40)
             }
             .navigationTitle("Servers")
         }
@@ -51,14 +53,14 @@ struct ServerDetailView: View {
                 }
             }
 
-            Section("Server Information") {
+            Section("Server information") {
                 LabeledContent("Name", value: server.name)
                 LabeledContent("URL", value: server.baseURL)
                 LabeledContent("Username", value: server.username)
             }
 
             Section("Actions") {
-                Button("Set as Active server") {
+                Button("Set as active server") {
                     appState.serverStore.activeServerID = server.id
                     appState.syncActiveServer()
                 }
@@ -94,7 +96,7 @@ struct ServerRow: View {
             Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
                 .foregroundColor(isActive ? .accentColor : .primary)
                 .font(.title2)
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(server.name).font(.headline)
                 Text(server.baseURL).font(.caption).foregroundColor(.secondary)
                 Text("User: \(server.username)").font(.caption2).foregroundColor(.secondary)
@@ -147,7 +149,7 @@ struct ServerEditView: View {
     var body: some View {
         Form {
             Section("Server details") {
-                LabeledContent("Name") {
+                LabeledContent("Enter server name") {
                     TextField("My Navidrome", text: $name)
                         .multilineTextAlignment(.trailing)
                 }

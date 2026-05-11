@@ -261,14 +261,20 @@ struct TransportButton: View {
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: icon)
-                .font(.system(size: 30))
-                .foregroundColor((isFocused || isToggled) ? .accentColor : .white.opacity(0.85))
-                .frame(width: 72, height: 72)
-                .background(Color.clear)
-                .clipShape(Circle())
-                .scaleEffect(isFocused ? 1.12 : 1.0)
-                .animation(.easeInOut(duration: 0.12), value: isFocused)
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 30))
+                    .foregroundColor((isFocused || isToggled) ? .accentColor : .white.opacity(0.85))
+                    .frame(width: 72, height: 72)
+                    .background(Color.clear)
+                    .clipShape(Circle())
+                
+                Circle()
+                    .fill(isToggled ? Color.accentColor : Color.clear)
+                    .frame(width: 5, height: 5)
+            }
+            .scaleEffect(isFocused ? 1.12 : 1.0)
+            .animation(.easeInOut(duration: 0.12), value: isFocused)
         }
         .buttonStyle(.plain)
         .focused($isFocused)
@@ -307,24 +313,30 @@ struct RepeatTransportButton: View {
 
     var body: some View {
         Button(action: action) {
-            ZStack(alignment: .topTrailing) {
-                ZStack {
-                    Circle()
-                        .fill(Color.clear)
-                        .frame(width: 72, height: 72)
-                    Image(systemName: mode.icon)
-                        .font(.system(size: 30))
-                        .foregroundColor((isFocused || mode != .off) ? .accentColor : .white.opacity(0.85))
+            VStack(spacing: 4) {
+                ZStack(alignment: .topTrailing) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.clear)
+                            .frame(width: 72, height: 72)
+                        Image(systemName: mode.icon)
+                            .font(.system(size: 30))
+                            .foregroundColor((isFocused || mode != .off) ? .accentColor : .white.opacity(0.85))
+                    }
+                    if mode == .one {
+                        Text("1")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white).padding(3)
+                            .background(Color.accentColor).clipShape(Circle())
+                            .offset(x: -16, y: 16)
+                    }
                 }
-                .scaleEffect(isFocused ? 1.12 : 1.0)
-                if mode == .one {
-                    Text("1")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white).padding(3)
-                        .background(Color.accentColor).clipShape(Circle())
-                        .offset(x: -16, y: 16)
-                }
+                
+                Circle()
+                    .fill(mode != .off ? Color.accentColor : Color.clear)
+                    .frame(width: 5, height: 5)
             }
+            .scaleEffect(isFocused ? 1.12 : 1.0)
             .animation(.easeInOut(duration: 0.12), value: isFocused)
         }
         .buttonStyle(.plain)

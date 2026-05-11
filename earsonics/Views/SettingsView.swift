@@ -3,13 +3,13 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
-    @State private var gaplessCrossfade: Double = 0
+    @State private var showDonationQR = false
 
     var body: some View {
         NavigationStack {
-            List {
+            Form {
                 // Server management section
-                Section("Servers") {
+                Section(header: Text("Servers").font(.headline)) {
                     NavigationLink {
                         ServerManagementView()
                     } label: {
@@ -37,42 +37,56 @@ struct SettingsView: View {
                         }
                     }
                 }
+                .padding(.vertical, 20)
 
                 // Playback section
-                Section("Playback") {
+                Section(header: Text("Playback").font(.headline)) {
                     LabeledContent("Quality") {
-                        Text("Original (Lossless)")
+                        Text("Original (lossless)")
                             .foregroundColor(.secondary)
                     }
+                }
+                .padding(.vertical, 20)
 
+                // About section
+                Section(header: Text("About").font(.headline)) {
                     Button {
-                        gaplessCrossfade = gaplessCrossfade >= 10 ? 0 : gaplessCrossfade + 0.5
-                        appState.player.gaplessCrossfade = gaplessCrossfade
+                        showDonationQR = true
                     } label: {
                         HStack {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Gapless crossfade")
-                                Text("0 = true gapless (recommended for live albums)")
-                                    .font(.caption)
-                            }
+                            Text("QR code me a coffee")
                             Spacer()
-                            Text(gaplessCrossfade == 0 ? "Off (true gapless)" : String(format: "%.1fs", gaplessCrossfade))
+                            Text("Show QR")
                                 .foregroundColor(.secondary)
                         }
                     }
-                }
+                    .sheet(isPresented: $showDonationQR) {
+                        VStack(spacing: 40) {
+                            Text("Scan to donate a coffee!")
+                                .font(.largeTitle)
+                            
+                            Image("paypalme")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 500, height: 500)
+                            
+                            Button("Close") {
+                                showDonationQR = false
+                            }
+                        }
+                        .padding()
+                    }
 
-                // About section
-                Section("About") {
                     HStack { Text("App"); Spacer(); Text("earsonics").foregroundColor(.secondary) }
-                    HStack { Text("Version"); Spacer(); Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0").foregroundColor(.secondary) }
-                    HStack { Text("Protocol"); Spacer(); Text("Subsonic / Navidrome").foregroundColor(.secondary) }
+                        .focusable()
+                    HStack { Text("Version"); Spacer(); Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.01").foregroundColor(.secondary) }
+                        .focusable()
+                    HStack { Text("Protocol"); Spacer(); Text("Subsonic/Navidrome").foregroundColor(.secondary) }
+                        .focusable()
                     HStack { Text("Platform"); Spacer(); Text("Apple TV").foregroundColor(.secondary) }
+                        .focusable()
                 }
-            }
-            .navigationTitle("Settings")
-            .onAppear {
-                gaplessCrossfade = appState.player.gaplessCrossfade
+                .padding(.vertical, 20)
             }
         }
     }
