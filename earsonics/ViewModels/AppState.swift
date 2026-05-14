@@ -14,6 +14,8 @@ class AppState: ObservableObject {
     @Published var isConnected: Bool = false
     @Published var connectionError: String? = nil
 
+    @AppStorage("crossfadeDuration") var crossfadeDuration: Double = 0.0
+
     init() {
         // Wire up active server to API and player
         syncActiveServer()

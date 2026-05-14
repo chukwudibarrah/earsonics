@@ -16,14 +16,40 @@ enum RepeatMode: String, CaseIterable {
     }
 }
 
+// MARK: - Playback Transition State
+enum PlaybackTransitionState {
+    case idle
+    case prewarming
+    case crossfading
+}
+
 // MARK: - Audio Player Service
 @MainActor
 class AudioPlayerService: NSObject, ObservableObject {
     static let shared = AudioPlayerService()
 
-    private var player: AVQueuePlayer = AVQueuePlayer()
-    private var playerItems: [AVPlayerItem] = []
-    private var timeObserver: Any?
+    private var deckA: AVPlayer
+    private var deckB: AVPlayer
+    private var activeDeck: AVPlayer
+    
+    // Observers and Timers
+    private var timeObserverA: Any?
+    private var timeObserverB: Any?
+    private var fadeDisplayLink: CADisplayLink?
+    
+    // Transition State
+    private var transitionState: PlaybackTransitionState = .idle
+    private var fadeStartTime: CFTimeInterval = 0
+    private var fadeStartDuration: Double = 0
+    private var hasUpdatedMetadataDuringFade = false
+    
+    // Telemetry for startup latency
+    private var lastStreamRequestTime: CFTimeInterval = 0
+    private var recentStartupLatencies: [Double] = []
+    
+    // Settings mapping
+    @AppStorage("crossfadeDuration") private var appCrossfadeDuration: Double = 0.0
+
     private var cancellables = Set<AnyCancellable>()
 
     @Published var queue: [Song] = []
@@ -47,10 +73,24 @@ class AudioPlayerService: NSObject, ObservableObject {
     private var originalQueue: [Song] = []
 
     override init() {
+        self.deckA = AVPlayer()
+        self.deckB = AVPlayer()
+        self.activeDeck = self.deckA
+        
         super.init()
+        
+        deckA.automaticallyWaitsToMinimizeStalling = true
+        deckB.automaticallyWaitsToMinimizeStalling = true
+        activeDeck.volume = 1.0
+
         configureAudioSession()
-        setupPlayer()
+        setupPlayer(deck: deckA, isDeckA: true)
+        setupPlayer(deck: deckB, isDeckA: false)
         setupRemoteCommandCenter()
+    }
+    
+    deinit {
+        fadeDisplayLink?.invalidate()
     }
 
     // MARK: - Audio Session
@@ -66,41 +106,39 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
 
     // MARK: - Player setup
-    private func setupPlayer() {
-        player.automaticallyWaitsToMinimizeStalling = true
-
-        player.publisher(for: \.timeControlStatus)
+    private func setupPlayer(deck: AVPlayer, isDeckA: Bool) {
+        deck.publisher(for: \.timeControlStatus)
             .receive(on: RunLoop.main)
             .sink { [weak self] status in
-                guard let self else { return }
+                guard let self = self, self.activeDeck === deck else { return }
                 self.isPlaying = (status == .playing)
                 self.isBuffering = (status == .waitingToPlayAtSpecifiedRate)
             }
             .store(in: &cancellables)
 
-        timeObserver = player.addPeriodicTimeObserver(
-            forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
-            queue: .main
-        ) { [weak self] time in
-            guard let self else { return }
-            Task { @MainActor in
-                self.currentTime = time.seconds
-                if let dur = self.player.currentItem?.duration,
-                   dur.isNumeric, dur.seconds > 0 {
-                    self.duration = dur.seconds
-                }
+        let interval = CMTime(seconds: 0.5, preferredTimescale: 600)
+        let observer = deck.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                self.handleTimeTick(for: deck, time: time.seconds)
             }
+        }
+        
+        if isDeckA {
+            timeObserverA = observer
+        } else {
+            timeObserverB = observer
         }
 
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(playerItemDidFinish),
+            selector: #selector(playerItemDidFinish(_:)),
             name: .AVPlayerItemDidPlayToEndTime,
             object: nil
         )
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(playerItemFailed),
+            selector: #selector(playerItemFailed(_:)),
             name: .AVPlayerItemFailedToPlayToEndTime,
             object: nil
         )
@@ -115,12 +153,13 @@ class AudioPlayerService: NSObject, ObservableObject {
         cc.previousTrackCommand.addTarget { [weak self] _ in self?.skipPrevious(); return .success }
         cc.changePlaybackPositionCommand.addTarget { [weak self] event in
             guard let e = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
+            // Guard against seeking during fade (it's handled in seek method, but adding here as safety)
             self?.seek(to: e.positionTime)
             return .success
         }
     }
 
-    // MARK: - Load songs (pre-loads ALL items for true gapless)
+    // MARK: - Load songs
     func load(songs: [Song], startIndex: Int = 0) {
         originalQueue = songs
         if isShuffled {
@@ -135,92 +174,258 @@ class AudioPlayerService: NSObject, ObservableObject {
             currentIndex = startIndex
         }
         rebuildPlayerItems()
-        player.play()
+    }
+
+    // MARK: - Rebuild: sets up current track on active deck
+    func rebuildPlayerItems() {
+        guard let srv = server else { return }
+        
+        transitionState = .idle
+        stopCrossfadeDisplayLink()
+        hasUpdatedMetadataDuringFade = false
+
+        // Stop both decks
+        deckA.pause()
+        deckA.replaceCurrentItem(with: nil)
+        deckB.pause()
+        deckB.replaceCurrentItem(with: nil)
+        
+        activeDeck = deckA
+        activeDeck.volume = 1.0
+        
+        guard currentIndex >= 0, currentIndex < queue.count else { return }
+        let currentSong = queue[currentIndex]
+        
+        guard let url = SubsonicClient.shared.streamURL(songId: currentSong.id, server: srv) else { return }
+        let item = AVPlayerItem(url: url)
+        
+        // Setup observer for when it's ready to play (for latency telemetry if it was prewarmed, though here it's direct play)
+        activeDeck.replaceCurrentItem(with: item)
+        activeDeck.play()
         updateNowPlaying()
     }
 
-    // MARK: - Rebuild: loads all remaining songs into AVQueuePlayer upfront
-    // This is the key to gapless — AVQueuePlayer pre-buffers the next item.
-    // We call pause() only here (structural change), never during natural advance.
-    func rebuildPlayerItems() {
-        guard let srv = server else { return }
-        let wasPlaying = isPlaying
-        player.pause()
-        player.removeAllItems()
-        playerItems = []
-
-        // Load from currentIndex to end so all upcoming tracks are pre-queued
-        let songsFromCurrent = Array(queue.dropFirst(currentIndex))
-        let items: [AVPlayerItem] = songsFromCurrent.compactMap { song in
-            guard let url = SubsonicClient.shared.streamURL(songId: song.id, server: srv) else { return nil }
-            let item = AVPlayerItem(url: url)
-            item.preferredForwardBufferDuration = 60  // 60s pre-buffer for gapless
-            return item
+    // MARK: - Time Tick and Transitions
+    private func handleTimeTick(for deck: AVPlayer, time: Double) {
+        // Only drive UI and transition logic from the active deck
+        guard deck === activeDeck else { return }
+        
+        self.currentTime = time
+        if let dur = deck.currentItem?.duration, dur.isNumeric, dur.seconds > 0 {
+            self.duration = dur.seconds
+            
+            checkTransitionPhase(currentTime: time, duration: dur.seconds)
         }
-        playerItems = items
-        for item in items { player.insert(item, after: nil) }
-        if wasPlaying { player.play() }
+    }
+    
+    private func getAdaptivePrewarmBudget() -> Double {
+        // Minimum budget of 2s, maximum of 10s based on recent transcoder startups
+        guard !recentStartupLatencies.isEmpty else { return 4.0 }
+        let avg = recentStartupLatencies.reduce(0, +) / Double(recentStartupLatencies.count)
+        return min(max(avg * 1.5, 2.0), 10.0)
+    }
+
+    private func checkTransitionPhase(currentTime: Double, duration: Double) {
+        let fadeDuration = appCrossfadeDuration
+        let prewarmBudget = getAdaptivePrewarmBudget()
+        
+        let remainingTime = duration - currentTime
+        
+        // 1. Check for Prewarming (start T-(fade+budget) )
+        if transitionState == .idle && remainingTime <= (fadeDuration + prewarmBudget) {
+            startPrewarming()
+        }
+        
+        // 2. Check for Crossfading (start T-fade )
+        if transitionState == .prewarming && remainingTime <= fadeDuration {
+            // For 0s crossfade, we just trigger the swap here
+            startCrossfade()
+        }
+    }
+    
+    private func getNextSong() -> Song? {
+        let nextIndex = currentIndex + 1
+        if nextIndex < queue.count {
+            return queue[nextIndex]
+        } else if repeatMode == .all {
+            return queue.first
+        }
+        // repeatMode == .one is handled at end of track by seeking
+        return nil
+    }
+
+    private func startPrewarming() {
+        guard transitionState == .idle else { return }
+        guard let nextSong = getNextSong(), let srv = server else { return }
+        guard let url = SubsonicClient.shared.streamURL(songId: nextSong.id, server: srv) else { return }
+        
+        transitionState = .prewarming
+        
+        let standbyDeck = (activeDeck === deckA) ? deckB : deckA
+        standbyDeck.volume = 0.0
+        
+        let item = AVPlayerItem(url: url)
+        lastStreamRequestTime = CACurrentMediaTime()
+        
+        // KVO for ready to play status to update recentStartupLatencies
+        item.publisher(for: \.status)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] status in
+                guard let self = self else { return }
+                if status == .readyToPlay {
+                    let latency = CACurrentMediaTime() - self.lastStreamRequestTime
+                    self.recentStartupLatencies.append(latency)
+                    if self.recentStartupLatencies.count > 5 { self.recentStartupLatencies.removeFirst() }
+                }
+            }
+            .store(in: &cancellables)
+        
+        standbyDeck.replaceCurrentItem(with: item)
+        // Ensure standby deck starts loading
+        standbyDeck.play()
+        standbyDeck.pause() // Play/pause forces buffer to start
+    }
+    
+    private func startCrossfade() {
+        guard transitionState == .prewarming else { return }
+        guard let _ = getNextSong() else { return }
+        
+        transitionState = .crossfading
+        hasUpdatedMetadataDuringFade = false
+        
+        let standbyDeck = (activeDeck === deckA) ? deckB : deckA
+        standbyDeck.play()
+        
+        let fadeDuration = appCrossfadeDuration
+        
+        if fadeDuration == 0.0 {
+            // Instant cut with 10ms micro fade to avoid pop
+            self.fadeStartTime = CACurrentMediaTime()
+            self.fadeStartDuration = 0.01
+        } else {
+            self.fadeStartTime = CACurrentMediaTime()
+            self.fadeStartDuration = fadeDuration
+        }
+        
+        fadeDisplayLink?.invalidate()
+        let link = CADisplayLink(target: self, selector: #selector(handleCrossfadeTick))
+        link.add(to: .main, forMode: .common)
+        fadeDisplayLink = link
+    }
+    
+    @objc private func handleCrossfadeTick() {
+        let elapsed = CACurrentMediaTime() - fadeStartTime
+        let fadeDur = max(fadeStartDuration, 0.01)
+        let progress = min(elapsed / fadeDur, 1.0)
+        
+        let standbyDeck = (activeDeck === deckA) ? deckB : deckA
+        
+        // Equal power curve
+        activeDeck.volume = Float(cos(progress * .pi / 2))
+        standbyDeck.volume = Float(sin(progress * .pi / 2))
+        
+        if progress >= 0.5 && !hasUpdatedMetadataDuringFade {
+            hasUpdatedMetadataDuringFade = true
+            
+            // Scrobble previous track
+            let prevSong = queue[currentIndex]
+            Task { try? await SubsonicClient.shared.scrobble(id: prevSong.id, server: self.server) }
+            
+            // Advance index
+            let nextIndex = currentIndex + 1
+            if nextIndex < queue.count {
+                currentIndex = nextIndex
+            } else if repeatMode == .all {
+                currentIndex = 0
+            }
+            updateNowPlaying()
+        }
+        
+        if progress >= 1.0 {
+            completeCrossfade()
+        }
+    }
+    
+    private func completeCrossfade() {
+        fadeDisplayLink?.invalidate()
+        
+        let oldActiveDeck = activeDeck
+        activeDeck = (activeDeck === deckA) ? deckB : deckA
+        
+        activeDeck.volume = 1.0
+        
+        // Full reset and stop transcoder
+        oldActiveDeck.pause()
+        oldActiveDeck.replaceCurrentItem(with: nil)
+        
+        transitionState = .idle
+    }
+    
+    private func stopCrossfadeDisplayLink() {
+        fadeDisplayLink?.invalidate()
+        fadeDisplayLink = nil
     }
 
     // MARK: - Playback controls
-    func play() { player.play(); updateNowPlaying() }
-    func pause() { player.pause(); updateNowPlaying() }
+    func play() { activeDeck.play(); updateNowPlaying() }
+    func pause() { activeDeck.pause(); updateNowPlaying() }
     func togglePlayPause() { isPlaying ? pause() : play() }
 
     func skipNext() {
+        guard transitionState != .crossfading else { return }
+        
         let nextIndex = currentIndex + 1
         if nextIndex < queue.count {
-            // Scrobble current before advancing
             let prev = queue[currentIndex]
             Task { try? await SubsonicClient.shared.scrobble(id: prev.id, server: self.server) }
             currentIndex = nextIndex
-            // AVQueuePlayer already has all items pre-queued — just advance
-            player.advanceToNextItem()
-            updateNowPlaying()
+            rebuildPlayerItems()
         } else if repeatMode == .all {
             load(songs: queue, startIndex: 0)
         }
     }
 
     func skipPrevious() {
+        guard transitionState != .crossfading else { return }
+        
         if currentTime > 3 {
             seek(to: 0)
         } else if currentIndex > 0 {
             currentIndex -= 1
-            rebuildPlayerItems()  // must rebuild: AVQueuePlayer has no go-back API
-            player.play()
-            updateNowPlaying()
+            rebuildPlayerItems()
         } else if repeatMode == .all {
             load(songs: queue, startIndex: queue.count - 1)
         }
     }
 
     func seek(to seconds: Double) {
+        guard transitionState != .crossfading else { return }
+        
+        // If we are prewarming, cancel the prewarm because the track might not end soon anymore
+        if transitionState == .prewarming {
+            let standbyDeck = (activeDeck === deckA) ? deckB : deckA
+            standbyDeck.pause()
+            standbyDeck.replaceCurrentItem(with: nil)
+            transitionState = .idle
+        }
+        
         let time = CMTime(seconds: seconds, preferredTimescale: 600)
-        player.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero)
+        activeDeck.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero)
         updateNowPlaying()
     }
 
     func playFromQueue(index: Int) {
         currentIndex = index
         rebuildPlayerItems()
-        player.play()
-        updateNowPlaying()
     }
 
     func addToQueue(_ song: Song) {
         queue.append(song)
-        if let srv = server, let url = SubsonicClient.shared.streamURL(songId: song.id, server: srv) {
-            let item = AVPlayerItem(url: url)
-            item.preferredForwardBufferDuration = 60
-            player.insert(item, after: nil)
-        }
     }
 
     func addToQueueNext(_ song: Song) {
         let insertIndex = min(currentIndex + 1, queue.count)
         queue.insert(song, at: insertIndex)
-        rebuildPlayerItems()
     }
 
     func removeFromQueue(at offsets: IndexSet) {
@@ -256,7 +461,13 @@ class AudioPlayerService: NSObject, ObservableObject {
                 currentIndex = 0
             }
         }
-        rebuildPlayerItems()
+        // Don't rebuild if simply shuffling future items, but if we do re-order, prewarm state might be wrong.
+        if transitionState == .prewarming {
+            let standbyDeck = (activeDeck === deckA) ? deckB : deckA
+            standbyDeck.pause()
+            standbyDeck.replaceCurrentItem(with: nil)
+            transitionState = .idle
+        }
     }
 
     // MARK: - Repeat
@@ -266,32 +477,24 @@ class AudioPlayerService: NSObject, ObservableObject {
         case .all: repeatMode = .one
         case .one: repeatMode = .off
         }
-        player.actionAtItemEnd = repeatMode == .one ? .none : .advance
     }
 
-    // MARK: - Item finished (natural gapless advance — no rebuild needed)
+    // MARK: - Item finished
     @objc private func playerItemDidFinish(_ notification: Notification) {
+        // If the item represents the activeDeck and finished prematurely or without triggering crossfade loop
+        // It can also be repeat .one case
+        guard let item = notification.object as? AVPlayerItem, item == activeDeck.currentItem else { return }
+        
         Task { @MainActor in
             if self.repeatMode == .one {
                 self.seek(to: 0)
-                self.player.play()
+                self.activeDeck.play()
                 return
             }
-            // Scrobble
-            let prevSong = self.queue[self.currentIndex]
-            Task { try? await SubsonicClient.shared.scrobble(id: prevSong.id, server: self.server) }
-
-            let nextIndex = self.currentIndex + 1
-            if nextIndex < self.queue.count {
-                // AVQueuePlayer has already advanced to next item (gapless)
-                // We just update our index and metadata
-                self.currentIndex = nextIndex
-                self.updateNowPlaying()
-            } else if self.repeatMode == .all {
-                self.load(songs: self.queue, startIndex: 0)
-            } else {
-                self.isPlaying = false
-                self.updateNowPlaying()
+            
+            // If it finishes naturally without hitting prewarm logic (e.g., short track or stream issue)
+            if self.transitionState != .crossfading {
+                self.skipNext()
             }
         }
     }

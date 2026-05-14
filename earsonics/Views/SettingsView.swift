@@ -45,6 +45,25 @@ struct SettingsView: View {
                         Text("Original (lossless)")
                             .foregroundColor(.secondary)
                     }
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("Crossfade Duration: \(Int(appState.crossfadeDuration))s")
+                            Spacer()
+                            Button("-") {
+                                if appState.crossfadeDuration > 0 { appState.crossfadeDuration -= 1 }
+                            }
+                            .buttonStyle(.bordered)
+                            Button("+") {
+                                if appState.crossfadeDuration < 12 { appState.crossfadeDuration += 1 }
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                        if appState.crossfadeDuration > 0 {
+                            Text("Note: Overlapping streams may occasionally cause lag on wireless outputs (AirPlay/Bluetooth).")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
                 }
                 .padding(.vertical, 20)
 
@@ -63,7 +82,7 @@ struct SettingsView: View {
                     .sheet(isPresented: $showDonationQR) {
                         VStack(spacing: 40) {
                             Text("Scan to donate a coffee!")
-                                .font(.largeTitle)
+                                .font(.subheadline)
                             
                             Image("paypalme")
                                 .resizable()
@@ -79,7 +98,7 @@ struct SettingsView: View {
 
                     HStack { Text("App"); Spacer(); Text("earsonics").foregroundColor(.secondary) }
                         .focusable()
-                    HStack { Text("Version"); Spacer(); Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.01").foregroundColor(.secondary) }
+                    HStack { Text("Version"); Spacer(); Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.02").foregroundColor(.secondary) }
                         .focusable()
                     HStack { Text("Protocol"); Spacer(); Text("Subsonic/Navidrome").foregroundColor(.secondary) }
                         .focusable()
@@ -88,6 +107,7 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 20)
             }
+//            .navigationTitle("Settings")
         }
     }
 }
