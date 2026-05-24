@@ -207,7 +207,7 @@ struct SongRow: View {
                         Image(systemName: appState.player.isPlaying ? "waveform" : "pause.fill")
                             .foregroundColor(.accentColor)
                             .font(.caption2)
-                    } else {
+                    } else if showTrackNumber {
                         Text(String(format: "%d", song.track ?? (index + 1)))
                             .font(.caption)
                             .lineLimit(1)
