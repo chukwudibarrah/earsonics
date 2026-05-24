@@ -43,6 +43,7 @@ struct Song: Identifiable, Codable, Hashable {
     let duration: Int?
     let bitRate: Int?
     let path: String?
+    let replayGain: ReplayGainData?
     var starred: Date?
 
     var durationFormatted: String {
@@ -55,6 +56,14 @@ struct Song: Identifiable, Codable, Hashable {
         guard let s = suffix?.lowercased() else { return false }
         return ["flac", "alac", "wav", "aiff", "aif", "ape", "dsf", "dff"].contains(s)
     }
+}
+
+// MARK: - ReplayGain
+struct ReplayGainData: Codable, Hashable {
+    let trackGain: Double?
+    let trackPeak: Double?
+    let albumGain: Double?
+    let albumPeak: Double?
 }
 
 // MARK: - Playlist

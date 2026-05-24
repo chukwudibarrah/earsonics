@@ -246,12 +246,13 @@ class SubsonicClient: ObservableObject {
 
     // MARK: - Search
     func search(query: String, artistCount: Int = 10, albumCount: Int = 10, songCount: Int = 20,
-                server srv: Server? = nil) async throws -> SearchResult {
+                songOffset: Int = 0, server srv: Server? = nil) async throws -> SearchResult {
         let params: [URLQueryItem] = [
             URLQueryItem(name: "query", value: query),
             URLQueryItem(name: "artistCount", value: "\(artistCount)"),
             URLQueryItem(name: "albumCount", value: "\(albumCount)"),
-            URLQueryItem(name: "songCount", value: "\(songCount)")
+            URLQueryItem(name: "songCount", value: "\(songCount)"),
+            URLQueryItem(name: "songOffset", value: "\(songOffset)")
         ]
         let r = try await fetch(endpoint: "search3.view", params: params, server: srv)
         return SearchResult(

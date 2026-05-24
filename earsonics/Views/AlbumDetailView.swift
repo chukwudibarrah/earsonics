@@ -93,6 +93,27 @@ struct AlbumDetailView: View {
                             .frame(maxWidth: .infinity)
                             .foregroundColor(isStarred ? .red : .primary)
                     }
+                    
+                    Button {
+                        if !songs.isEmpty {
+                            appState.player.addToQueueNext(songs[0])
+                            for song in songs.dropFirst() {
+                                appState.player.addToQueue(song)
+                            }
+                        }
+                    } label: {
+                        Label("Play Next", systemImage: "text.insert")
+                            .frame(maxWidth: .infinity)
+                    }
+                    
+                    Button {
+                        for song in songs {
+                            appState.player.addToQueue(song)
+                        }
+                    } label: {
+                        Label("Add to Queue", systemImage: "text.badge.plus")
+                            .frame(maxWidth: .infinity)
+                    }
 
                     if !playlists.isEmpty {
                         Menu {

@@ -39,19 +39,37 @@ struct StarredView: View {
                                 EmptyStarredView(type: "Songs")
                             } else {
                                 ScrollView {
-                                    LazyVStack(spacing: 2) {
-                                        ForEach(Array(starredSongs.enumerated()), id: \.element.id) { idx, song in
+                                    VStack(alignment: .leading, spacing: 20) {
+                                        HStack(spacing: 16) {
                                             Button {
-                                                appState.player.load(songs: starredSongs, startIndex: idx)
+                                                appState.player.load(songs: starredSongs, startIndex: 0)
                                             } label: {
-                                                SongRow(song: song, index: idx, playlists: playlists)
+                                                Label("Play All", systemImage: "play.fill")
                                             }
-                                            .buttonStyle(.card)
+                                            Button {
+                                                var shuffled = starredSongs
+                                                shuffled.shuffle()
+                                                appState.player.load(songs: shuffled, startIndex: 0)
+                                            } label: {
+                                                Label("Shuffle Play", systemImage: "shuffle")
+                                            }
                                         }
+                                        .padding(.horizontal, 60)
+                                        .padding(.top, 20)
+
+                                        LazyVStack(spacing: 2) {
+                                            ForEach(Array(starredSongs.enumerated()), id: \.element.id) { idx, song in
+                                                Button {
+                                                    appState.player.load(songs: starredSongs, startIndex: idx)
+                                                } label: {
+                                                    SongRow(song: song, index: idx, playlists: playlists)
+                                                }
+                                                .buttonStyle(.card)
+                                            }
+                                        }
+                                        .padding(.horizontal, 60)
+                                        .padding(.bottom, 100)
                                     }
-                                    .padding(.horizontal, 60)
-                                    .padding(.vertical, 20)
-                                    .padding(.bottom, 100)
                                 }
                             }
                         case .albums:

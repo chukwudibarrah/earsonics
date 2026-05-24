@@ -169,22 +169,39 @@ struct PlaylistDetailView: View {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 2) {
-                        ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
+                    VStack(alignment: .leading, spacing: 20) {
+                        HStack(spacing: 16) {
                             Button {
-                                appState.player.load(songs: songs, startIndex: idx)
+                                if !songs.isEmpty { appState.player.load(songs: songs, startIndex: 0) }
                             } label: {
-                                SongRow(song: song, index: idx, playlists: playlists)
+                                Label("Play All", systemImage: "play.fill")
                             }
-                            .buttonStyle(.card)
-                            .contextMenu {
-                                Button(role: .destructive) {
-                                    Task {
-                                        try? await SubsonicClient.shared.updatePlaylist(
-                                            id: playlist.id, indexesToRemove: [idx])
-                                        await reload()
-                                    }
-                                } label: { Label("Remove from Playlist", systemImage: "minus.circle") }
+                            Button {
+                                var shuffled = songs; shuffled.shuffle()
+                                appState.player.load(songs: shuffled, startIndex: 0)
+                            } label: {
+                                Label("Shuffle Play", systemImage: "shuffle")
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        LazyVStack(spacing: 2) {
+                            ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
+                                Button {
+                                    appState.player.load(songs: songs, startIndex: idx)
+                                } label: {
+                                    SongRow(song: song, index: idx, playlists: playlists)
+                                }
+                                .buttonStyle(.card)
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        Task {
+                                            try? await SubsonicClient.shared.updatePlaylist(
+                                                id: playlist.id, indexesToRemove: [idx])
+                                            await reload()
+                                        }
+                                    } label: { Label("Remove from Playlist", systemImage: "minus.circle") }
+                                }
                             }
                         }
                     }

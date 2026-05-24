@@ -49,6 +49,11 @@ class AudioPlayerService: NSObject, ObservableObject {
     
     // Settings mapping
     @AppStorage("crossfadeDuration") private var appCrossfadeDuration: Double = 0.0
+    @AppStorage("normalizeVolume") var normalizeVolume: Bool = true
+    
+    // Transition State additions
+    private var fadeOutVolume: Float = 1.0
+    private var fadeInVolume: Float = 1.0
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -176,6 +181,16 @@ class AudioPlayerService: NSObject, ObservableObject {
         rebuildPlayerItems()
     }
 
+    // MARK: - Target Volume helper
+    private func getTargetVolume(for song: Song?) -> Float {
+        guard normalizeVolume, let gain = song?.replayGain?.trackGain else { return 1.0 }
+        
+        let scalar = pow(10.0, gain / 20.0)
+        let peak = song?.replayGain?.trackPeak ?? 0.0
+        let peakSafeScalar = peak > 0 ? min(scalar, 1.0 / peak) : scalar
+        return Float(min(peakSafeScalar, 1.0))
+    }
+
     // MARK: - Rebuild: sets up current track on active deck
     func rebuildPlayerItems() {
         guard let srv = server else { return }
@@ -191,7 +206,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         deckB.replaceCurrentItem(with: nil)
         
         activeDeck = deckA
-        activeDeck.volume = 1.0
+        activeDeck.volume = getTargetVolume(for: currentSong)
         
         guard currentIndex >= 0, currentIndex < queue.count else { return }
         let currentSong = queue[currentIndex]
@@ -288,10 +303,13 @@ class AudioPlayerService: NSObject, ObservableObject {
     
     private func startCrossfade() {
         guard transitionState == .prewarming else { return }
-        guard let _ = getNextSong() else { return }
+        guard let nextSong = getNextSong() else { return }
         
         transitionState = .crossfading
         hasUpdatedMetadataDuringFade = false
+        
+        fadeOutVolume = getTargetVolume(for: currentSong)
+        fadeInVolume = getTargetVolume(for: nextSong)
         
         let standbyDeck = (activeDeck === deckA) ? deckB : deckA
         standbyDeck.play()
@@ -320,9 +338,9 @@ class AudioPlayerService: NSObject, ObservableObject {
         
         let standbyDeck = (activeDeck === deckA) ? deckB : deckA
         
-        // Equal power curve
-        activeDeck.volume = Float(cos(progress * .pi / 2))
-        standbyDeck.volume = Float(sin(progress * .pi / 2))
+        // Equal power curve scaled by target volumes
+        activeDeck.volume = fadeOutVolume * Float(cos(progress * .pi / 2))
+        standbyDeck.volume = fadeInVolume * Float(sin(progress * .pi / 2))
         
         if progress >= 0.5 && !hasUpdatedMetadataDuringFade {
             hasUpdatedMetadataDuringFade = true
@@ -352,7 +370,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         let oldActiveDeck = activeDeck
         activeDeck = (activeDeck === deckA) ? deckB : deckA
         
-        activeDeck.volume = 1.0
+        activeDeck.volume = getTargetVolume(for: currentSong)
         
         // Full reset and stop transcoder
         oldActiveDeck.pause()

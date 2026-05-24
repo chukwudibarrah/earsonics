@@ -14,7 +14,7 @@ struct ContentView: View {
     @State private var showNowPlaying = false
 
     enum Tab: Hashable {
-        case home, artists, playlists, starred, search, settings
+        case home, artists, songs, playlists, starred, search, settings
     }
 
     var body: some View {
@@ -29,6 +29,10 @@ struct ContentView: View {
                 ArtistsView()
                     .tabItem { Label("Artists", systemImage: "music.mic") }
                     .tag(Tab.artists)
+
+                SongsView()
+                    .tabItem { Label("Songs", systemImage: "music.note") }
+                    .tag(Tab.songs)
 
                 PlaylistsView()
                     .tabItem { Label("Playlists", systemImage: "music.note.list") }

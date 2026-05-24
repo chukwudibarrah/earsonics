@@ -1,6 +1,7 @@
 // ViewModels/AppState.swift
 import SwiftUI
 import Combine
+import AVFoundation
 
 @MainActor
 class AppState: ObservableObject {
@@ -15,6 +16,7 @@ class AppState: ObservableObject {
     @Published var connectionError: String? = nil
 
     @AppStorage("crossfadeDuration") var crossfadeDuration: Double = 0.0
+    @AppStorage("preventScreenSaver") var preventScreenSaver: Bool = false
 
     init() {
         // Wire up active server to API and player
@@ -23,9 +25,45 @@ class AppState: ObservableObject {
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in self?.syncActiveServer() }
             .store(in: &cancellables)
+
+        setupObservers()
     }
 
     private var cancellables = Set<AnyCancellable>()
+
+    private func setupObservers() {
+        // Observe playback state to manage idle timer
+        player.$isPlaying
+            .receive(on: RunLoop.main)
+            .sink { [weak self] isPlaying in
+                guard let self = self else { return }
+                self.updateIdleTimer(isPlaying: isPlaying)
+            }
+            .store(in: &cancellables)
+            
+        // Observe app state for safe idle timer resetting
+        NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
+            .sink { _ in
+                // Always allow screen saver when app is in background
+                UIApplication.shared.isIdleTimerDisabled = false
+            }
+            .store(in: &cancellables)
+            
+        NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)
+            .sink { _ in
+                // Allow screen saver if audio is interrupted
+                UIApplication.shared.isIdleTimerDisabled = false
+            }
+            .store(in: &cancellables)
+    }
+
+    private func updateIdleTimer(isPlaying: Bool) {
+        if preventScreenSaver && isPlaying {
+            UIApplication.shared.isIdleTimerDisabled = true
+        } else {
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+    }
 
     func syncActiveServer() {
         guard let server = serverStore.activeServer else {

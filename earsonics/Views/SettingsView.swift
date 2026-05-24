@@ -64,6 +64,24 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
+                    
+                    Toggle(isOn: $appState.player.normalizeVolume) {
+                        Text("Normalize Volume")
+                    }
+                    if appState.player.normalizeVolume {
+                        Text("Uses ReplayGain metadata to equalize volume between tracks and prevent loud peaks.")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Toggle(isOn: $appState.preventScreenSaver) {
+                        Text("Prevent Screen Saver While Playing")
+                    }
+                    if appState.preventScreenSaver {
+                        Text("Warning: Keeping the screen active for long periods may cause burn-in on some TVs.")
+                            .font(.caption2)
+                            .foregroundColor(.red)
+                    }
                 }
                 .padding(.vertical, 20)
 
