@@ -20,42 +20,6 @@ struct AlbumDetailView: View {
         HStack(alignment: .top, spacing: 50) {
             // Left: Cover + info
             VStack(alignment: .leading, spacing: 16) {
-                CoverArtView(id: album.coverArt, size: 600)
-                    .frame(width: 340, height: 340)
-                    .cornerRadius(16)
-
-                Text(album.name)
-                    .font(.headline).bold()
-                    .lineLimit(3)
-                    .minimumScaleFactor(0.8)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if let artist = album.artist {
-                    Text(artist)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                HStack(spacing: 5) {
-                    if let year = album.year { 
-                        Text(String(format: "%d", year)).foregroundColor(.secondary)
-                        if album.genre != nil || album.songCount != nil {
-                            Text("•").foregroundColor(.secondary)
-                        }
-                    }
-                    if let genre = album.genre { 
-                        Text(genre).foregroundColor(.secondary)
-                        if album.songCount != nil {
-                            Text("•").foregroundColor(.secondary)
-                        }
-                    }
-                    if let count = album.songCount { 
-                        Text("\(count) tracks").foregroundColor(.secondary) 
-                    }
-                }
-                .font(.body)
-
                 // Actions
                 VStack(spacing: 12) {
                     Button {
@@ -134,6 +98,44 @@ struct AlbumDetailView: View {
                         }
                     }
                 }
+
+
+                CoverArtView(id: album.coverArt, size: 600)
+                    .frame(width: 340, height: 340)
+                    .cornerRadius(16)
+
+                Text(album.name)
+                    .font(.headline).bold()
+                    .lineLimit(3)
+                    .minimumScaleFactor(0.8)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if let artist = album.artist {
+                    Text(artist)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                HStack(spacing: 5) {
+                    if let year = album.year { 
+                        Text(String(format: "%d", year)).foregroundColor(.secondary)
+                        if album.genre != nil || album.songCount != nil {
+                            Text("•").foregroundColor(.secondary)
+                        }
+                    }
+                    if let genre = album.genre { 
+                        Text(genre).foregroundColor(.secondary)
+                        if album.songCount != nil {
+                            Text("•").foregroundColor(.secondary)
+                        }
+                    }
+                    if let count = album.songCount { 
+                        Text("\(count) tracks").foregroundColor(.secondary) 
+                    }
+                }
+                .font(.body)
+
 
                 Spacer()
             }
