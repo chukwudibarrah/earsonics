@@ -18,7 +18,7 @@ struct SongsView: View {
                         Image(systemName: "music.note")
                             .font(.system(size: 60))
                             .foregroundColor(.secondary)
-                        Text("No Songs")
+                        Text("No songs")
                             .font(.title)
                         Text("No songs were found on the server.")
                             .foregroundColor(.secondary)
@@ -31,14 +31,14 @@ struct SongsView: View {
                                 Button {
                                     appState.player.load(songs: vm.songs, startIndex: 0)
                                 } label: {
-                                    Label("Play All", systemImage: "play.fill")
+                                    Label("Play all", systemImage: "play.fill")
                                 }
                                 Button {
                                     var shuffled = vm.songs
                                     shuffled.shuffle()
                                     appState.player.load(songs: shuffled, startIndex: 0)
                                 } label: {
-                                    Label("Shuffle Play", systemImage: "shuffle")
+                                    Label("Shuffle play", systemImage: "shuffle")
                                 }
                             }
                             .padding(.horizontal, 60)
@@ -49,7 +49,7 @@ struct SongsView: View {
                                     Button {
                                         appState.player.load(songs: vm.songs, startIndex: idx)
                                     } label: {
-                                        SongRow(song: song, index: idx, playlists: playlists)
+                                        SongRow(song: song, index: idx, playlists: playlists, showTrackNumber: false)
                                     }
                                     .buttonStyle(.card)
                                 }
@@ -62,7 +62,7 @@ struct SongsView: View {
                                             ProgressView()
                                                 .padding()
                                         } else {
-                                            Text("Load More")
+                                            Text("Load more")
                                                 .frame(maxWidth: .infinity)
                                                 .padding()
                                         }

@@ -62,7 +62,7 @@ struct StarredView: View {
                                                 Button {
                                                     appState.player.load(songs: starredSongs, startIndex: idx)
                                                 } label: {
-                                                    SongRow(song: song, index: idx, playlists: playlists)
+                                                    SongRow(song: song, index: idx, playlists: playlists, showTrackNumber: false)
                                                 }
                                                 .buttonStyle(.card)
                                             }

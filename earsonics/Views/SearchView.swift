@@ -91,7 +91,7 @@ struct SearchView: View {
                                         Button {
                                             appState.player.load(songs: results.songs, startIndex: idx)
                                         } label: {
-                                            SongRow(song: song, index: idx, playlists: playlists)
+                                            SongRow(song: song, index: idx, playlists: playlists, showTrackNumber: false)
                                         }
                                         .buttonStyle(.card)
                                     }

@@ -190,7 +190,7 @@ struct PlaylistDetailView: View {
                                 Button {
                                     appState.player.load(songs: songs, startIndex: idx)
                                 } label: {
-                                    SongRow(song: song, index: idx, playlists: playlists)
+                                    SongRow(song: song, index: idx, playlists: playlists, showTrackNumber: false)
                                 }
                                 .buttonStyle(.card)
                                 .contextMenu {

@@ -161,7 +161,7 @@ struct AlbumDetailView: View {
                 }
             }
         }
-//        .padding(60)
+.padding(.horizontal, 60)
         .padding(.top, 100) // add padding to top of tracklist
         .task {
             isLoading = true
@@ -182,13 +182,15 @@ struct SongRow: View {
     let song: Song
     let index: Int
     var playlists: [Playlist] = []
+    var showTrackNumber: Bool = true
     @EnvironmentObject var appState: AppState
     @State private var isStarred: Bool
 
-    init(song: Song, index: Int, playlists: [Playlist] = []) {
+    init(song: Song, index: Int, playlists: [Playlist] = [], showTrackNumber: Bool = true) {
         self.song = song
         self.index = index
         self.playlists = playlists
+        self.showTrackNumber = showTrackNumber
         _isStarred = State(initialValue: song.starred != nil)
     }
 
@@ -199,19 +201,21 @@ struct SongRow: View {
     var body: some View {
         HStack(spacing: 16) {
             // Track number / playing indicator
-            ZStack {
-                if isCurrentSong {
-                    Image(systemName: appState.player.isPlaying ? "waveform" : "pause.fill")
-                        .foregroundColor(.accentColor)
-                        .font(.caption2)
-                } else {
-                    Text(String(format: "%d", song.track ?? (index + 1)))
-                        .font(.caption)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+            if isCurrentSong || showTrackNumber {
+                ZStack {
+                    if isCurrentSong {
+                        Image(systemName: appState.player.isPlaying ? "waveform" : "pause.fill")
+                            .foregroundColor(.accentColor)
+                            .font(.caption2)
+                    } else {
+                        Text(String(format: "%d", song.track ?? (index + 1)))
+                            .font(.caption)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
                 }
+                .frame(width: 32, alignment: .center)
             }
-            .frame(width: 32, alignment: .center)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(song.title)
