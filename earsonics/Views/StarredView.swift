@@ -26,7 +26,7 @@ struct StarredView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, 60)
-                .padding(.top, 20)
+                .padding(.top, 80)
 
                 Group {
                     if isLoading {

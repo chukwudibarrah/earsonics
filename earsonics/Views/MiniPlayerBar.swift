@@ -11,7 +11,7 @@ struct MiniPlayerBar: View {
             Button(action: onTap) {
                 HStack(spacing: 14) {
                     CoverArtView(id: song.coverArt, size: 120)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 46, height: 46)
                         .cornerRadius(6)
                         .shadow(radius: 4)
 
@@ -32,9 +32,9 @@ struct MiniPlayerBar: View {
                         .font(.callout)
                         .foregroundColor(.accentColor)
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 10)
                 .padding(.vertical, 10)
-                .frame(width: 360, height: 80)
+                .frame(width: 360, height: 100)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
                 .shadow(color: .black.opacity(0.4), radius: 12, y: 4)
             }

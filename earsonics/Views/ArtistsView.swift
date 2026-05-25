@@ -31,7 +31,7 @@ struct ArtistsView: View {
                             }
                         }
                         .padding(.horizontal, 60)
-                        .padding(.vertical, 16)
+                        .padding(.vertical, 60)
                         .padding(.bottom, 100)
                     }
                     .searchable(text: $searchText, prompt: "Search artists")
@@ -39,8 +39,11 @@ struct ArtistsView: View {
             }
             .task { if vm.artists.isEmpty { await vm.loadHome() } }
         }
+//        .padding(.top, 80)
+        .padding(.horizontal, 60)
     }
 }
+
 
 struct ArtistRow: View {
     let artist: Artist

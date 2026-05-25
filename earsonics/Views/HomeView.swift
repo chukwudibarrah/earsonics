@@ -20,7 +20,7 @@ struct HomeView: View {
                         .font(.headline)
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 60) {
+                        VStack(alignment: .leading, spacing: 50) {
                             if !vm.recentAlbums.isEmpty {
                                 AlbumShelf(title: "Recently played", albums: vm.recentAlbums, navPath: $navPath)
                             }
@@ -32,8 +32,9 @@ struct HomeView: View {
                             }
                         }
                         // NO horizontal padding here — each shelf manages its own
-                        .padding(.vertical, 40)
+//                        .padding(.vertical, 40)
                         .padding(.bottom, 120)
+                        .padding(.top, 90)
                     }
                 }
             }
@@ -56,14 +57,14 @@ struct AlbumShelf: View {
     @State private var playlists: [Playlist] = []
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 0) {
             Text(title)
                 .font(.title2).fontWeight(.medium)
-                .padding(.leading, 60)
+//                .padding(.leading, 60)
                 .foregroundColor(.primary.opacity(0.28))
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 24) {
+                HStack(spacing: 25) {
                     ForEach(albums) { album in
                         Button {
                             navPath.append(album)
@@ -97,7 +98,7 @@ struct AlbumShelf: View {
                         }
                     }
                 }
-                .padding(.horizontal, 60)   // wide enough for card scale at edges
+//                .padding(.horizontal, 60)   // wide enough for card scale at edges
                 .padding(.vertical, 60)
             }
         }
@@ -112,25 +113,25 @@ struct AlbumCard: View {
     let album: Album
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 30) {
+        VStack(alignment: .leading, spacing: 10) {
             CoverArtView(id: album.coverArt, size: 260)
                 .frame(width: 360, height: 360)
 //                .cornerRadius(10)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 5) {
                 Text(album.name)
-                    .font(.caption).bold()
+                    .font(.subheadline).bold()
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 if let artist = album.artist {
                     Text(artist)
                         .font(.caption2)
-                        .lineLimit(1)
+                        .lineLimit(2)
                         .foregroundStyle(.secondary)
                 }
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 8)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 10)
         }
         .frame(width: 360)
     }
@@ -145,7 +146,7 @@ struct NoServerView: View {
                 .foregroundColor(.secondary)
             Text("No server configured")
                 .font(.title).bold()
-            Text("Go to Settings to add your Navidrome/Subsonic server.")
+            Text("Go to settings to add your Navidrome/Subsonic server.")
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }

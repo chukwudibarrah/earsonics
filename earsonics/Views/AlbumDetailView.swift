@@ -21,7 +21,7 @@ struct AlbumDetailView: View {
             // Left: Cover + info
             VStack(alignment: .leading, spacing: 16) {
                 // Actions
-                VStack(spacing: 12) {
+                VStack(spacing: 10) {
                     Button {
                         if isThisAlbumPlaying {
                             player.togglePlayPause()
@@ -31,7 +31,9 @@ struct AlbumDetailView: View {
                     } label: {
                         Label(isThisAlbumPlaying && player.isPlaying ? "Pause" : "Play", systemImage: isThisAlbumPlaying && player.isPlaying ? "pause.fill" : "play.fill")
                             .frame(maxWidth: .infinity)
+                            .font(.caption2)
                     }
+                    
 
                     Button {
                         var shuffled = songs
@@ -40,6 +42,7 @@ struct AlbumDetailView: View {
                     } label: {
                         Label("Shuffle", systemImage: "shuffle")
                             .frame(maxWidth: .infinity)
+                            .font(.caption2)
                     }
 
                     Button {
@@ -56,6 +59,7 @@ struct AlbumDetailView: View {
                         Label(isStarred ? "Unstar" : "Star", systemImage: isStarred ? "heart.fill" : "heart")
                             .frame(maxWidth: .infinity)
                             .foregroundColor(isStarred ? .red : .primary)
+                            .font(.caption2)
                     }
                     
                     Button {
@@ -66,8 +70,9 @@ struct AlbumDetailView: View {
                             }
                         }
                     } label: {
-                        Label("Play Next", systemImage: "text.insert")
+                        Label("Play next", systemImage: "text.insert")
                             .frame(maxWidth: .infinity)
+                            .font(.caption2)
                     }
                     
                     Button {
@@ -75,8 +80,9 @@ struct AlbumDetailView: View {
                             appState.player.addToQueue(song)
                         }
                     } label: {
-                        Label("Add to Queue", systemImage: "text.badge.plus")
+                        Label("Add to queue", systemImage: "text.badge.plus")
                             .frame(maxWidth: .infinity)
+                            .font(.caption2)
                     }
 
                     if !playlists.isEmpty {
@@ -95,20 +101,23 @@ struct AlbumDetailView: View {
                         } label: {
                             Label("Add to playlist", systemImage: "text.badge.plus")
                                 .frame(maxWidth: .infinity)
+                                .font(.caption2)
                         }
                     }
                 }
+                .controlSize(.small)
 
 
-                CoverArtView(id: album.coverArt, size: 600)
-                    .frame(width: 340, height: 340)
+                CoverArtView(id: album.coverArt, size: 400)
+                    .frame(width: 250, height: 250)
                     .cornerRadius(16)
 
                 Text(album.name)
-                    .font(.headline).bold()
+                    .font(.headline)
                     .lineLimit(3)
                     .minimumScaleFactor(0.8)
                     .fixedSize(horizontal: false, vertical: true)
+                    .lineHeight(.tight)
 
                 if let artist = album.artist {
                     Text(artist)
@@ -134,12 +143,12 @@ struct AlbumDetailView: View {
                         Text("\(count) tracks").foregroundColor(.secondary) 
                     }
                 }
-                .font(.body)
+                .font(.caption2)
 
 
                 Spacer()
             }
-            .frame(width: 360)
+            .frame(width: 250)
 
             // Right: Track list
             if isLoading {
@@ -147,7 +156,7 @@ struct AlbumDetailView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 2) {
+                    LazyVStack(spacing: 5) {
                         ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
                             Button {
                                 appState.player.load(songs: songs, startIndex: idx)
@@ -164,7 +173,7 @@ struct AlbumDetailView: View {
             }
         }
 .padding(.horizontal, 60)
-        .padding(.top, 100) // add padding to top of tracklist
+        .padding(.top, 200) // add padding to top of tracklist
         .task {
             isLoading = true
             async let albumLoad = SubsonicClient.shared.getAlbum(id: album.id)
@@ -266,12 +275,12 @@ struct SongRow: View {
             Button {
                 appState.player.addToQueueNext(song)
             } label: {
-                Label("Play Next", systemImage: "text.insert")
+                Label("Play next", systemImage: "text.insert")
             }
             Button {
                 appState.player.addToQueue(song)
             } label: {
-                Label("Add to Queue", systemImage: "text.badge.plus")
+                Label("Add to queue", systemImage: "text.badge.plus")
             }
             if !playlists.isEmpty {
                 Divider()

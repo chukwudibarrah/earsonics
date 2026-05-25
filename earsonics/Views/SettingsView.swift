@@ -37,7 +37,7 @@ struct SettingsView: View {
                         }
                     }
                 }
-                .padding(.vertical, 20)
+                .padding()
 
                 // Playback section
                 Section(header: Text("Playback").font(.headline)) {
@@ -47,7 +47,7 @@ struct SettingsView: View {
                     }
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Crossfade Duration: \(Int(appState.crossfadeDuration))s")
+                            Text("Crossfade duration: \(Int(appState.crossfadeDuration))s")
                             Spacer()
                             Button("-") {
                                 if appState.crossfadeDuration > 0 { appState.crossfadeDuration -= 1 }
@@ -66,16 +66,16 @@ struct SettingsView: View {
                     }
                     
                     Toggle(isOn: $appState.player.normalizeVolume) {
-                        Text("Normalize Volume")
+                        Text("Normalise volume")
                     }
                     if appState.player.normalizeVolume {
-                        Text("Uses ReplayGain metadata to equalize volume between tracks and prevent loud peaks.")
+                        Text("Uses Replay Gain metadata to equalise volume between tracks and prevent loud peaks.")
                             .font(.caption2)
                             .foregroundColor(.secondary)
                     }
 
                     Toggle(isOn: $appState.preventScreenSaver) {
-                        Text("Prevent Screen Saver While Playing")
+                        Text("Disable screen saver while playing")
                     }
                     if appState.preventScreenSaver {
                         Text("Warning: Keeping the screen active for long periods may cause burn-in on some TVs.")
@@ -83,7 +83,7 @@ struct SettingsView: View {
                             .foregroundColor(.red)
                     }
                 }
-                .padding(.vertical, 20)
+                .padding()
 
                 // About section
                 Section(header: Text("About").font(.headline)) {
@@ -113,6 +113,7 @@ struct SettingsView: View {
                         }
                         .padding()
                     }
+                    .cornerRadius(2)
 
                     HStack { Text("App"); Spacer(); Text("earsonics").foregroundColor(.secondary) }
                         .focusable()
@@ -124,8 +125,11 @@ struct SettingsView: View {
                         .focusable()
                 }
                 .padding(.vertical, 20)
+                
             }
 //            .navigationTitle("Settings")
+            .padding(.horizontal, 60)
+            .padding(.top, 80)
         }
     }
 }

@@ -42,7 +42,6 @@ struct SongsView: View {
                                 }
                             }
                             .padding(.horizontal, 60)
-                            .padding(.top, 20)
 
                             LazyVStack(spacing: 2) {
                                 ForEach(Array(vm.songs.enumerated()), id: \.element.id) { idx, song in

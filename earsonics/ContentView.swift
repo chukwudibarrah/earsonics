@@ -23,33 +23,35 @@ struct ContentView: View {
             // buttons are removed from the tvOS focus chain entirely
             TabView(selection: $selectedTab) {
                 HomeView()
-                    .tabItem { Label("Home", systemImage: "house.fill") }
+                    .tabItem { Text("Home") }
                     .tag(Tab.home)
 
                 ArtistsView()
-                    .tabItem { Label("Artists", systemImage: "music.mic") }
+                    .tabItem { Text("Artists") }
                     .tag(Tab.artists)
 
                 SongsView()
-                    .tabItem { Label("Songs", systemImage: "music.note") }
+                    .tabItem { Text("Songs") }
                     .tag(Tab.songs)
 
                 PlaylistsView()
-                    .tabItem { Label("Playlists", systemImage: "music.note.list") }
+                    .tabItem { Text("Playlists") }
                     .tag(Tab.playlists)
 
                 StarredView()
-                    .tabItem { Label("Favourites", systemImage: "heart.fill") }
+                    .tabItem { Text("Favourites") }
                     .tag(Tab.starred)
+                
+                SettingsView()
+                    .tabItem { Text("Settings") }
+                    .tag(Tab.settings)
 
                 SearchView(goHome: { selectedTab = .home })
-                    .tabItem { Label("Search", systemImage: "magnifyingglass") }
+                    .tabItem { Text("Search") }
                     .tag(Tab.search)
 
-                SettingsView()
-                    .tabItem { Label("Settings", systemImage: "gearshape.fill") }
-                    .tag(Tab.settings)
             }
+            .tabViewStyle(.sidebarAdaptable)
             .environmentObject(appState)
             .disabled(showNowPlaying) // remove from focus chain when player is open
 
@@ -58,7 +60,7 @@ struct ContentView: View {
                 MiniPlayerBar(onTap: { withAnimation { showNowPlaying = true } })
                     .environmentObject(appState)
                     .padding(.top, 60)
-                    .padding(.leading, 80)
+//                    .padding(.leading, 50)
                     .zIndex(10)
                     .transition(.opacity)
                     .disabled(showNowPlaying)

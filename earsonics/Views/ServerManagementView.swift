@@ -29,9 +29,10 @@ struct ServerManagementView: View {
                             .font(.callout)
                     }
                 }
-                .padding(.top, 40)
+                .padding()
             }
             .navigationTitle("Servers")
+            .padding(.horizontal, 60)
         }
     }
 }
