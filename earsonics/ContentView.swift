@@ -47,7 +47,7 @@ struct ContentView: View {
                     .tag(Tab.settings)
 
                 SearchView(goHome: { selectedTab = .home })
-                    .tabItem { Text("Search") }
+                    .tabItem { Label("", systemImage: "magnifyingglass") }
                     .tag(Tab.search)
 
             }
