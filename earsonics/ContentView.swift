@@ -51,7 +51,6 @@ struct ContentView: View {
                     .tag(Tab.search)
 
             }
-            .tabViewStyle(.sidebarAdaptable)
             .environmentObject(appState)
             .disabled(showNowPlaying) // remove from focus chain when player is open
 
