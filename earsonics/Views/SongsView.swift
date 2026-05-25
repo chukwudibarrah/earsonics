@@ -29,14 +29,15 @@ struct SongsView: View {
                         VStack(alignment: .leading, spacing: 20) {
                             HStack(spacing: 16) {
                                 Button {
+                                    appState.player.isShuffled = false
                                     appState.player.load(songs: vm.songs, startIndex: 0)
                                 } label: {
                                     Label("Play all", systemImage: "play.fill")
                                 }
                                 Button {
-                                    var shuffled = vm.songs
-                                    shuffled.shuffle()
-                                    appState.player.load(songs: shuffled, startIndex: 0)
+                                    appState.player.isShuffled = false
+                                    appState.player.load(songs: vm.songs, startIndex: 0)
+                                    appState.player.toggleShuffle()
                                 } label: {
                                     Label("Shuffle play", systemImage: "shuffle")
                                 }
@@ -45,12 +46,7 @@ struct SongsView: View {
 
                             LazyVStack(spacing: 2) {
                                 ForEach(Array(vm.songs.enumerated()), id: \.element.id) { idx, song in
-                                    Button {
-                                        appState.player.load(songs: vm.songs, startIndex: idx)
-                                    } label: {
-                                        SongRow(song: song, index: idx, playlists: playlists, showTrackNumber: false)
-                                    }
-                                    .buttonStyle(.card)
+                                    SongRow(song: song, index: idx, songs: vm.songs, playlists: playlists, showTrackNumber: false)
                                 }
 
                                 if vm.hasMore {
@@ -85,6 +81,7 @@ struct SongsView: View {
                 playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []
             }
         }
+        .padding(.top, layoutTopPadding)
     }
 }
 

@@ -1,4 +1,4 @@
-// Views/SearchView.swift
+ // Views/SearchView.swift
 import SwiftUI
 
 struct SearchView: View {
@@ -88,12 +88,7 @@ struct SearchView: View {
                             if !results.songs.isEmpty {
                                 ResultSection(title: "Songs") {
                                     ForEach(Array(results.songs.enumerated()), id: \.element.id) { idx, song in
-                                        Button {
-                                            appState.player.load(songs: results.songs, startIndex: idx)
-                                        } label: {
-                                            SongRow(song: song, index: idx, playlists: playlists, showTrackNumber: false)
-                                        }
-                                        .buttonStyle(.card)
+                                        SongRow(song: song, index: idx, songs: results.songs, playlists: playlists, showTrackNumber: false)
                                     }
                                 }
                             }
@@ -111,6 +106,9 @@ struct SearchView: View {
                     }
                 }
             }
+            .navigationDestination(for: Album.self) { album in
+                AlbumDetailView(album: album)
+            }
             .onExitCommand {
                 if !query.isEmpty {
                     query = ""
@@ -120,6 +118,7 @@ struct SearchView: View {
             }
             .task { playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? [] }
         }
+        .padding(.top, layoutTopPadding)
     }
 
     private func performSearch(query: String) async {

@@ -17,7 +17,7 @@ struct MiniPlayerBar: View {
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(song.title)
-                            .font(.caption2).bold()
+                            .font(.caption2)
                             .lineLimit(1)
                         Text(song.artist ?? "")
                             .font(.caption2)
@@ -34,7 +34,7 @@ struct MiniPlayerBar: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 10)
-                .frame(width: 360, height: 100)
+                .frame(width: 330, height: 100)
                 .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
                 .shadow(color: .black.opacity(0.4), radius: 12, y: 4)
             }

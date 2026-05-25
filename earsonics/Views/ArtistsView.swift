@@ -5,6 +5,7 @@ struct ArtistsView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var vm = LibraryViewModel()
     @State private var searchText: String = ""
+    @State private var navPath = NavigationPath()
 
     var filtered: [Artist] {
         searchText.isEmpty ? vm.artists : vm.artists.filter {
@@ -13,7 +14,7 @@ struct ArtistsView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navPath) {
             Group {
                 if vm.isLoading && vm.artists.isEmpty {
                     ProgressView("Loading artists...")
@@ -30,17 +31,18 @@ struct ArtistsView: View {
                                 .buttonStyle(.card)
                             }
                         }
-                        .padding(.horizontal, 60)
-                        .padding(.vertical, 60)
                         .padding(.bottom, 100)
                     }
                     .searchable(text: $searchText, prompt: "Search artists")
                 }
             }
+            .navigationDestination(for: Album.self) { album in
+                AlbumDetailView(album: album)
+                    .environmentObject(appState)
+            }
             .task { if vm.artists.isEmpty { await vm.loadHome() } }
         }
-//        .padding(.top, 80)
-        .padding(.horizontal, 60)
+        .padding(.top, layoutTopPadding)
     }
 }
 
@@ -49,24 +51,24 @@ struct ArtistRow: View {
     let artist: Artist
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 20) {
             CoverArtView(id: artist.coverArt, size: 100)
                 .frame(width: 60, height: 60)
-                .cornerRadius(8)
+                .cornerRadius(6)
             VStack(alignment: .leading, spacing: 4) {
                 Text(artist.name)
-                    .font(.headline)
+                    .font(.caption2).bold(true)
                 if let count = artist.albumCount {
                     Text("\(count) albums")
-                        .font(.caption)
+                        .font(.caption2).foregroundColor(.secondary)
                 }
             }
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.callout)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 50)
+        .padding(.vertical, 15)
     }
 }
 
@@ -74,88 +76,155 @@ struct ArtistRow: View {
 struct ArtistDetailView: View {
     let artist: Artist
     @EnvironmentObject var appState: AppState
+    @ObservedObject private var player = AudioPlayerService.shared
     @State private var albums: [Album] = []
     @State private var isLoading = true
     @State private var isStarred: Bool
-    @State private var navPath = NavigationPath()
+    @State private var isFetchingTracks = false
+    @State private var fetchErrorOccurred = false
 
     init(artist: Artist) {
         self.artist = artist
         _isStarred = State(initialValue: artist.starred != nil)
     }
 
+    var isThisArtistPlaying: Bool {
+        player.currentSong?.artistId == artist.id
+    }
+
     var body: some View {
-        NavigationStack(path: $navPath) {
-            ZStack(alignment: .top) {
-                // Background artist name
-                Text(artist.name)
-                    .font(.system(size: 240, weight: .black))
-                    .foregroundColor(.white.opacity(0.05))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.2)
-                    .padding(.top, 40)
-                    .ignoresSafeArea()
+        ZStack(alignment: .top) {
+            // Background artist name watermark
+            Text(artist.name)
+                .font(.system(size: 200, weight: .black))
+                .foregroundColor(.white.opacity(0.05))
+                .lineLimit(2)
+                .minimumScaleFactor(0.5)
+                .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 40) {
-                        // Header
-                        HStack(spacing: 40) {
-                            CoverArtView(id: artist.coverArt, size: 400)
-                                .frame(width: 200, height: 200)
-                                .cornerRadius(100)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 40) {
+                    // Header
+                    HStack(spacing: 50) {
+                        CoverArtView(id: artist.coverArt, size: 400)
+                            .frame(width: 200, height: 200)
+                            .cornerRadius(100)
 
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text(artist.name).font(.largeTitle).bold()
-                                if let count = artist.albumCount {
-                                    Text("\(count) albums").foregroundColor(.secondary)
-                                }
-                                HStack(spacing: 16) {
-                                    Button {
-                                        let allSongs = albums.flatMap { $0.songs ?? [] }
-                                        if !allSongs.isEmpty {
-                                            appState.player.load(songs: allSongs, startIndex: 0)
-                                        }
-                                    } label: {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(artist.name).font(.largeTitle).bold()
+                            if let count = artist.albumCount {
+                                Text("\(count) albums").foregroundColor(.secondary)
+                            }
+                            HStack(spacing: 20) {
+                                Button {
+                                    playOrShuffleArtistDiscography(shuffle: false)
+                                } label: {
+                                    if isFetchingTracks {
+                                        ProgressView().controlSize(.small)
+                                    } else {
                                         Label("Play all", systemImage: "play.fill")
                                     }
+                                }
+                                .controlSize(.small)
+                                .disabled(isFetchingTracks)
 
-                                    StarButton(isStarred: isStarred, artistId: artist.id) { newVal in
-                                        isStarred = newVal
+                                Button {
+                                    playOrShuffleArtistDiscography(shuffle: true)
+                                } label: {
+                                    if isFetchingTracks {
+                                        ProgressView().controlSize(.small)
+                                    } else {
+                                        Label("Shuffle", systemImage: "shuffle")
+                                            .foregroundColor(isThisArtistPlaying && player.isShuffled ? .accentColor : .primary)
                                     }
                                 }
+                                .controlSize(.small)
+                                .disabled(isFetchingTracks)
+
+                                StarButton(isStarred: isStarred, artistId: artist.id) { newVal in
+                                    isStarred = newVal
+                                }
                             }
-                            Spacer()
                         }
-                        .padding(.horizontal, 60)
+                        Spacer()
+                    }
 
-                        // Albums grid — Button + CardlessButtonStyle, no NavigationLink card
-                        if isLoading {
-                            ProgressView().frame(maxWidth: .infinity)
-                        } else {
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 350), spacing: 24)], spacing: 32) {
-                                ForEach(albums) { album in
-                                    Button {
-                                        navPath.append(album)
-                                    } label: {
-                                        AlbumCard(album: album)
-                                    }
-                                    .buttonStyle(.card)
+                    // Albums grid
+                    if isLoading {
+                        ProgressView().frame(maxWidth: .infinity)
+                    } else {
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 350), spacing: 10)], spacing: 50) {
+                            ForEach(albums) { album in
+                                NavigationLink(value: album) {
+                                    AlbumCard(album: album)
                                 }
+                                .buttonStyle(.card)
                             }
-                            .padding(.horizontal, 60)
                         }
                     }
-                    .padding(.vertical, 60)
-                    .padding(.bottom, 100)
                 }
-                .navigationDestination(for: Album.self) { album in
-                    AlbumDetailView(album: album)
+                .padding(.bottom, 30)
+            }
+            .task {
+                isLoading = true
+                albums = (try? await SubsonicClient.shared.getArtistAlbums(artistId: artist.id)) ?? []
+                isLoading = false
+            }
+        }
+        .alert("Connection Issue", isPresented: $fetchErrorOccurred) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Could not load the full artist discography. Please check your server connection and try again.")
+        }
+    }
+
+    // MARK: - Lazy-fetch discography then play/shuffle
+    private func playOrShuffleArtistDiscography(shuffle: Bool) {
+        guard !albums.isEmpty else { return }
+        isFetchingTracks = true
+        fetchErrorOccurred = false
+
+        Task {
+            var allTracks: [Song] = []
+            var successfulFetches = 0
+
+            // Chunk into batches of 5 to avoid slamming the server
+            let chunks = stride(from: 0, to: albums.count, by: 5).map {
+                Array(albums[$0..<min($0 + 5, albums.count)])
+            }
+
+            for chunk in chunks {
+                await withTaskGroup(of: [Song]?.self) { group in
+                    for album in chunk {
+                        group.addTask {
+                            (try? await SubsonicClient.shared.getAlbum(id: album.id))?.songs
+                        }
+                    }
+                    for await songs in group {
+                        if let songs = songs {
+                            allTracks.append(contentsOf: songs)
+                            successfulFetches += 1
+                        }
+                    }
                 }
-                .task {
-                    isLoading = true
-                    albums = (try? await SubsonicClient.shared.getArtistAlbums(artistId: artist.id)) ?? []
-                    isLoading = false
+            }
+
+            let successRate = Double(successfulFetches) / Double(albums.count)
+
+            await MainActor.run {
+                isFetchingTracks = false
+                guard successRate >= 0.5 && !allTracks.isEmpty else {
+                    fetchErrorOccurred = true
+                    return
                 }
+
+                // Sort chronologically then by track number
+                let sorted = allTracks.sorted {
+                    ($0.year ?? 0, $0.track ?? 0) < ($1.year ?? 0, $1.track ?? 0)
+                }
+
+                appState.player.isShuffled = shuffle
+                appState.player.load(songs: sorted, startIndex: 0)
             }
         }
     }

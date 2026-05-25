@@ -36,13 +36,18 @@ struct AlbumDetailView: View {
                     
 
                     Button {
-                        var shuffled = songs
-                        shuffled.shuffle()
-                        appState.player.load(songs: shuffled, startIndex: 0)
+                        if isThisAlbumPlaying {
+                            player.toggleShuffle()
+                        } else if !songs.isEmpty {
+                            appState.player.isShuffled = false
+                            appState.player.load(songs: songs, startIndex: 0)
+                            player.toggleShuffle()
+                        }
                     } label: {
                         Label("Shuffle", systemImage: "shuffle")
                             .frame(maxWidth: .infinity)
                             .font(.caption2)
+                            .foregroundColor(isThisAlbumPlaying && player.isShuffled ? .accentColor : .primary)
                     }
 
                     Button {
@@ -158,12 +163,7 @@ struct AlbumDetailView: View {
                 ScrollView {
                     LazyVStack(spacing: 5) {
                         ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
-                            Button {
-                                appState.player.load(songs: songs, startIndex: idx)
-                            } label: {
-                                SongRow(song: song, index: idx, playlists: playlists)
-                            }
-                            .buttonStyle(.card)
+                            SongRow(song: song, index: idx, songs: songs, playlists: playlists)
                         }
                     }
                     .padding(.horizontal, 20)
@@ -172,8 +172,8 @@ struct AlbumDetailView: View {
                 }
             }
         }
-.padding(.horizontal, 60)
-        .padding(.top, 200) // add padding to top of tracklist
+//.padding(.horizontal, 60)
+        .padding(.top, layoutTopPadding)
         .task {
             isLoading = true
             async let albumLoad = SubsonicClient.shared.getAlbum(id: album.id)
@@ -192,16 +192,22 @@ struct AlbumDetailView: View {
 struct SongRow: View {
     let song: Song
     let index: Int
+    let songs: [Song]                          // full queue for tap-to-play
     var playlists: [Playlist] = []
     var showTrackNumber: Bool = true
+    var onRemove: (() -> Void)? = nil          // playlist-specific remove action
     @EnvironmentObject var appState: AppState
     @State private var isStarred: Bool
 
-    init(song: Song, index: Int, playlists: [Playlist] = [], showTrackNumber: Bool = true) {
+    init(song: Song, index: Int, songs: [Song],
+         playlists: [Playlist] = [], showTrackNumber: Bool = true,
+         onRemove: (() -> Void)? = nil) {
         self.song = song
         self.index = index
+        self.songs = songs
         self.playlists = playlists
         self.showTrackNumber = showTrackNumber
+        self.onRemove = onRemove
         _isStarred = State(initialValue: song.starred != nil)
     }
 
@@ -210,54 +216,56 @@ struct SongRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 16) {
-            // Track number / playing indicator
-            if isCurrentSong || showTrackNumber {
-                ZStack {
-                    if isCurrentSong {
-                        Image(systemName: appState.player.isPlaying ? "waveform" : "pause.fill")
-                            .foregroundColor(.accentColor)
+        Button {
+            appState.player.load(songs: songs, startIndex: index)
+        } label: {
+            HStack(spacing: 16) {
+                // Track number / playing indicator
+                if isCurrentSong || showTrackNumber {
+                    ZStack {
+                        if isCurrentSong {
+                            Image(systemName: appState.player.isPlaying ? "waveform" : "pause.fill")
+                                .foregroundColor(.accentColor)
+                                .font(.caption2)
+                        } else if showTrackNumber {
+                            Text(String(format: "%d", song.track ?? (index + 1)))
+                                .font(.caption)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                    }
+                    .frame(width: 32, alignment: .center)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(song.title)
+                        .font(.footnote)
+                        .fontWeight(isCurrentSong ? .bold : .regular)
+                        .foregroundColor(isCurrentSong ? .accentColor : .primary)
+                        .lineLimit(1)
+                    if let artist = song.artist {
+                        Text(artist)
                             .font(.caption2)
-                    } else if showTrackNumber {
-                        Text(String(format: "%d", song.track ?? (index + 1)))
-                            .font(.caption)
                             .lineLimit(1)
-                            .minimumScaleFactor(0.7)
                     }
                 }
-                .frame(width: 32, alignment: .center)
+
+                Spacer()
+
+                // Plain image, NOT a button, to prevent focus trapping
+                Image(systemName: isStarred ? "heart.fill" : "heart")
+                    .foregroundColor(isStarred ? .red : .primary.opacity(0.8))
+                    .font(.callout)
+
+                Text(song.durationFormatted)
+                    .font(.caption.monospacedDigit())
+                    .fixedSize()
             }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(song.title)
-                    .font(.footnote)
-                    .fontWeight(isCurrentSong ? .bold : .regular)
-                    .foregroundColor(isCurrentSong ? .accentColor : .primary)
-                    .lineLimit(1)
-                if let artist = song.artist {
-                    Text(artist)
-                        .font(.caption2)
-                        .lineLimit(1)
-                }
-            }
-
-            Spacer()
-
-//            FormatBadge(song: song)
-
-            // Plain image, NOT a button, to prevent focus trapping
-            Image(systemName: isStarred ? "heart.fill" : "heart")
-                .foregroundColor(isStarred ? .red : .primary.opacity(0.8))
-                .font(.callout)
-
-            Text(song.durationFormatted)
-                .font(.caption.monospacedDigit())
-                .fixedSize()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .buttonStyle(.card)
         .onPlayPauseCommand { appState.player.togglePlayPause() }
-        // Context menu: Star + Play Next + Add to Queue + Add to playlist
         .contextMenu {
             Button {
                 Task {
@@ -293,6 +301,14 @@ struct SongRow: View {
                     } label: {
                         Label("Add to \(playlist.name)", systemImage: "music.note.list")
                     }
+                }
+            }
+            if let onRemove {
+                Divider()
+                Button(role: .destructive) {
+                    onRemove()
+                } label: {
+                    Label("Remove from Playlist", systemImage: "minus.circle")
                 }
             }
         }

@@ -34,7 +34,7 @@ struct HomeView: View {
                         // NO horizontal padding here — each shelf manages its own
 //                        .padding(.vertical, 40)
                         .padding(.bottom, 120)
-                        .padding(.top, 90)
+                        .padding(.top, layoutTopPadding)
                     }
                 }
             }

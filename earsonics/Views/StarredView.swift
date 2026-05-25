@@ -26,7 +26,7 @@ struct StarredView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, 60)
-                .padding(.top, 80)
+                .padding(.top, layoutTopPadding)
 
                 Group {
                     if isLoading {
@@ -42,14 +42,15 @@ struct StarredView: View {
                                     VStack(alignment: .leading, spacing: 20) {
                                         HStack(spacing: 16) {
                                             Button {
+                                                appState.player.isShuffled = false
                                                 appState.player.load(songs: starredSongs, startIndex: 0)
                                             } label: {
                                                 Label("Play All", systemImage: "play.fill")
                                             }
                                             Button {
-                                                var shuffled = starredSongs
-                                                shuffled.shuffle()
-                                                appState.player.load(songs: shuffled, startIndex: 0)
+                                                appState.player.isShuffled = false
+                                                appState.player.load(songs: starredSongs, startIndex: 0)
+                                                appState.player.toggleShuffle()
                                             } label: {
                                                 Label("Shuffle Play", systemImage: "shuffle")
                                             }
@@ -59,12 +60,7 @@ struct StarredView: View {
 
                                         LazyVStack(spacing: 2) {
                                             ForEach(Array(starredSongs.enumerated()), id: \.element.id) { idx, song in
-                                                Button {
-                                                    appState.player.load(songs: starredSongs, startIndex: idx)
-                                                } label: {
-                                                    SongRow(song: song, index: idx, playlists: playlists, showTrackNumber: false)
-                                                }
-                                                .buttonStyle(.card)
+                                                SongRow(song: song, index: idx, songs: starredSongs, playlists: playlists, showTrackNumber: false)
                                             }
                                         }
                                         .padding(.horizontal, 60)
@@ -113,6 +109,9 @@ struct StarredView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .navigationDestination(for: Album.self) { album in
+                AlbumDetailView(album: album)
             }
             .task { await loadStarred() }
         }
