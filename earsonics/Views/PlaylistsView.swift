@@ -7,71 +7,69 @@ struct PlaylistsView: View {
     @State private var isLoading = true
     @State private var showCreate = false
     @State private var newPlaylistName = ""
+    @ObservedObject private var player = AudioPlayerService.shared
 
     var body: some View {
         NavigationStack {
-            Group {
-                if isLoading && playlists.isEmpty {
-                    ProgressView("Loading Playlists...")
-                } else if playlists.isEmpty {
-                    VStack(spacing: 20) {
-                        Image(systemName: "music.note.list")
-                            .font(.system(size: 60)).foregroundColor(.secondary)
-                        Text("No Playlists").font(.title)
-                        Text("Create a playlist to get started").foregroundColor(.secondary)
-                    }
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 8) {
-                            ForEach(playlists) { playlist in
-                                NavigationLink {
-                                    PlaylistDetailView(playlist: playlist)
-                                        .environmentObject(appState)
-                                } label: {
-                                    PlaylistRow(playlist: playlist) {
-                                        Task { await loadPlaylists() }
-                                    }
-                                }
-                                .buttonStyle(.card)
-                                .contextMenu {
-                                    Button(role: .destructive) {
-                                        Task {
-                                            try? await SubsonicClient.shared.deletePlaylist(id: playlist.id)
-                                            await loadPlaylists()
-                                        }
-                                    } label: { Label("Delete Playlist", systemImage: "trash") }
+            if isLoading && playlists.isEmpty {
+                ProgressView("Loading Playlists...")
+            } else if playlists.isEmpty {
+                VStack(spacing: 20) {
+                    Image(systemName: "music.note.list")
+                        .font(.system(size: 60)).foregroundColor(.secondary)
+                    Text("No Playlists").font(.title)
+                    Text("Create a playlist to get started").foregroundColor(.secondary)
+                }
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 8) {
+                        ForEach(playlists) { playlist in
+                            NavigationLink {
+                                PlaylistDetailView(playlist: playlist)
+                                    .environmentObject(appState)
+                            } label: {
+                                PlaylistRow(playlist: playlist) {
+                                    Task { await loadPlaylists() }
                                 }
                             }
-                        }
-                        .padding(.horizontal, 60)
-                        .padding(.vertical, 24)
-                        .padding(.bottom, 120)
-                    }
-                }
-            }
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    Button { showCreate = true } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            .task { await loadPlaylists() }
-            .alert("New playlist", isPresented: $showCreate) {
-                TextField("Name", text: $newPlaylistName)
-                Button("Create") {
-                    Task {
-                        if !newPlaylistName.isEmpty {
-                            _ = try? await SubsonicClient.shared.createPlaylist(name: newPlaylistName)
-                            newPlaylistName = ""
-                            await loadPlaylists()
+                            .buttonStyle(.card)
+                            .contextMenu {
+                                Button(role: .destructive) {
+                                    Task {
+                                        try? await SubsonicClient.shared.deletePlaylist(id: playlist.id)
+                                        await loadPlaylists()
+                                    }
+                                } label: { Label("Delete Playlist", systemImage: "trash") }
+                            }
                         }
                     }
+                    .padding(.top, 20)
+                    .padding(.horizontal, AppLayout.horizontalPadding)
+                    .padding(.bottom, 120)
                 }
-                Button("Cancel", role: .cancel) { newPlaylistName = "" }
             }
         }
-        .padding(.top, layoutTopPadding)
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button { showCreate = true } label: {
+                    Image(systemName: "plus")
+                }
+            }
+        }
+        .task { await loadPlaylists() }
+        .alert("New playlist", isPresented: $showCreate) {
+            TextField("Name", text: $newPlaylistName)
+            Button("Create") {
+                Task {
+                    if !newPlaylistName.isEmpty {
+                        _ = try? await SubsonicClient.shared.createPlaylist(name: newPlaylistName)
+                        newPlaylistName = ""
+                        await loadPlaylists()
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) { newPlaylistName = "" }
+        }
     }
 
     private func loadPlaylists() async {
@@ -122,7 +120,7 @@ struct PlaylistDetailView: View {
     @State private var isLoading = true
     @State private var isEditing = false
     @State private var editName = ""
-    @State private var playlists: [Playlist] = [] // for add-to-playlist from songs
+    @State private var playlists: [Playlist] = []
 
     var songs: [Song] { loadedPlaylist?.songs ?? [] }
 
@@ -133,9 +131,8 @@ struct PlaylistDetailView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 50) {
-            // ── Left panel ──────────────────────────────────────────────────
+            // Left panel
             VStack(alignment: .leading, spacing: 16) {
-                // Actions (above art, matching AlbumDetailView spec)
                 VStack(spacing: 10) {
                     Button {
                         if isThisPlaylistPlaying {
@@ -198,15 +195,20 @@ struct PlaylistDetailView: View {
             }
             .frame(width: 250)
 
-            // ── Right panel: track list ──────────────────────────────────────
+            // Right panel: track list
             if isLoading {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 5) {
                         ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
-                            SongRow(song: song, index: idx, songs: songs,
-                                    playlists: playlists, showTrackNumber: false) {
+                            SongRow(
+                                song: song,
+                                index: idx,
+                                contextSongs: songs,
+                                playlists: playlists,
+                                showTrackNumber: false
+                            ) {
                                 Task {
                                     try? await SubsonicClient.shared.updatePlaylist(
                                         id: playlist.id, indexesToRemove: [idx])
@@ -221,8 +223,8 @@ struct PlaylistDetailView: View {
                 }
             }
         }
-        .padding(.top, layoutTopPadding)
-        .padding(.horizontal, 60)
+        .padding(.top, 20)
+        .padding(.horizontal, AppLayout.horizontalPadding)
         .task {
             await reload()
             playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []

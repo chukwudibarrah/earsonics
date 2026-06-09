@@ -1,4 +1,4 @@
- // Views/SearchView.swift
+// Views/SearchView.swift
 import SwiftUI
 
 struct SearchView: View {
@@ -8,6 +8,7 @@ struct SearchView: View {
     @State private var isSearching = false
     @State private var searchTask: Task<Void, Never>? = nil
     @State private var playlists: [Playlist] = []
+    @ObservedObject private var player = AudioPlayerService.shared
 
     var goHome: () -> Void = {}
 
@@ -42,8 +43,8 @@ struct SearchView: View {
                 .padding(16)
                 .background(Color.white.opacity(0.1))
                 .cornerRadius(12)
-                .padding(.horizontal, 60)
-//                .padding(.top, 80)
+                .padding(.horizontal, AppLayout.horizontalPadding)
+                .padding(.top, 20)
 
                 if query.isEmpty {
                     Spacer()
@@ -88,7 +89,7 @@ struct SearchView: View {
                             if !results.songs.isEmpty {
                                 ResultSection(title: "Songs") {
                                     ForEach(Array(results.songs.enumerated()), id: \.element.id) { idx, song in
-                                        SongRow(song: song, index: idx, songs: results.songs, playlists: playlists, showTrackNumber: false)
+                                        SongRow(song: song, index: idx, contextSongs: results.songs, playlists: playlists, showTrackNumber: false)
                                     }
                                 }
                             }
@@ -98,11 +99,11 @@ struct SearchView: View {
                                     Text("No results for \"\(query)\"").foregroundColor(.secondary)
                                 }
                                 .frame(maxWidth: .infinity)
-                                .padding(.top, 60)
+                                .padding(.top, 30)
                             }
                         }
-                        .padding(.horizontal, 60)
-                        .padding(.vertical, 30)
+                        .padding(.horizontal, AppLayout.horizontalPadding)
+                        .padding(.vertical, 32)
                     }
                 }
             }
@@ -118,7 +119,6 @@ struct SearchView: View {
             }
             .task { playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? [] }
         }
-        .padding(.top, layoutTopPadding)
     }
 
     private func performSearch(query: String) async {

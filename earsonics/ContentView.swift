@@ -18,9 +18,8 @@ struct ContentView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            // Main tab view — disabled when Now Playing is active so its
-            // buttons are removed from the tvOS focus chain entirely
+        ZStack {
+            // Main tab view with safe area inset for mini player
             TabView(selection: $selectedTab) {
                 HomeView()
                     .tabItem { Text("Home") }
@@ -49,35 +48,48 @@ struct ContentView: View {
                 SearchView(goHome: { selectedTab = .home })
                     .tabItem { Label("", systemImage: "magnifyingglass") }
                     .tag(Tab.search)
-
             }
             .environmentObject(appState)
-            .disabled(showNowPlaying) // remove from focus chain when player is open
-
-            // Mini player — top-left corner, aligned with tab bar
-            if player.currentSong != nil && !showNowPlaying {
-                MiniPlayerBar(onTap: { withAnimation { showNowPlaying = true } })
-                    .environmentObject(appState)
-                    .padding(.top, 60)
-//                    .padding(.leading, 50)
-                    .zIndex(10)
+            .safeAreaInset(edge: .top) {
+                if player.currentSong != nil && !showNowPlaying {
+                    HStack {
+                        MiniPlayerBar(onTap: {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                showNowPlaying = true
+                            }
+                        })
+                        .environmentObject(appState)
+                        .padding(.leading, AppLayout.horizontalPadding)
+                        
+                        Spacer()
+                    }
+                    .padding(.top, AppLayout.miniPlayerTopOffset)
                     .transition(.opacity)
-                    .disabled(showNowPlaying)
+                } else {
+                    Color.clear.frame(height: 0)
+                }
             }
+            .disabled(showNowPlaying)
 
             // Full-screen Now Playing overlay
-            // .disabled(false) on this layer so its buttons ARE in the focus chain
             if showNowPlaying {
-                NowPlayingView(dismiss: { withAnimation { showNowPlaying = false } })
+                NowPlayingView(dismiss: {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        showNowPlaying = false
+                    }
+                })
                     .environmentObject(appState)
                     .zIndex(20)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .onExitCommand {
-                        withAnimation { showNowPlaying = false }
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                            showNowPlaying = false
+                        }
                     }
             }
         }
-        .animation(.easeInOut(duration: 0.28), value: showNowPlaying)
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: showNowPlaying)
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: player.currentSong != nil)
         .onAppear {
             if appState.serverStore.servers.isEmpty {
                 selectedTab = .settings

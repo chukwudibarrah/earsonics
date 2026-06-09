@@ -22,7 +22,7 @@ struct QueueView: View {
                 }
                 .padding(.top, 350)
                 .padding(.bottom, 600)
-                .padding(.horizontal, 60)
+                .padding(.horizontal, AppLayout.horizontalPadding)
             }
             .navigationTitle("Queue")
             .toolbar {

@@ -3,6 +3,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
+    @ObservedObject private var player = AudioPlayerService.shared
     @State private var showDonationQR = false
 
     var body: some View {
@@ -64,7 +65,7 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                    
+
                     Toggle(isOn: $appState.player.normalizeVolume) {
                         Text("Normalise volume")
                     }
@@ -93,27 +94,21 @@ struct SettingsView: View {
                         HStack {
                             Text("QR code me a coffee")
                             Spacer()
-                            Text("Show QR")
-                                .foregroundColor(.secondary)
+                            Text("Show QR").foregroundColor(.secondary)
                         }
                     }
                     .sheet(isPresented: $showDonationQR) {
                         VStack(spacing: 40) {
                             Text("Scan to donate a coffee!")
                                 .font(.subheadline)
-                            
                             Image("paypalme")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 500, height: 500)
-                            
-                            Button("Close") {
-                                showDonationQR = false
-                            }
+                            Button("Close") { showDonationQR = false }
                         }
                         .padding()
                     }
-                    .cornerRadius(2)
 
                     HStack { Text("App"); Spacer(); Text("earsonics").foregroundColor(.secondary) }
                         .focusable()
@@ -125,11 +120,9 @@ struct SettingsView: View {
                         .focusable()
                 }
                 .padding(.vertical, 20)
-                
             }
-//            .navigationTitle("Settings")
-            .padding(.horizontal, 60)
-            .padding(.top, 80)
+            .padding(.horizontal, AppLayout.horizontalPadding)
+            .padding(.top, 20)
         }
     }
 }

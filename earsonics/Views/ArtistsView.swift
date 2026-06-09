@@ -6,56 +6,54 @@ struct ArtistsView: View {
     @StateObject private var vm = LibraryViewModel()
     @State private var searchText: String = ""
     @State private var navPath = NavigationPath()
-
+    
     var filtered: [Artist] {
         searchText.isEmpty ? vm.artists : vm.artists.filter {
             $0.name.localizedCaseInsensitiveContains(searchText)
         }
     }
-
+    
     var body: some View {
         NavigationStack(path: $navPath) {
-            Group {
-                if vm.isLoading && vm.artists.isEmpty {
-                    ProgressView("Loading artists...")
-                } else {
-                    ScrollView {
-                        LazyVStack(spacing: 2) {
-                            ForEach(filtered) { artist in
-                                NavigationLink {
-                                    ArtistDetailView(artist: artist)
-                                        .environmentObject(appState)
-                                } label: {
-                                    ArtistRow(artist: artist)
-                                }
-                                .buttonStyle(.card)
+            if vm.isLoading && vm.artists.isEmpty {
+                ProgressView("Loading artists...")
+            } else {
+                ScrollView {
+                    LazyVStack(spacing: 2) {
+                        ForEach(filtered) { artist in
+                            NavigationLink {
+                                ArtistDetailView(artist: artist)
+                                    .environmentObject(appState)
+                            } label: {
+                                ArtistRow(artist: artist)
                             }
+                            .buttonStyle(.card)
                         }
-                        .padding(.bottom, 100)
                     }
-                    .searchable(text: $searchText, prompt: "Search artists")
+                    .padding(.top, 20)
+                    .padding(.horizontal, AppLayout.horizontalPadding)
+                    .padding(.bottom, 100)
                 }
+                .searchable(text: $searchText, prompt: "Search artists")
             }
-            .navigationDestination(for: Album.self) { album in
-                AlbumDetailView(album: album)
-                    .environmentObject(appState)
-            }
-            .task { if vm.artists.isEmpty { await vm.loadHome() } }
         }
-        .padding(.top, layoutTopPadding)
+        .navigationDestination(for: Album.self) { album in
+            AlbumDetailView(album: album)
+                .environmentObject(appState)
+        }
+        .task { if vm.artists.isEmpty { await vm.loadHome() } }
     }
 }
 
-
 struct ArtistRow: View {
     let artist: Artist
-
+    
     var body: some View {
         HStack(spacing: 20) {
             CoverArtView(id: artist.coverArt, size: 100)
                 .frame(width: 60, height: 60)
                 .cornerRadius(6)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text(artist.name)
                     .font(.caption2).bold(true)
                 if let count = artist.albumCount {
@@ -67,8 +65,7 @@ struct ArtistRow: View {
             Image(systemName: "chevron.right")
                 .font(.callout)
         }
-        .padding(.horizontal, 50)
-        .padding(.vertical, 15)
+        .padding()
     }
 }
 
@@ -82,16 +79,16 @@ struct ArtistDetailView: View {
     @State private var isStarred: Bool
     @State private var isFetchingTracks = false
     @State private var fetchErrorOccurred = false
-
+    
     init(artist: Artist) {
         self.artist = artist
         _isStarred = State(initialValue: artist.starred != nil)
     }
-
+    
     var isThisArtistPlaying: Bool {
         player.currentSong?.artistId == artist.id
     }
-
+    
     var body: some View {
         ZStack(alignment: .top) {
             // Background artist name watermark
@@ -101,7 +98,7 @@ struct ArtistDetailView: View {
                 .lineLimit(2)
                 .minimumScaleFactor(0.5)
                 .ignoresSafeArea()
-
+            
             ScrollView {
                 VStack(alignment: .leading, spacing: 40) {
                     // Header
@@ -109,7 +106,7 @@ struct ArtistDetailView: View {
                         CoverArtView(id: artist.coverArt, size: 400)
                             .frame(width: 200, height: 200)
                             .cornerRadius(100)
-
+                        
                         VStack(alignment: .leading, spacing: 12) {
                             Text(artist.name).font(.largeTitle).bold()
                             if let count = artist.albumCount {
@@ -127,7 +124,7 @@ struct ArtistDetailView: View {
                                 }
                                 .controlSize(.small)
                                 .disabled(isFetchingTracks)
-
+                                
                                 Button {
                                     playOrShuffleArtistDiscography(shuffle: true)
                                 } label: {
@@ -140,7 +137,7 @@ struct ArtistDetailView: View {
                                 }
                                 .controlSize(.small)
                                 .disabled(isFetchingTracks)
-
+                                
                                 StarButton(isStarred: isStarred, artistId: artist.id) { newVal in
                                     isStarred = newVal
                                 }
@@ -148,7 +145,7 @@ struct ArtistDetailView: View {
                         }
                         Spacer()
                     }
-
+                    
                     // Albums grid
                     if isLoading {
                         ProgressView().frame(maxWidth: .infinity)
@@ -163,6 +160,8 @@ struct ArtistDetailView: View {
                         }
                     }
                 }
+                .padding(.top, 20)
+                .padding(.horizontal, AppLayout.horizontalPadding)
                 .padding(.bottom, 30)
             }
             .task {
@@ -171,28 +170,27 @@ struct ArtistDetailView: View {
                 isLoading = false
             }
         }
-        .alert("Connection Issue", isPresented: $fetchErrorOccurred) {
+        .alert("Connection issue", isPresented: $fetchErrorOccurred) {
             Button("OK", role: .cancel) { }
         } message: {
             Text("Could not load the full artist discography. Please check your server connection and try again.")
         }
     }
-
+    
     // MARK: - Lazy-fetch discography then play/shuffle
     private func playOrShuffleArtistDiscography(shuffle: Bool) {
         guard !albums.isEmpty else { return }
         isFetchingTracks = true
         fetchErrorOccurred = false
-
+        
         Task {
             var allTracks: [Song] = []
             var successfulFetches = 0
-
-            // Chunk into batches of 5 to avoid slamming the server
+            
             let chunks = stride(from: 0, to: albums.count, by: 5).map {
                 Array(albums[$0..<min($0 + 5, albums.count)])
             }
-
+            
             for chunk in chunks {
                 await withTaskGroup(of: [Song]?.self) { group in
                     for album in chunk {
@@ -208,21 +206,20 @@ struct ArtistDetailView: View {
                     }
                 }
             }
-
+            
             let successRate = Double(successfulFetches) / Double(albums.count)
-
+            
             await MainActor.run {
                 isFetchingTracks = false
                 guard successRate >= 0.5 && !allTracks.isEmpty else {
                     fetchErrorOccurred = true
                     return
                 }
-
-                // Sort chronologically then by track number
+                
                 let sorted = allTracks.sorted {
                     ($0.year ?? 0, $0.track ?? 0) < ($1.year ?? 0, $1.track ?? 0)
                 }
-
+                
                 appState.player.isShuffled = shuffle
                 appState.player.load(songs: sorted, startIndex: 0)
             }

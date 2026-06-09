@@ -36,18 +36,13 @@ struct AlbumDetailView: View {
                     
 
                     Button {
-                        if isThisAlbumPlaying {
-                            player.toggleShuffle()
-                        } else if !songs.isEmpty {
-                            appState.player.isShuffled = false
-                            appState.player.load(songs: songs, startIndex: 0)
-                            player.toggleShuffle()
-                        }
+                        var shuffled = songs
+                        shuffled.shuffle()
+                        appState.player.load(songs: shuffled, startIndex: 0)
                     } label: {
                         Label("Shuffle", systemImage: "shuffle")
                             .frame(maxWidth: .infinity)
                             .font(.caption2)
-                            .foregroundColor(isThisAlbumPlaying && player.isShuffled ? .accentColor : .primary)
                     }
 
                     Button {
@@ -112,7 +107,6 @@ struct AlbumDetailView: View {
                 }
                 .controlSize(.small)
 
-
                 CoverArtView(id: album.coverArt, size: 400)
                     .frame(width: 250, height: 250)
                     .cornerRadius(16)
@@ -132,24 +126,23 @@ struct AlbumDetailView: View {
                 }
 
                 HStack(spacing: 5) {
-                    if let year = album.year { 
+                    if let year = album.year {
                         Text(String(format: "%d", year)).foregroundColor(.secondary)
                         if album.genre != nil || album.songCount != nil {
                             Text("•").foregroundColor(.secondary)
                         }
                     }
-                    if let genre = album.genre { 
+                    if let genre = album.genre {
                         Text(genre).foregroundColor(.secondary)
-                        if album.songCount != nil {
-                            Text("•").foregroundColor(.secondary)
-                        }
+//                        if album.songCount != nil {
+//                           Text("•").foregroundColor(.secondary)
+//                        }
                     }
-                    if let count = album.songCount { 
-                        Text("\(count) tracks").foregroundColor(.secondary) 
-                    }
+ //                   if let count = album.songCount {
+ //                       Text("\(count) tracks").foregroundColor(.secondary)
+ //                   }
                 }
                 .font(.caption2)
-
 
                 Spacer()
             }
@@ -163,17 +156,22 @@ struct AlbumDetailView: View {
                 ScrollView {
                     LazyVStack(spacing: 5) {
                         ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
-                            SongRow(song: song, index: idx, songs: songs, playlists: playlists)
+                            Button {
+                                appState.player.load(songs: songs, startIndex: idx)
+                            } label: {
+                                SongRow(song: song, index: idx, playlists: playlists)
+                            }
+                            .buttonStyle(.card)
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 20)   // prevent top card from clipping on first focus
+                    .padding(.top, 20)
                     .padding(.bottom, 120)
                 }
             }
         }
-//.padding(.horizontal, 60)
-        .padding(.top, layoutTopPadding)
+        .padding(.top, 20)
+        .padding(.horizontal, AppLayout.horizontalPadding)
         .task {
             isLoading = true
             async let albumLoad = SubsonicClient.shared.getAlbum(id: album.id)
@@ -192,19 +190,17 @@ struct AlbumDetailView: View {
 struct SongRow: View {
     let song: Song
     let index: Int
-    let songs: [Song]                          // full queue for tap-to-play
+    var contextSongs: [Song] = []
     var playlists: [Playlist] = []
     var showTrackNumber: Bool = true
-    var onRemove: (() -> Void)? = nil          // playlist-specific remove action
+    var onRemove: (() -> Void)? = nil
     @EnvironmentObject var appState: AppState
     @State private var isStarred: Bool
 
-    init(song: Song, index: Int, songs: [Song],
-         playlists: [Playlist] = [], showTrackNumber: Bool = true,
-         onRemove: (() -> Void)? = nil) {
+    init(song: Song, index: Int, contextSongs: [Song] = [], playlists: [Playlist] = [], showTrackNumber: Bool = true, onRemove: (() -> Void)? = nil) {
         self.song = song
         self.index = index
-        self.songs = songs
+        self.contextSongs = contextSongs
         self.playlists = playlists
         self.showTrackNumber = showTrackNumber
         self.onRemove = onRemove
@@ -216,99 +212,115 @@ struct SongRow: View {
     }
 
     var body: some View {
-        Button {
-            appState.player.load(songs: songs, startIndex: index)
-        } label: {
-            HStack(spacing: 16) {
-                // Track number / playing indicator
-                if isCurrentSong || showTrackNumber {
-                    ZStack {
-                        if isCurrentSong {
-                            Image(systemName: appState.player.isPlaying ? "waveform" : "pause.fill")
-                                .foregroundColor(.accentColor)
-                                .font(.caption2)
-                        } else if showTrackNumber {
-                            Text(String(format: "%d", song.track ?? (index + 1)))
-                                .font(.caption)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                        }
-                    }
-                    .frame(width: 32, alignment: .center)
-                }
+        if contextSongs.isEmpty {
+            rowContent
+                .contextMenu { contextMenuItems }
+        } else {
+            Button {
+                appState.player.load(songs: contextSongs, startIndex: index)
+            } label: {
+                rowContent
+            }
+            .buttonStyle(.card)
+            .contextMenu { contextMenuItems }
+        }
+    }
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(song.title)
-                        .font(.footnote)
-                        .fontWeight(isCurrentSong ? .bold : .regular)
-                        .foregroundColor(isCurrentSong ? .accentColor : .primary)
-                        .lineLimit(1)
-                    if let artist = song.artist {
-                        Text(artist)
+    @ViewBuilder
+    private var rowContent: some View {
+        HStack(spacing: 16) {
+            // Track number / playing indicator
+            if isCurrentSong || showTrackNumber {
+                ZStack {
+                    if isCurrentSong {
+                        Image(systemName: appState.player.isPlaying ? "waveform" : "pause.fill")
+                            .foregroundColor(.accentColor)
                             .font(.caption2)
+                    } else if showTrackNumber {
+                        Text(String(format: "%d", song.track ?? (index + 1)))
+                            .font(.caption)
                             .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                     }
                 }
+                .frame(width: 32, alignment: .center)
+            }
 
-                Spacer()
+            VStack(alignment: .leading, spacing: 2) {
+                Text(song.title)
+                    .font(.footnote)
+                    .fontWeight(isCurrentSong ? .bold : .regular)
+                    .foregroundColor(isCurrentSong ? .accentColor : .primary)
+                    .lineLimit(1)
+                if let artist = song.artist {
+                    Text(artist)
+                        .font(.caption2)
+                        .lineLimit(1)
+                }
+            }
 
-                // Plain image, NOT a button, to prevent focus trapping
+            Spacer()
+
+            // Vertical trailing alignment: heart button + duration in fixed width containers
+            HStack(spacing: 20) {
                 Image(systemName: isStarred ? "heart.fill" : "heart")
                     .foregroundColor(isStarred ? .red : .primary.opacity(0.8))
                     .font(.callout)
+                    .frame(width: 30, alignment: .center)
 
                 Text(song.durationFormatted)
                     .font(.caption.monospacedDigit())
-                    .fixedSize()
+                    .frame(width: 60, alignment: .trailing)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
         }
-        .buttonStyle(.card)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
         .onPlayPauseCommand { appState.player.togglePlayPause() }
-        .contextMenu {
-            Button {
-                Task {
-                    if isStarred {
-                        try? await SubsonicClient.shared.unstar(songId: song.id)
-                        isStarred = false
-                    } else {
-                        try? await SubsonicClient.shared.star(songId: song.id)
-                        isStarred = true
-                    }
-                }
-            } label: {
-                Label(isStarred ? "Unstar" : "Star", systemImage: isStarred ? "heart.slash" : "heart")
-            }
-            Button {
-                appState.player.addToQueueNext(song)
-            } label: {
-                Label("Play next", systemImage: "text.insert")
-            }
-            Button {
-                appState.player.addToQueue(song)
-            } label: {
-                Label("Add to queue", systemImage: "text.badge.plus")
-            }
-            if !playlists.isEmpty {
-                Divider()
-                ForEach(playlists) { playlist in
-                    Button {
-                        Task {
-                            try? await SubsonicClient.shared.updatePlaylist(
-                                id: playlist.id, songIdsToAdd: [song.id])
-                        }
-                    } label: {
-                        Label("Add to \(playlist.name)", systemImage: "music.note.list")
-                    }
+    }
+
+    @ViewBuilder
+    private var contextMenuItems: some View {
+        Button {
+            Task {
+                if isStarred {
+                    try? await SubsonicClient.shared.unstar(songId: song.id)
+                    isStarred = false
+                } else {
+                    try? await SubsonicClient.shared.star(songId: song.id)
+                    isStarred = true
                 }
             }
-            if let onRemove {
-                Divider()
-                Button(role: .destructive) {
-                    onRemove()
+        } label: {
+            Label(isStarred ? "Unstar" : "Star", systemImage: isStarred ? "heart.slash" : "heart")
+        }
+        Button {
+            appState.player.addToQueueNext(song)
+        } label: {
+            Label("Play next", systemImage: "text.insert")
+        }
+        Button {
+            appState.player.addToQueue(song)
+        } label: {
+            Label("Add to queue", systemImage: "text.badge.plus")
+        }
+        if let onRemove {
+            Divider()
+            Button(role: .destructive) {
+                onRemove()
+            } label: {
+                Label("Remove from playlist", systemImage: "minus.circle")
+            }
+        }
+        if !playlists.isEmpty {
+            Divider()
+            ForEach(playlists) { playlist in
+                Button {
+                    Task {
+                        try? await SubsonicClient.shared.updatePlaylist(
+                            id: playlist.id, songIdsToAdd: [song.id])
+                    }
                 } label: {
-                    Label("Remove from Playlist", systemImage: "minus.circle")
+                    Label("Add to \(playlist.name)", systemImage: "music.note.list")
                 }
             }
         }

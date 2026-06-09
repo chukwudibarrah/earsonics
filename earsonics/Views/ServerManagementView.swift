@@ -7,7 +7,7 @@ struct ServerManagementView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Servers") {
+                Section {
                     ForEach(appState.serverStore.servers) { server in
                         NavigationLink {
                             ServerDetailView(server: server)
@@ -29,7 +29,6 @@ struct ServerManagementView: View {
                             .font(.callout)
                     }
                 }
-                .padding()
             }
             .navigationTitle("Servers")
             .padding(.horizontal, 60)
@@ -87,7 +86,7 @@ struct ServerDetailView: View {
     }
 }
 
-// MARK: - Server Row
+
 struct ServerRow: View {
     let server: Server
     let isActive: Bool

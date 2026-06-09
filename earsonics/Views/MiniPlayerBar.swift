@@ -4,6 +4,7 @@ import SwiftUI
 struct MiniPlayerBar: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject private var player = AudioPlayerService.shared
+    @FocusState private var isFocused: Bool
     var onTap: () -> Void
 
     var body: some View {
@@ -16,14 +17,13 @@ struct MiniPlayerBar: View {
                         .shadow(radius: 4)
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(song.title)
-                            .font(.caption2)
-                            .lineLimit(1)
-                        Text(song.artist ?? "")
-                            .font(.caption2)
+                        ScrollingText(text: song.title, trackID: song.id, isFocused: isFocused)
+                            .frame(height: 14)
+                        ScrollingText(text: song.artist ?? "", trackID: song.id, isFocused: isFocused)
+                            .frame(height: 14)
                             .foregroundStyle(.secondary)
-                            .lineLimit(1)
                     }
+                    .font(.caption2)
                     .frame(maxWidth: 200, alignment: .leading)
 
                     Spacer(minLength: 0)
@@ -32,13 +32,13 @@ struct MiniPlayerBar: View {
                         .font(.callout)
                         .foregroundColor(.accentColor)
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 10)
-                .frame(width: 330, height: 100)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+                .padding(.horizontal, 16)
+                .frame(width: 350, height: AppLayout.miniPlayerHeight)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                 .shadow(color: .black.opacity(0.4), radius: 12, y: 4)
             }
             .buttonStyle(.card)
+            .focused($isFocused)
         }
     }
 }

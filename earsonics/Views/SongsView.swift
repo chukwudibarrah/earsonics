@@ -6,82 +6,73 @@ struct SongsView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var vm = SongsViewModel()
     @State private var playlists: [Playlist] = []
+    @ObservedObject private var player = AudioPlayerService.shared
 
     var body: some View {
         NavigationStack {
-            Group {
-                if vm.isLoading && vm.songs.isEmpty {
-                    ProgressView("Loading songs...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if vm.songs.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "music.note")
-                            .font(.system(size: 60))
-                            .foregroundColor(.secondary)
-                        Text("No songs")
-                            .font(.title)
-                        Text("No songs were found on the server.")
-                            .foregroundColor(.secondary)
-                    }
+            if vm.isLoading && vm.songs.isEmpty {
+                ProgressView("Loading songs...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 20) {
-                            HStack(spacing: 16) {
-                                Button {
-                                    appState.player.isShuffled = false
-                                    appState.player.load(songs: vm.songs, startIndex: 0)
-                                } label: {
-                                    Label("Play all", systemImage: "play.fill")
-                                }
-                                Button {
-                                    appState.player.isShuffled = false
-                                    appState.player.load(songs: vm.songs, startIndex: 0)
-                                    appState.player.toggleShuffle()
-                                } label: {
-                                    Label("Shuffle play", systemImage: "shuffle")
-                                }
+            } else if vm.songs.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "music.note")
+                        .font(.system(size: 60))
+                        .foregroundColor(.secondary)
+                    Text("No songs").font(.title)
+                    Text("No songs were found on the server.").foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        HStack(spacing: 16) {
+                            Button {
+                                appState.player.isShuffled = false
+                                appState.player.load(songs: vm.songs, startIndex: 0)
+                            } label: {
+                                Label("Play", systemImage: "play.fill")
                             }
-                            .padding(.horizontal, 60)
-
-                            LazyVStack(spacing: 2) {
-                                ForEach(Array(vm.songs.enumerated()), id: \.element.id) { idx, song in
-                                    SongRow(song: song, index: idx, songs: vm.songs, playlists: playlists, showTrackNumber: false)
-                                }
-
-                                if vm.hasMore {
-                                    Button {
-                                        Task { await vm.loadNextPage() }
-                                    } label: {
-                                        if vm.isLoading {
-                                            ProgressView()
-                                                .padding()
-                                        } else {
-                                            Text("Load more")
-                                                .frame(maxWidth: .infinity)
-                                                .padding()
-                                        }
-                                    }
-                                    .buttonStyle(.card)
-                                    .padding(.top, 20)
-                                    .onAppear {
-                                        // Auto-load next page on focus
-                                        Task { await vm.loadNextPage() }
-                                    }
-                                }
+                            Button {
+                                appState.player.isShuffled = false
+                                appState.player.load(songs: vm.songs, startIndex: 0)
+                                appState.player.toggleShuffle()
+                            } label: {
+                                Label("Shuffle play", systemImage: "shuffle")
                             }
-                            .padding(.horizontal, 60)
-                            .padding(.bottom, 120)
                         }
+                        .padding(.horizontal, AppLayout.horizontalPadding)
+
+                        LazyVStack(spacing: 2) {
+                            ForEach(Array(vm.songs.enumerated()), id: \.element.id) { idx, song in
+                                SongRow(song: song, index: idx, contextSongs: vm.songs, playlists: playlists, showTrackNumber: false)
+                            }
+
+                            if vm.hasMore {
+                                Button {
+                                    Task { await vm.loadNextPage() }
+                                } label: {
+                                    if vm.isLoading {
+                                        ProgressView().padding()
+                                    } else {
+                                        Text("Load more").frame(maxWidth: .infinity).padding()
+                                    }
+                                }
+                                .buttonStyle(.card)
+                                .padding(.top, 20)
+                                .onAppear { Task { await vm.loadNextPage() } }
+                            }
+                        }
+                        .padding(.horizontal, AppLayout.horizontalPadding)
+                        .padding(.bottom, 120)
                     }
+                    .padding(.top, 20)
                 }
             }
-            .task {
-                if vm.songs.isEmpty { await vm.loadNextPage() }
-                playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []
-            }
         }
-        .padding(.top, layoutTopPadding)
+        .task {
+            if vm.songs.isEmpty { await vm.loadNextPage() }
+            playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []
+        }
     }
 }
 

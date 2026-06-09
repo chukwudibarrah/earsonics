@@ -42,7 +42,6 @@ struct NowPlayingView: View {
                     showLyrics = false
                 }
                 .transition(.move(edge: .trailing))
-                .onExitCommand { showLyrics = false }
             } else {
                 mainPlayerView.transition(.opacity)
             }

@@ -7,6 +7,7 @@ struct HomeView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var vm = LibraryViewModel()
     @State private var navPath = NavigationPath()
+    @ObservedObject private var player = AudioPlayerService.shared
 
     var body: some View {
         // Use path-based NavigationStack so we can push programmatically
@@ -20,7 +21,7 @@ struct HomeView: View {
                         .font(.headline)
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 50) {
+                        VStack(alignment: .leading, spacing: AppLayout.verticalSpacing) {
                             if !vm.recentAlbums.isEmpty {
                                 AlbumShelf(title: "Recently played", albums: vm.recentAlbums, navPath: $navPath)
                             }
@@ -31,10 +32,8 @@ struct HomeView: View {
                                 AlbumShelf(title: "Discover", albums: vm.randomAlbums, navPath: $navPath)
                             }
                         }
-                        // NO horizontal padding here — each shelf manages its own
-//                        .padding(.vertical, 40)
+                        .padding(.top, 20)
                         .padding(.bottom, 120)
-                        .padding(.top, layoutTopPadding)
                     }
                 }
             }
@@ -60,11 +59,11 @@ struct AlbumShelf: View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
                 .font(.title2).fontWeight(.medium)
-//                .padding(.leading, 60)
+                .padding(.leading, AppLayout.horizontalPadding)
                 .foregroundColor(.primary.opacity(0.28))
 
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 25) {
+                HStack(spacing: 40) {
                     ForEach(albums) { album in
                         Button {
                             navPath.append(album)
@@ -98,9 +97,11 @@ struct AlbumShelf: View {
                         }
                     }
                 }
-//                .padding(.horizontal, 60)   // wide enough for card scale at edges
+                .padding(.horizontal, AppLayout.horizontalPadding)
                 .padding(.vertical, 60)
             }
+            .clipShape(Rectangle())
+            .contentShape(Rectangle())
         }
         .task {
             playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []

@@ -9,6 +9,7 @@ struct StarredView: View {
     @State private var playlists: [Playlist] = []
     @State private var isLoading = true
     @State private var selectedTab: StarredTab = .songs
+    @ObservedObject private var player = AudioPlayerService.shared
 
     enum StarredTab: String, CaseIterable {
         case songs = "Songs"
@@ -25,8 +26,8 @@ struct StarredView: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .padding(.horizontal, 60)
-                .padding(.top, layoutTopPadding)
+                .padding(.horizontal, AppLayout.horizontalPadding)
+                .padding(.top, 20)
 
                 Group {
                     if isLoading {
@@ -55,17 +56,17 @@ struct StarredView: View {
                                                 Label("Shuffle Play", systemImage: "shuffle")
                                             }
                                         }
-                                        .padding(.horizontal, 60)
-                                        .padding(.top, 20)
+                                        .padding(.horizontal, AppLayout.horizontalPadding)
 
                                         LazyVStack(spacing: 2) {
                                             ForEach(Array(starredSongs.enumerated()), id: \.element.id) { idx, song in
-                                                SongRow(song: song, index: idx, songs: starredSongs, playlists: playlists, showTrackNumber: false)
+                                                SongRow(song: song, index: idx, contextSongs: starredSongs, playlists: playlists, showTrackNumber: false)
                                             }
                                         }
-                                        .padding(.horizontal, 60)
+                                        .padding(.horizontal, AppLayout.horizontalPadding)
                                         .padding(.bottom, 100)
                                     }
+                                    .padding(.top, 20)
                                 }
                             }
                         case .albums:
@@ -83,7 +84,9 @@ struct StarredView: View {
                                             .buttonStyle(.card)
                                         }
                                     }
-                                    .padding(60)
+                                    .padding(.top, 20)
+                                    .padding(.horizontal, AppLayout.horizontalPadding)
+                                    .padding(.bottom, 120)
                                 }
                             }
                         case .artists:
@@ -101,8 +104,9 @@ struct StarredView: View {
                                             .buttonStyle(.card)
                                         }
                                     }
-                                    .padding(.horizontal, 60)
-                                    .padding(.vertical, 20)
+                                    .padding(.top, 20)
+                                    .padding(.horizontal, AppLayout.horizontalPadding)
+                                    .padding(.bottom, 120)
                                 }
                             }
                         }

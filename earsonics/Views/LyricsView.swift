@@ -13,34 +13,47 @@ struct LyricsView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Button(action: onDismiss) {
-                    Image(systemName: "chevron.left").font(.title2)
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Button(action: onDismiss) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "chevron.left")
+                                .font(.title2)
+                            Text("Back")
+                                .font(.headline)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    
+                    Text("Lyrics")
+                        .font(.largeTitle).bold()
+                        .padding(.leading, 30)
+                    Spacer()
                 }
-                .buttonStyle(.plain)
-                Text("Lyrics")
-                    .font(.largeTitle).bold()
-                    .padding(.leading, 16)
-                Spacer()
-            }
-            .padding(.horizontal, 60)
-            .padding(.vertical, 30)
+                .padding(.horizontal, 80)
+                .padding(.vertical, 30)
 
-            Divider().background(Color.white.opacity(0.2))
+                Divider().background(Color.white.opacity(0.2))
 
-            if let synced = syncedLyrics, let lines = synced.lines, !lines.isEmpty {
-                SyncedLyricsView(lines: lines, currentTime: currentTime)
-            } else if let value = plain?.value, !value.isEmpty {
-                PlainLyricsView(text: value)
-            } else {
-                VStack(spacing: 16) {
-                    Image(systemName: "text.quote")
-                        .font(.system(size: 60)).foregroundColor(.secondary)
-                    Text("No lyrics available").font(.title).foregroundColor(.secondary)
+                if let synced = syncedLyrics, let lines = synced.lines, !lines.isEmpty {
+                    SyncedLyricsView(lines: lines, currentTime: currentTime)
+                } else if let value = plain?.value, !value.isEmpty {
+                    PlainLyricsView(text: value)
+                } else {
+                    VStack(spacing: 16) {
+                        Image(systemName: "text.quote")
+                            .font(.system(size: 60)).foregroundColor(.secondary)
+                        Text("No lyrics available").font(.title).foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+        }
+        .onExitCommand {
+            onDismiss()
         }
     }
 }
@@ -73,7 +86,7 @@ struct SyncedLyricsView: View {
                             .animation(.easeInOut(duration: 0.3), value: currentLineIndex)
                     }
                 }
-                .padding(.horizontal, 60)
+                .padding(.horizontal, 80)
                 .padding(.vertical, 40)
             }
             .onChange(of: currentLineIndex) { _, newIdx in
@@ -94,7 +107,7 @@ struct PlainLyricsView: View {
                 .font(.title3)
                 .lineSpacing(10)
                 .foregroundColor(.white.opacity(0.9))
-                .padding(.horizontal, 60)
+                .padding(.horizontal, 80)
                 .padding(.vertical, 40)
         }
     }
