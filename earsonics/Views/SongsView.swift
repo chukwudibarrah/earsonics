@@ -65,7 +65,7 @@ struct SongsView: View {
                         .padding(.horizontal, AppLayout.horizontalPadding)
                         .padding(.bottom, 120)
                     }
-                    .padding(.top, 20)
+                    .padding(.top, 130)
                 }
             }
         }

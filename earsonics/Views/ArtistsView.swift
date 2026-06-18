@@ -12,7 +12,7 @@ struct ArtistsView: View {
             $0.name.localizedCaseInsensitiveContains(searchText)
         }
     }
-    
+
     var body: some View {
         NavigationStack(path: $navPath) {
             if vm.isLoading && vm.artists.isEmpty {
@@ -160,7 +160,7 @@ struct ArtistDetailView: View {
                         }
                     }
                 }
-                .padding(.top, 20)
+                .padding(.top, 200)
                 .padding(.horizontal, AppLayout.horizontalPadding)
                 .padding(.bottom, 30)
             }
@@ -226,3 +226,4 @@ struct ArtistDetailView: View {
         }
     }
 }
+

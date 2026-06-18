@@ -122,7 +122,7 @@ struct SettingsView: View {
                 .padding(.vertical, 20)
             }
             .padding(.horizontal, AppLayout.horizontalPadding)
-            .padding(.top, 20)
+            .padding(.top, 100)
         }
     }
 }

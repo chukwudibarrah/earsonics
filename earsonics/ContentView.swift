@@ -60,13 +60,12 @@ struct ContentView: View {
                         })
                         .environmentObject(appState)
                         .padding(.leading, AppLayout.horizontalPadding)
-                        
                         Spacer()
                     }
                     .padding(.top, AppLayout.miniPlayerTopOffset)
                     .transition(.opacity)
                 } else {
-                    Color.clear.frame(height: 0)
+                    Color.clear.frame(height: 80)
                 }
             }
             .disabled(showNowPlaying)

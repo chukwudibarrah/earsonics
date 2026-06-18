@@ -18,9 +18,9 @@ struct MiniPlayerBar: View {
 
                     VStack(alignment: .leading, spacing: 2) {
                         ScrollingText(text: song.title, trackID: song.id, isFocused: isFocused)
-                            .frame(height: 14)
+                            .frame(height: 22)
                         ScrollingText(text: song.artist ?? "", trackID: song.id, isFocused: isFocused)
-                            .frame(height: 14)
+                            .frame(height: 22)
                             .foregroundStyle(.secondary)
                     }
                     .font(.caption2)
@@ -34,7 +34,7 @@ struct MiniPlayerBar: View {
                 }
                 .padding(.horizontal, 16)
                 .frame(width: 350, height: AppLayout.miniPlayerHeight)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
                 .shadow(color: .black.opacity(0.4), radius: 12, y: 4)
             }
             .buttonStyle(.card)

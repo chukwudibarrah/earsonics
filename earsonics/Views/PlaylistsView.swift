@@ -43,7 +43,7 @@ struct PlaylistsView: View {
                             }
                         }
                     }
-                    .padding(.top, 20)
+                    .padding(.top, 150)
                     .padding(.horizontal, AppLayout.horizontalPadding)
                     .padding(.bottom, 120)
                 }
@@ -223,7 +223,7 @@ struct PlaylistDetailView: View {
                 }
             }
         }
-        .padding(.top, 20)
+        .padding(.top, 120)
         .padding(.horizontal, AppLayout.horizontalPadding)
         .task {
             await reload()

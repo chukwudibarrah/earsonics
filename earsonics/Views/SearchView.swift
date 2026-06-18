@@ -44,7 +44,7 @@ struct SearchView: View {
                 .background(Color.white.opacity(0.1))
                 .cornerRadius(12)
                 .padding(.horizontal, AppLayout.horizontalPadding)
-                .padding(.top, 20)
+                .padding(.top, 140)
 
                 if query.isEmpty {
                     Spacer()

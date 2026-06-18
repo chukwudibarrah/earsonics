@@ -31,7 +31,7 @@ struct StarredView: View {
 
                 Group {
                     if isLoading {
-                        ProgressView("Loading Favourites...")
+                        ProgressView("Loading favourites...")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         switch selectedTab {
@@ -46,14 +46,14 @@ struct StarredView: View {
                                                 appState.player.isShuffled = false
                                                 appState.player.load(songs: starredSongs, startIndex: 0)
                                             } label: {
-                                                Label("Play All", systemImage: "play.fill")
+                                                Label("Play all", systemImage: "play.fill")
                                             }
                                             Button {
                                                 appState.player.isShuffled = false
                                                 appState.player.load(songs: starredSongs, startIndex: 0)
                                                 appState.player.toggleShuffle()
                                             } label: {
-                                                Label("Shuffle Play", systemImage: "shuffle")
+                                                Label("Shuffle play", systemImage: "shuffle")
                                             }
                                         }
                                         .padding(.horizontal, AppLayout.horizontalPadding)
@@ -119,6 +119,7 @@ struct StarredView: View {
             }
             .task { await loadStarred() }
         }
+        .padding(.top, 120)
     }
 
     private func loadStarred() async {

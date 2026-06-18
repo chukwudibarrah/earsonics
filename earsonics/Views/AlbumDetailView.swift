@@ -21,7 +21,7 @@ struct AlbumDetailView: View {
             // Left: Cover + info
             VStack(alignment: .leading, spacing: 16) {
                 // Actions
-                VStack(spacing: 10) {
+                VStack(spacing: 7) {
                     Button {
                         if isThisAlbumPlaying {
                             player.togglePlayPause()
@@ -108,21 +108,21 @@ struct AlbumDetailView: View {
                 .controlSize(.small)
 
                 CoverArtView(id: album.coverArt, size: 400)
-                    .frame(width: 250, height: 250)
+                    .frame(width: 230, height: 230)
                     .cornerRadius(16)
 
                 Text(album.name)
-                    .font(.headline)
+                    .font(.callout)
                     .lineLimit(3)
-                    .minimumScaleFactor(0.8)
+//                    .minimumScaleFactor(0.8)
                     .fixedSize(horizontal: false, vertical: true)
-                    .lineHeight(.tight)
+//                    .lineHeight(.tight)
 
                 if let artist = album.artist {
                     Text(artist)
-                        .font(.subheadline)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+//                        .fixedSize(horizontal: false, vertical: true)
                 }
 
                 HStack(spacing: 5) {
@@ -146,7 +146,8 @@ struct AlbumDetailView: View {
 
                 Spacer()
             }
-            .frame(width: 250)
+            .frame(width: 230)
+            .padding(.top, 200)
 
             // Right: Track list
             if isLoading {
@@ -165,7 +166,7 @@ struct AlbumDetailView: View {
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 20)
+                    .padding(.top, 200)
                     .padding(.bottom, 120)
                 }
             }
@@ -269,8 +270,8 @@ struct SongRow: View {
                     .frame(width: 30, alignment: .center)
 
                 Text(song.durationFormatted)
-                    .font(.caption.monospacedDigit())
-                    .frame(width: 60, alignment: .trailing)
+                    .font(.caption2.monospacedDigit())
+                    .frame(width: 65, alignment: .trailing)
             }
         }
         .padding(.horizontal, 16)
