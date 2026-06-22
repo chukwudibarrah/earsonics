@@ -74,7 +74,7 @@ struct StarredView: View {
                                 EmptyStarredView(type: "Albums")
                             } else {
                                 ScrollView {
-                                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 24)], spacing: 32) {
+                                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 80)], spacing: 80) {
                                         ForEach(starredAlbums) { album in
                                             NavigationLink {
                                                 AlbumDetailView(album: album)
