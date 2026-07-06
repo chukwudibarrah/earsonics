@@ -91,6 +91,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         configureAudioSession()
         setupPlayer(deck: deckA, isDeckA: true)
         setupPlayer(deck: deckB, isDeckA: false)
+        setupItemNotifications()
         setupRemoteCommandCenter()
     }
     
@@ -101,11 +102,17 @@ class AudioPlayerService: NSObject, ObservableObject {
     // MARK: - Audio Session
     private func configureAudioSession() {
         #if os(tvOS)
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
-            try AVAudioSession.sharedInstance().setActive(true)
-        } catch {
-            print("Audio session error: \(error)")
+        // Session activation can block, so keep it off the main thread.
+        // Playback starts on user action long after launch, so the async
+        // activation always completes in time.
+        Task.detached(priority: .userInitiated) {
+            do {
+                let session = AVAudioSession.sharedInstance()
+                try session.setCategory(.playback, mode: .default, options: [])
+                try session.setActive(true)
+            } catch {
+                print("Audio session error: \(error)")
+            }
         }
         #endif
     }
@@ -134,7 +141,12 @@ class AudioPlayerService: NSObject, ObservableObject {
         } else {
             timeObserverB = observer
         }
+    }
 
+    // MARK: - Item notifications
+    // Registered once (not per deck) so each notification is delivered a single
+    // time — otherwise a natural track end would double-skip and double-scrobble.
+    private func setupItemNotifications() {
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(playerItemDidFinish(_:)),

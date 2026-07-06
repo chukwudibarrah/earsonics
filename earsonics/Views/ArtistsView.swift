@@ -5,8 +5,7 @@ struct ArtistsView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var vm = LibraryViewModel()
     @State private var searchText: String = ""
-    @State private var navPath = NavigationPath()
-    
+
     var filtered: [Artist] {
         searchText.isEmpty ? vm.artists : vm.artists.filter {
             $0.name.localizedCaseInsensitiveContains(searchText)
@@ -14,7 +13,7 @@ struct ArtistsView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $navPath) {
+        NavigationStack {
             if vm.isLoading && vm.artists.isEmpty {
                 ProgressView("Loading artists...")
             } else {
@@ -36,10 +35,6 @@ struct ArtistsView: View {
                 }
                 .searchable(text: $searchText, prompt: "Search artists")
             }
-        }
-        .navigationDestination(for: Album.self) { album in
-            AlbumDetailView(album: album)
-                .environmentObject(appState)
         }
         .task { if vm.artists.isEmpty { await vm.loadHome() } }
     }
@@ -152,7 +147,9 @@ struct ArtistDetailView: View {
                     } else {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 350), spacing: 10)], spacing: 50) {
                             ForEach(albums) { album in
-                                NavigationLink(value: album) {
+                                NavigationLink {
+                                    AlbumDetailView(album: album)
+                                } label: {
                                     AlbumCard(album: album)
                                 }
                                 .buttonStyle(.card)

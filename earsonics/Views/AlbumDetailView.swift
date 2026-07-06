@@ -17,7 +17,7 @@ struct AlbumDetailView: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 50) {
+        HStack(alignment: .top, spacing: 30) {
             // Left: Cover + info
             VStack(alignment: .leading, spacing: 16) {
                 // Actions
@@ -125,7 +125,7 @@ struct AlbumDetailView: View {
 //                        .fixedSize(horizontal: false, vertical: true)
                 }
 
-                HStack(spacing: 5) {
+                HStack(spacing: 2) {
                     if let year = album.year {
                         Text(String(format: "%d", year)).foregroundColor(.secondary)
                         if album.genre != nil || album.songCount != nil {
