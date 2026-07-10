@@ -1,20 +1,34 @@
 // Views/MiniPlayerBar.swift
 import SwiftUI
 
+/// Floating now-playing pill shown at the top-right of the screen.
+/// The leading end is fully curved around the circular artwork; the glow
+/// takes the user-selected accent colour.
 struct MiniPlayerBar: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject private var player = AudioPlayerService.shared
     @FocusState private var isFocused: Bool
+    @Environment(\.appAccent) private var appAccent
     var onTap: () -> Void
+
+    private var pillShape: UnevenRoundedRectangle {
+        let height = AppLayout.miniPlayerHeight
+        return UnevenRoundedRectangle(
+            topLeadingRadius: height / 2,
+            bottomLeadingRadius: height / 2,
+            bottomTrailingRadius: 16,
+            topTrailingRadius: 16
+        )
+    }
 
     var body: some View {
         if let song = player.currentSong {
             Button(action: onTap) {
                 HStack(spacing: 14) {
                     CoverArtView(id: song.coverArt, size: 120)
-                        .frame(width: 46, height: 46)
-                        .cornerRadius(6)
-                        .shadow(radius: 4)
+                        .frame(width: AppLayout.miniPlayerHeight - 12,
+                               height: AppLayout.miniPlayerHeight - 12)
+                        .clipShape(Circle())
 
                     VStack(alignment: .leading, spacing: 2) {
                         ScrollingText(text: song.title, trackID: song.id, isFocused: isFocused)
@@ -24,20 +38,20 @@ struct MiniPlayerBar: View {
                             .foregroundStyle(.secondary)
                     }
                     .font(.caption2)
-                    .frame(maxWidth: 200, alignment: .leading)
-
-                    Spacer(minLength: 0)
+                    .frame(maxWidth: 220, alignment: .leading)
 
                     Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                         .font(.callout)
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(appAccent)
                 }
-                .padding(.horizontal, 16)
-                .frame(width: 350, height: AppLayout.miniPlayerHeight)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 6))
-                .shadow(color: .black.opacity(0.4), radius: 12, y: 4)
+                .padding(.leading, 6)
+                .padding(.trailing, 20)
+                .frame(height: AppLayout.miniPlayerHeight)
+                .background(.regularMaterial, in: pillShape)
+                .shadow(color: appAccent.opacity(0.55), radius: 16, y: 4)
+                .accentFocusRing(pillShape)
             }
-            .buttonStyle(.card)
+            .buttonStyle(CardlessButtonStyle())
             .focused($isFocused)
         }
     }

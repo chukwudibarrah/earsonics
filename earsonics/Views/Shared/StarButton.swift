@@ -19,7 +19,7 @@ struct StarButton: View {
                 .font(.title2)
         }
         .disabled(working)
-        .buttonStyle(.plain)
+        .buttonStyle(AccentPillButtonStyle())
     }
 
     private func toggle() async {

@@ -26,7 +26,7 @@ struct ArtistsView: View {
                             } label: {
                                 ArtistRow(artist: artist)
                             }
-                            .buttonStyle(.card)
+                            .buttonStyle(CardlessButtonStyle())
                         }
                     }
                     .padding(.top, 20)
@@ -61,6 +61,7 @@ struct ArtistRow: View {
                 .font(.callout)
         }
         .padding()
+        .cardSurface()
     }
 }
 
@@ -69,6 +70,7 @@ struct ArtistDetailView: View {
     let artist: Artist
     @EnvironmentObject var appState: AppState
     @ObservedObject private var player = AudioPlayerService.shared
+    @Environment(\.appAccent) private var appAccent
     @State private var albums: [Album] = []
     @State private var isLoading = true
     @State private var isStarred: Bool
@@ -117,7 +119,6 @@ struct ArtistDetailView: View {
                                         Label("Play all", systemImage: "play.fill")
                                     }
                                 }
-                                .controlSize(.small)
                                 .disabled(isFetchingTracks)
                                 
                                 Button {
@@ -127,16 +128,15 @@ struct ArtistDetailView: View {
                                         ProgressView().controlSize(.small)
                                     } else {
                                         Label("Shuffle", systemImage: "shuffle")
-                                            .foregroundColor(isThisArtistPlaying && player.isShuffled ? .accentColor : .primary)
                                     }
                                 }
-                                .controlSize(.small)
                                 .disabled(isFetchingTracks)
                                 
                                 StarButton(isStarred: isStarred, artistId: artist.id) { newVal in
                                     isStarred = newVal
                                 }
                             }
+                            .buttonStyle(AccentPillButtonStyle())
                         }
                         Spacer()
                     }
@@ -152,12 +152,12 @@ struct ArtistDetailView: View {
                                 } label: {
                                     AlbumCard(album: album)
                                 }
-                                .buttonStyle(.card)
+                                .buttonStyle(CardlessButtonStyle())
                             }
                         }
                     }
                 }
-                .padding(.top, 200)
+                .padding(.top, AppLayout.detailTopPadding)
                 .padding(.horizontal, AppLayout.horizontalPadding)
                 .padding(.bottom, 30)
             }

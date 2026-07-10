@@ -109,7 +109,7 @@ struct NowPlayingView: View {
                             Image(systemName: "chevron.down.circle.fill")
                                 .font(.title).foregroundColor(.white.opacity(0.7))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(AccentIconButtonStyle())
 
 //                        if let song = player.currentSong { FormatBadge(song: song) }
 
@@ -131,7 +131,7 @@ struct NowPlayingView: View {
                                 .foregroundColor(isStarred ? .red : .white.opacity(0.7))
                                 .font(.title2)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(AccentIconButtonStyle())
                     }
                 }
 
@@ -154,7 +154,7 @@ struct NowPlayingView: View {
                     }
                 }
 
-                // Transport controls — use .buttonStyle(.plain) + .focusable()
+                // Transport controls — use .buttonStyle(CardlessButtonStyle()) + .focusable()
                 // They live inside a full-screen view with TabView disabled,
                 // so the focus engine will find ONLY these buttons
                 HStack(spacing: 60) {
@@ -234,6 +234,7 @@ struct SecondaryActionButton: View {
     let icon: String
     let action: () -> Void
     @FocusState private var isFocused: Bool
+    @Environment(\.appAccent) private var appAccent
 
     var body: some View {
         Button(action: action) {
@@ -242,11 +243,10 @@ struct SecondaryActionButton: View {
                 .padding(.horizontal, 20).padding(.vertical, 12)
                 .background(RoundedRectangle(cornerRadius: 10)
                     .fill(Color.clear))
-                .foregroundColor(isFocused ? .accentColor : .white.opacity(0.85))
-                .scaleEffect(isFocused ? 1.06 : 1.0)
+                .foregroundColor(isFocused ? appAccent : .white.opacity(0.85))
                 .animation(.easeInOut(duration: 0.12), value: isFocused)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(CardlessButtonStyle())
         .focused($isFocused)
     }
 }
@@ -257,25 +257,25 @@ struct TransportButton: View {
     var isToggled: Bool = false
     let action: () -> Void
     @FocusState private var isFocused: Bool
+    @Environment(\.appAccent) private var appAccent
 
     var body: some View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.system(size: 30))
-                    .foregroundColor((isFocused || isToggled) ? .accentColor : .white.opacity(0.85))
+                    .foregroundColor((isFocused || isToggled) ? appAccent : .white.opacity(0.85))
                     .frame(width: 72, height: 72)
                     .background(Color.clear)
                     .clipShape(Circle())
                 
                 Circle()
-                    .fill(isToggled ? Color.accentColor : Color.clear)
+                    .fill(isToggled ? appAccent : Color.clear)
                     .frame(width: 5, height: 5)
             }
-            .scaleEffect(isFocused ? 1.12 : 1.0)
             .animation(.easeInOut(duration: 0.12), value: isFocused)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(CardlessButtonStyle())
         .focused($isFocused)
     }
 }
@@ -285,6 +285,7 @@ struct PlayPauseButton: View {
     let isPlaying: Bool
     let action: () -> Void
     @FocusState private var isFocused: Bool
+    @Environment(\.appAccent) private var appAccent
 
     var body: some View {
         Button(action: action) {
@@ -292,14 +293,13 @@ struct PlayPauseButton: View {
                 Circle()
                     .fill(Color.clear)
                     .frame(width: 86, height: 86)
-                    .scaleEffect(isFocused ? 1.1 : 1.0)
                 Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 36, weight: .black))
-                    .foregroundColor(isFocused ? .accentColor : .white.opacity(0.85))
+                    .foregroundColor(isFocused ? appAccent : .white.opacity(0.85))
             }
             .animation(.easeInOut(duration: 0.12), value: isFocused)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(CardlessButtonStyle())
         .focused($isFocused)
     }
 }
@@ -309,6 +309,7 @@ struct RepeatTransportButton: View {
     let mode: RepeatMode
     let action: () -> Void
     @FocusState private var isFocused: Bool
+    @Environment(\.appAccent) private var appAccent
 
     var body: some View {
         Button(action: action) {
@@ -320,25 +321,24 @@ struct RepeatTransportButton: View {
                             .frame(width: 72, height: 72)
                         Image(systemName: mode.icon)
                             .font(.system(size: 30))
-                            .foregroundColor((isFocused || mode != .off) ? .accentColor : .white.opacity(0.85))
+                            .foregroundColor((isFocused || mode != .off) ? appAccent : .white.opacity(0.85))
                     }
                     if mode == .one {
                         Text("1")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(.white).padding(3)
-                            .background(Color.accentColor).clipShape(Circle())
+                            .background(appAccent).clipShape(Circle())
                             .offset(x: -16, y: 16)
                     }
                 }
                 
                 Circle()
-                    .fill(mode != .off ? Color.accentColor : Color.clear)
+                    .fill(mode != .off ? appAccent : Color.clear)
                     .frame(width: 5, height: 5)
             }
-            .scaleEffect(isFocused ? 1.12 : 1.0)
             .animation(.easeInOut(duration: 0.12), value: isFocused)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(CardlessButtonStyle())
         .focused($isFocused)
     }
 }
@@ -349,6 +349,7 @@ struct ProgressSlider: View {
     let total: Double
     let onSeek: (Double) -> Void
     @FocusState private var isFocused: Bool
+    @Environment(\.appAccent) private var appAccent
 
     var progress: Double {
         guard total > 0 else { return 0 }
@@ -360,7 +361,7 @@ struct ProgressSlider: View {
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.white.opacity(isFocused ? 0.35 : 0.2))
                     .frame(height: isFocused ? 10 : 6)
-                Capsule().fill(isFocused ? Color.accentColor : Color.white)
+                Capsule().fill(isFocused ? appAccent : Color.white)
                     .frame(width: geo.size.width * CGFloat(progress), height: isFocused ? 10 : 6)
                 Circle().fill(Color.white)
                     .frame(width: isFocused ? 26 : 16, height: isFocused ? 26 : 16)

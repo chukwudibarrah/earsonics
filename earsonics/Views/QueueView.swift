@@ -17,7 +17,7 @@ struct QueueView: View {
                         } label: {
                             QueueRow(song: song, index: idx, isCurrent: idx == player.currentIndex)
                         }
-                        .buttonStyle(.card)
+                        .buttonStyle(CardlessButtonStyle())
                     }
                 }
                 .padding(.top, 350)
@@ -49,12 +49,13 @@ struct QueueRow: View {
     let index: Int
     let isCurrent: Bool
     @EnvironmentObject var appState: AppState
+    @Environment(\.appAccent) private var appAccent
 
     var body: some View {
         HStack(spacing: 16) {
             if isCurrent {
                 Image(systemName: appState.player.isPlaying ? "waveform" : "play.fill")
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(appAccent)
                     .frame(width: 32)
             } else {
                 Text("\(index + 1)")
@@ -73,7 +74,7 @@ struct QueueRow: View {
                 Text(song.title)
                     .font(.callout)
                     .fontWeight(isCurrent ? .bold : .regular)
-                    .foregroundColor(isCurrent ? .accentColor : .primary)
+                    .foregroundColor(isCurrent ? appAccent : .primary)
                 Text(song.artist ?? "").font(.caption).foregroundColor(.secondary)
             }
 
@@ -85,5 +86,6 @@ struct QueueRow: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        .cardSurface(cornerRadius: 10)
     }
 }

@@ -86,6 +86,27 @@ struct SettingsView: View {
                 }
                 .padding()
 
+                // Appearance section
+                Section(header: Text("Appearance").font(.headline)) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Highlight colour")
+                        HStack(spacing: 28) {
+                            ForEach(AccentColorChoice.allCases) { choice in
+                                AccentSwatchButton(
+                                    choice: choice,
+                                    isSelected: appState.accentChoice == choice
+                                ) {
+                                    appState.accentChoice = choice
+                                }
+                            }
+                        }
+                        Text("Used for the focus outline, now-playing glow and play indicators.")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding()
+
                 // About section
                 Section(header: Text("About").font(.headline)) {
                     Button {
@@ -122,7 +143,39 @@ struct SettingsView: View {
                 .padding(.vertical, 20)
             }
             .padding(.horizontal, AppLayout.horizontalPadding)
-            .padding(.top, 100)
+            .padding(.top, AppLayout.contentTopPadding)
         }
     }
 }
+// MARK: - Accent colour swatch
+private struct AccentSwatchButton: View {
+    let choice: AccentColorChoice
+    let isSelected: Bool
+    let action: () -> Void
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        Button(action: action) {
+            Circle()
+                .fill(choice.color)
+                .frame(width: 52, height: 52)
+                .overlay {
+                    if isSelected {
+                        Image(systemName: "checkmark")
+                            .font(.headline.bold())
+                            .foregroundColor(.black.opacity(0.7))
+                    }
+                }
+                .overlay {
+                    Circle()
+                        .strokeBorder(.white.opacity(isFocused ? 1 : 0), lineWidth: 4)
+                }
+                .animation(.easeOut(duration: 0.15), value: isFocused)
+        }
+        .buttonStyle(CardlessButtonStyle())
+        .focused($isFocused)
+        .accessibilityLabel(choice.displayName)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+}
+

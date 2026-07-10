@@ -36,7 +36,7 @@ struct SearchView: View {
                         Button { query = "" } label: {
                             Image(systemName: "xmark.circle.fill").foregroundColor(.secondary)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(AccentIconButtonStyle())
                     }
                     if isSearching { ProgressView().scaleEffect(0.8) }
                 }
@@ -44,7 +44,7 @@ struct SearchView: View {
                 .background(Color.white.opacity(0.1))
                 .cornerRadius(12)
                 .padding(.horizontal, AppLayout.horizontalPadding)
-                .padding(.top, 140)
+                .padding(.top, AppLayout.contentTopPadding)
 
                 if query.isEmpty {
                     Spacer()
@@ -65,7 +65,7 @@ struct SearchView: View {
                                         } label: {
                                             ArtistRow(artist: artist)
                                         }
-                                        .buttonStyle(.card)
+                                        .buttonStyle(CardlessButtonStyle())
                                     }
                                 }
                             }
@@ -79,7 +79,7 @@ struct SearchView: View {
                                                 } label: {
                                                     AlbumCard(album: album)
                                                 }
-                                                .buttonStyle(.card)
+                                                .buttonStyle(CardlessButtonStyle())
                                             }
                                         }
                                         .padding(.horizontal, 4)

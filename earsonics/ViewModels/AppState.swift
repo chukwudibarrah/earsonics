@@ -17,6 +17,15 @@ class AppState: ObservableObject {
 
     @AppStorage("crossfadeDuration") var crossfadeDuration: Double = 0.0
     @AppStorage("preventScreenSaver") var preventScreenSaver: Bool = false
+    @AppStorage("accentColourChoice") var accentColourRaw: String = AccentColorChoice.orange.rawValue
+
+    /// The user-selected highlight colour (see `AccentColorChoice`).
+    var accentChoice: AccentColorChoice {
+        get { AccentColorChoice(rawValue: accentColourRaw) ?? .orange }
+        set { accentColourRaw = newValue.rawValue }
+    }
+
+    var accentColor: Color { accentChoice.color }
 
     init() {
         // Wire up active server to API and player

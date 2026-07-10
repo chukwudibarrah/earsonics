@@ -105,10 +105,11 @@ struct AlbumDetailView: View {
                         }
                     }
                 }
-                .controlSize(.small)
+                .buttonStyle(AccentPillButtonStyle())
+                .menuStyle(.button)
 
                 CoverArtView(id: album.coverArt, size: 400)
-                    .frame(width: 230, height: 230)
+                    .frame(width: 300, height: 300)
                     .cornerRadius(16)
 
                 Text(album.name)
@@ -146,8 +147,8 @@ struct AlbumDetailView: View {
 
                 Spacer()
             }
-            .frame(width: 230)
-            .padding(.top, 200)
+            .frame(width: 300)
+            .padding(.top, AppLayout.detailTopPadding)
 
             // Right: Track list
             if isLoading {
@@ -162,11 +163,11 @@ struct AlbumDetailView: View {
                             } label: {
                                 SongRow(song: song, index: idx, playlists: playlists)
                             }
-                            .buttonStyle(.card)
+                            .buttonStyle(CardlessButtonStyle())
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 200)
+                    .padding(.top, AppLayout.detailTopPadding)
                     .padding(.bottom, 120)
                 }
             }
@@ -189,6 +190,7 @@ struct AlbumDetailView: View {
 
 // MARK: - Song Row
 struct SongRow: View {
+    @Environment(\.appAccent) private var appAccent
     let song: Song
     let index: Int
     var contextSongs: [Song] = []
@@ -222,7 +224,7 @@ struct SongRow: View {
             } label: {
                 rowContent
             }
-            .buttonStyle(.card)
+            .buttonStyle(CardlessButtonStyle())
             .contextMenu { contextMenuItems }
         }
     }
@@ -235,7 +237,7 @@ struct SongRow: View {
                 ZStack {
                     if isCurrentSong {
                         Image(systemName: appState.player.isPlaying ? "waveform" : "pause.fill")
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(appAccent)
                             .font(.caption2)
                     } else if showTrackNumber {
                         Text(String(format: "%d", song.track ?? (index + 1)))
@@ -251,7 +253,7 @@ struct SongRow: View {
                 Text(song.title)
                     .font(.footnote)
                     .fontWeight(isCurrentSong ? .bold : .regular)
-                    .foregroundColor(isCurrentSong ? .accentColor : .primary)
+                    .foregroundColor(isCurrentSong ? appAccent : .primary)
                     .lineLimit(1)
                 if let artist = song.artist {
                     Text(artist)
@@ -275,7 +277,8 @@ struct SongRow: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.vertical, 12)
+        .cardSurface(cornerRadius: 10)
         .onPlayPauseCommand { appState.player.togglePlayPause() }
     }
 

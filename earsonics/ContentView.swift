@@ -10,63 +10,65 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var appState = AppState.shared
     @ObservedObject private var player = AudioPlayerService.shared
-    @State private var selectedTab: Tab = .home
+    @State private var selectedTab: AppTab = .home
     @State private var showNowPlaying = false
 
-    enum Tab: Hashable {
+    enum AppTab: Hashable {
         case home, artists, songs, playlists, starred, search, settings
     }
 
     var body: some View {
         ZStack {
-            // Main tab view with safe area inset for mini player
+            // Sidebar navigation: collapses to an icon rail while browsing,
+            // expands with labels when focus moves onto it
             TabView(selection: $selectedTab) {
-                HomeView()
-                    .tabItem { Text("Home") }
-                    .tag(Tab.home)
+                Tab(value: AppTab.search, role: .search) {
+                    SearchView(goHome: { selectedTab = .home })
+                }
 
-                ArtistsView()
-                    .tabItem { Text("Artists") }
-                    .tag(Tab.artists)
+                Tab("Home", systemImage: "house", value: AppTab.home) {
+                    HomeView()
+                }
 
-                SongsView()
-                    .tabItem { Text("Songs") }
-                    .tag(Tab.songs)
+                Tab("Artists", systemImage: "person", value: AppTab.artists) {
+                    ArtistsView()
+                }
 
-                PlaylistsView()
-                    .tabItem { Text("Playlists") }
-                    .tag(Tab.playlists)
+                Tab("Tracks", systemImage: "music.note", value: AppTab.songs) {
+                    SongsView()
+                }
 
-                StarredView()
-                    .tabItem { Text("Favourites") }
-                    .tag(Tab.starred)
-                
-                SettingsView()
-                    .tabItem { Text("Settings") }
-                    .tag(Tab.settings)
+                Tab("Playlists", systemImage: "music.note.list", value: AppTab.playlists) {
+                    PlaylistsView()
+                }
 
-                SearchView(goHome: { selectedTab = .home })
-                    .tabItem { Label("", systemImage: "magnifyingglass") }
-                    .tag(Tab.search)
+                Tab("Favourites", systemImage: "bookmark", value: AppTab.starred) {
+                    StarredView()
+                }
+
+                Tab("Settings", systemImage: "gearshape", value: AppTab.settings) {
+                    SettingsView()
+                }
             }
+            .tabViewStyle(.sidebarAdaptable)
             .environmentObject(appState)
+            // Fixed-height top strip hosting the now-playing pill so content
+            // never jumps when playback starts or stops
             .safeAreaInset(edge: .top) {
-                if player.currentSong != nil && !showNowPlaying {
-                    HStack {
+                ZStack(alignment: .trailing) {
+                    Color.clear
+                    if player.currentSong != nil && !showNowPlaying {
                         MiniPlayerBar(onTap: {
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                                 showNowPlaying = true
                             }
                         })
                         .environmentObject(appState)
-                        .padding(.leading, AppLayout.horizontalPadding)
-                        Spacer()
+                        .padding(.trailing, AppLayout.horizontalPadding)
+                        .transition(.opacity)
                     }
-                    .padding(.top, AppLayout.miniPlayerTopOffset)
-                    .transition(.opacity)
-                } else {
-                    Color.clear.frame(height: 80)
                 }
+                .frame(height: AppLayout.topStripHeight)
             }
             .disabled(showNowPlaying)
 
@@ -89,6 +91,9 @@ struct ContentView: View {
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: showNowPlaying)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: player.currentSong != nil)
+        // No global .tint(): buttons stay neutral while idle and only take
+        // the accent when focused (AccentPillButtonStyle / accentFocusRing)
+        .environment(\.appAccent, appState.accentColor)
         .onAppear {
             if appState.serverStore.servers.isEmpty {
                 selectedTab = .settings

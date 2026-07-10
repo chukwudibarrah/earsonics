@@ -26,7 +26,7 @@ struct LyricsView: View {
                                 .font(.headline)
                         }
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(AccentIconButtonStyle())
                     
                     Text("Lyrics")
                         .font(.largeTitle).bold()

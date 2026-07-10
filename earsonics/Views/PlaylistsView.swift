@@ -32,7 +32,7 @@ struct PlaylistsView: View {
                                     Task { await loadPlaylists() }
                                 }
                             }
-                            .buttonStyle(.card)
+                            .buttonStyle(CardlessButtonStyle())
                             .contextMenu {
                                 Button(role: .destructive) {
                                     Task {
@@ -43,7 +43,7 @@ struct PlaylistsView: View {
                             }
                         }
                     }
-                    .padding(.top, 150)
+                    .padding(.top, AppLayout.contentTopPadding)
                     .padding(.horizontal, AppLayout.horizontalPadding)
                     .padding(.bottom, 120)
                 }
@@ -108,6 +108,7 @@ struct PlaylistRow: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 18)
+        .cardSurface(cornerRadius: 10)
     }
 }
 
@@ -116,6 +117,7 @@ struct PlaylistDetailView: View {
     let playlist: Playlist
     @EnvironmentObject var appState: AppState
     @ObservedObject private var player = AudioPlayerService.shared
+    @Environment(\.appAccent) private var appAccent
     @State private var loadedPlaylist: Playlist? = nil
     @State private var isLoading = true
     @State private var isEditing = false
@@ -160,7 +162,6 @@ struct PlaylistDetailView: View {
                         Label("Shuffle", systemImage: "shuffle")
                             .frame(maxWidth: .infinity)
                             .font(.caption2)
-                            .foregroundColor(isThisPlaylistPlaying && player.isShuffled ? .accentColor : .primary)
                     }
 
                     Button { isEditing = true } label: {
@@ -169,7 +170,7 @@ struct PlaylistDetailView: View {
                             .font(.caption2)
                     }
                 }
-                .controlSize(.small)
+                .buttonStyle(AccentPillButtonStyle())
 
                 CoverArtView(id: playlist.coverArt, size: 400)
                     .frame(width: 250, height: 250)
@@ -223,7 +224,7 @@ struct PlaylistDetailView: View {
                 }
             }
         }
-        .padding(.top, 120)
+        .padding(.top, AppLayout.detailTopPadding)
         .padding(.horizontal, AppLayout.horizontalPadding)
         .task {
             await reload()

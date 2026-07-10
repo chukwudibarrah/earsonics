@@ -56,6 +56,7 @@ struct StarredView: View {
                                                 Label("Shuffle play", systemImage: "shuffle")
                                             }
                                         }
+                                        .buttonStyle(AccentPillButtonStyle())
                                         .padding(.horizontal, AppLayout.horizontalPadding)
 
                                         LazyVStack(spacing: 2) {
@@ -81,7 +82,7 @@ struct StarredView: View {
                                             } label: {
                                                 AlbumCard(album: album)
                                             }
-                                            .buttonStyle(.card)
+                                            .buttonStyle(CardlessButtonStyle())
                                         }
                                     }
                                     .padding(.top, 20)
@@ -101,7 +102,7 @@ struct StarredView: View {
                                             } label: {
                                                 ArtistRow(artist: artist)
                                             }
-                                            .buttonStyle(.card)
+                                            .buttonStyle(CardlessButtonStyle())
                                         }
                                     }
                                     .padding(.top, 20)
@@ -119,7 +120,7 @@ struct StarredView: View {
             }
             .task { await loadStarred() }
         }
-        .padding(.top, 120)
+        .padding(.top, AppLayout.contentTopPadding)
     }
 
     private func loadStarred() async {

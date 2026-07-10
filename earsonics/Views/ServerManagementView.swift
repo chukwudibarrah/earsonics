@@ -90,11 +90,12 @@ struct ServerDetailView: View {
 struct ServerRow: View {
     let server: Server
     let isActive: Bool
+    @Environment(\.appAccent) private var appAccent
 
     var body: some View {
         HStack(spacing: 16) {
             Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(isActive ? .accentColor : .primary)
+                .foregroundColor(isActive ? appAccent : .primary)
                 .font(.title2)
             VStack(alignment: .leading, spacing: 4) {
                 Text(server.name).font(.headline)

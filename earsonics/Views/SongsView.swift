@@ -40,6 +40,7 @@ struct SongsView: View {
                                 Label("Shuffle play", systemImage: "shuffle")
                             }
                         }
+                        .buttonStyle(AccentPillButtonStyle())
                         .padding(.horizontal, AppLayout.horizontalPadding)
 
                         LazyVStack(spacing: 2) {
@@ -54,10 +55,13 @@ struct SongsView: View {
                                     if vm.isLoading {
                                         ProgressView().padding()
                                     } else {
-                                        Text("Load more").frame(maxWidth: .infinity).padding()
+                                        Text("Load more")
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .cardSurface(cornerRadius: 10)
                                     }
                                 }
-                                .buttonStyle(.card)
+                                .buttonStyle(CardlessButtonStyle())
                                 .padding(.top, 20)
                                 .onAppear { Task { await vm.loadNextPage() } }
                             }
@@ -65,7 +69,7 @@ struct SongsView: View {
                         .padding(.horizontal, AppLayout.horizontalPadding)
                         .padding(.bottom, 120)
                     }
-                    .padding(.top, 130)
+                    .padding(.top, AppLayout.contentTopPadding)
                 }
             }
         }
