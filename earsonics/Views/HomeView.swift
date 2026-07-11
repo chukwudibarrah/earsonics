@@ -129,11 +129,9 @@ struct AlbumCard: View {
                 ScrollingText(text: album.name, trackID: album.id, isFocused: isFocused, mode: .whenFocused)
                     .font(.subheadline)
                     .fontWeight(.bold)
-                    .frame(height: 30)
                 ScrollingText(text: album.artist ?? "", trackID: album.id, isFocused: isFocused, mode: .whenFocused)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                    .frame(height: 24)
             }
             .padding(.horizontal, 14)
             .padding(.bottom, 12)
@@ -211,15 +209,12 @@ struct TrackCard: View {
                     ScrollingText(text: song.title, trackID: song.id, isFocused: isFocused, mode: .whenFocused)
                         .font(.caption)
                         .fontWeight(.bold)
-                        .frame(height: 24)
                     ScrollingText(text: song.artist ?? "", trackID: song.id, isFocused: isFocused, mode: .whenFocused)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                        .frame(height: 20)
                     ScrollingText(text: song.album ?? "", trackID: song.id, isFocused: isFocused, mode: .whenFocused)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                        .frame(height: 20)
                 }
                 .padding(.trailing, 16)
             }
