@@ -6,32 +6,32 @@ struct ServerManagementView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section {
+            ScrollView {
+                LazyVStack(spacing: 8) {
                     ForEach(appState.serverStore.servers) { server in
                         NavigationLink {
                             ServerDetailView(server: server)
                         } label: {
                             ServerRow(server: server, isActive: server.id == appState.serverStore.activeServerID)
                         }
+                        .buttonStyle(CardlessButtonStyle())
                     }
-                }
-                .padding(.bottom, 30)
 
-                Section {
                     NavigationLink {
                         ServerEditView(mode: .add) { newServer in
                             appState.serverStore.add(newServer)
                             appState.syncActiveServer()
                         }
                     } label: {
-                        Label("Add server", systemImage: "plus.circle.fill")
-                            .font(.callout)
+                        AddServerRow()
                     }
+                    .buttonStyle(CardlessButtonStyle())
                 }
+                .padding(.top, AppLayout.contentTopPadding)
+                .padding(.horizontal, AppLayout.horizontalPadding)
+                .padding(.bottom, 120)
             }
             .navigationTitle("Servers")
-            .padding(.horizontal, 60)
         }
     }
 }
@@ -106,8 +106,31 @@ struct ServerRow: View {
             if isActive {
                 Text("Active").font(.caption).foregroundColor(.secondary)
             }
+            Image(systemName: "chevron.right")
+                .font(.callout)
+                .foregroundColor(.secondary)
         }
-        .padding(.vertical, 10)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 18)
+        .cardSurface(cornerRadius: 10)
+    }
+}
+
+// MARK: - Add Server Row
+struct AddServerRow: View {
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: "plus.circle.fill")
+                .font(.title2)
+            Text("Add server").font(.headline)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .font(.callout)
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 18)
+        .cardSurface(cornerRadius: 10)
     }
 }
 

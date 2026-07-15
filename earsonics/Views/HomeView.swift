@@ -23,16 +23,16 @@ struct HomeView: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: AppLayout.verticalSpacing) {
                             if !vm.newestAlbums.isEmpty {
-                                AlbumShelf(title: "Just arrived", albums: vm.newestAlbums, navPath: $navPath)
+                                AlbumShelf(title: "Just arrived", albums: vm.newestAlbums, playlists: vm.playlists, navPath: $navPath)
                             }
                             if !vm.keepSpinningSongs.isEmpty {
                                 TrackShelf(title: "Keep spinning", songs: vm.keepSpinningSongs)
                             }
                             if !vm.recentAlbums.isEmpty {
-                                AlbumShelf(title: "Recently played", albums: vm.recentAlbums, navPath: $navPath)
+                                AlbumShelf(title: "Recently played", albums: vm.recentAlbums, playlists: vm.playlists, navPath: $navPath)
                             }
                             if !vm.randomAlbums.isEmpty {
-                                AlbumShelf(title: "Discover", albums: vm.randomAlbums, navPath: $navPath)
+                                AlbumShelf(title: "Discover", albums: vm.randomAlbums, playlists: vm.playlists, navPath: $navPath)
                             }
                         }
                         .padding(.top, AppLayout.contentTopPadding)
@@ -55,8 +55,8 @@ struct HomeView: View {
 struct AlbumShelf: View {
     let title: String
     let albums: [Album]
+    let playlists: [Playlist]
     @Binding var navPath: NavigationPath
-    @State private var playlists: [Playlist] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -105,9 +105,6 @@ struct AlbumShelf: View {
             }
             .clipShape(Rectangle())
             .contentShape(Rectangle())
-        }
-        .task {
-            playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []
         }
     }
 }

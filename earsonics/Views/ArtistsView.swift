@@ -36,7 +36,7 @@ struct ArtistsView: View {
                 .searchable(text: $searchText, prompt: "Search artists")
             }
         }
-        .task { if vm.artists.isEmpty { await vm.loadHome() } }
+        .task { if vm.artists.isEmpty { await vm.loadArtists() } }
     }
 }
 

@@ -14,6 +14,20 @@ class SubsonicClient: ObservableObject {
     // Current server (set by AppState)
     var server: Server?
 
+    /// Dedicated session for API calls. The timeout stays generous on purpose:
+    /// a slow server (disk spinning up, remote link) can legitimately take a
+    /// long time to answer, and aborting such a request only converts a slow
+    /// success into a hard failure. Recovery from *dead* pooled connections is
+    /// handled by the hedged duplicate request in `requestData`, not by this
+    /// timeout. Responses carry a per-request auth salt so they're never
+    /// cacheable.
+    private let session: URLSession = {
+        let cfg = URLSessionConfiguration.default
+        cfg.timeoutIntervalForRequest = 30
+        cfg.urlCache = nil
+        return URLSession(configuration: cfg)
+    }()
+
     private let decoder: JSONDecoder = {
         let d = JSONDecoder()
         d.keyDecodingStrategy = .convertFromSnakeCase
@@ -76,12 +90,13 @@ class SubsonicClient: ObservableObject {
         return comps?.url
     }
 
-    // MARK: - Stream URL (for lossless/original quality)
-    func streamURL(songId: String, server srv: Server? = nil) -> URL? {
-        url(endpoint: "stream.view",
-            params: [URLQueryItem(name: "id", value: songId),
-                     URLQueryItem(name: "format", value: "raw")],
-            server: srv)
+    // MARK: - Stream URL
+    /// Builds a stream URL for the given quality. `.original` requests the raw
+    /// library file; the MP3 qualities ask the server to transcode.
+    func streamURL(songId: String, quality: StreamQuality = .original, server srv: Server? = nil) -> URL? {
+        var params = [URLQueryItem(name: "id", value: songId)]
+        params.append(contentsOf: quality.streamParams)
+        return url(endpoint: "stream.view", params: params, server: srv)
     }
 
     // MARK: - Cover Art URL
@@ -92,20 +107,99 @@ class SubsonicClient: ObservableObject {
     }
 
     // MARK: - Generic request
-    private func fetch(endpoint: String, params: [URLQueryItem] = [], server srv: Server? = nil) async throws -> SubsonicResponseBody {
+    private func fetch(endpoint: String, params: [URLQueryItem] = [], server srv: Server? = nil, hedged: Bool = true) async throws -> SubsonicResponseBody {
         guard let u = url(endpoint: endpoint, params: params, server: srv) else {
             throw SubsonicError.invalidURL
         }
-        let (data, response) = try await URLSession.shared.data(from: u)
-        if let http = response as? HTTPURLResponse, http.statusCode != 200 {
-            throw SubsonicError.httpError(http.statusCode)
-        }
+        let data = try await requestData(from: u, hedged: hedged)
         // Parse subsonic response wrapper
         let wrapper = try decoder.decode(SubsonicResponse<SubsonicResponseBody>.self, from: data)
         guard wrapper.subsonicResponse.status == "ok" else {
             throw SubsonicError.serverError(wrapper.subsonicResponse.error?.message ?? "Unknown error")
         }
         return wrapper.subsonicResponse
+    }
+
+    /// How long the first attempt gets before a duplicate request is hedged on
+    /// a fresh connection. A healthy server answers well within this; a dead
+    /// pooled connection never will, so recovery arrives ~this fast.
+    private static let hedgeDelayNanos: UInt64 = 3_000_000_000
+
+    /// Fetches data with a *hedged* duplicate rather than a timeout-and-retry.
+    ///
+    /// After the app sits idle or is suspended, every keep-alive connection in
+    /// the session's pool can be silently dead — and the Home screen opens
+    /// several at once, so a single retry can land on a second dead socket and
+    /// fail too. Aborting the first attempt is also wrong when the server is
+    /// merely slow: that turns a late success into a hard failure.
+    ///
+    /// So instead: the first attempt is left running, and if it hasn't
+    /// answered within `hedgeDelayNanos` a duplicate fires on a brand-new
+    /// single-use session (a guaranteed-fresh connection — the same thing
+    /// backing out and reopening a screen used to achieve by hand). Whichever
+    /// attempt finishes first wins; the loser is cancelled, which also tears
+    /// down its dead socket so the pool progressively heals.
+    ///
+    /// `hedged: false` performs one attempt with a single sequential retry on
+    /// a fresh connection instead — for mutating endpoints, where two racing
+    /// copies of the same call could double-apply.
+    private func requestData(from url: URL, hedged: Bool = true) async throws -> Data {
+        guard hedged else {
+            do {
+                return try await Self.perform(url, on: session)
+            } catch let error as URLError where error.code != .cancelled {
+                return try await Self.performOnFreshConnection(url)
+            }
+        }
+
+        return try await withThrowingTaskGroup(of: Data.self) { group in
+            group.addTask { [session] in
+                try await Self.perform(url, on: session)
+            }
+            group.addTask {
+                try await Task.sleep(nanoseconds: Self.hedgeDelayNanos)
+                return try await Self.performOnFreshConnection(url)
+            }
+            defer { group.cancelAll() }
+
+            var lastNetworkError: Error? = nil
+            while let outcome = await group.nextResult() {
+                switch outcome {
+                case .success(let data):
+                    return data
+                case .failure(let error as URLError):
+                    // A losing attempt is cancelled by the winner — ignore it.
+                    // Other network errors: let the remaining attempt play out.
+                    if error.code != .cancelled { lastNetworkError = error }
+                case .failure(is CancellationError):
+                    continue
+                case .failure(let error):
+                    // HTTP/server errors mean the connection works; a duplicate
+                    // request would get the same answer, so fail fast.
+                    throw error
+                }
+            }
+            throw lastNetworkError ?? CancellationError()
+        }
+    }
+
+    private static func perform(_ url: URL, on session: URLSession) async throws -> Data {
+        let (data, response) = try await session.data(from: url)
+        if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+            throw SubsonicError.httpError(http.statusCode)
+        }
+        return data
+    }
+
+    /// One request on a throwaway session: guarantees a fresh connection that
+    /// no stale pooled socket can stall.
+    private static func performOnFreshConnection(_ url: URL) async throws -> Data {
+        let cfg = URLSessionConfiguration.ephemeral
+        cfg.timeoutIntervalForRequest = 30
+        cfg.urlCache = nil
+        let fresh = URLSession(configuration: cfg)
+        defer { fresh.finishTasksAndInvalidate() }
+        return try await perform(url, on: fresh)
     }
 
     // MARK: - Ping
@@ -178,7 +272,7 @@ class SubsonicClient: ObservableObject {
     func createPlaylist(name: String, songIds: [String] = [], server srv: Server? = nil) async throws -> Playlist {
         var params = [URLQueryItem(name: "name", value: name)]
         params += songIds.map { URLQueryItem(name: "songId", value: $0) }
-        let r = try await fetch(endpoint: "createPlaylist.view", params: params, server: srv)
+        let r = try await fetch(endpoint: "createPlaylist.view", params: params, server: srv, hedged: false)
         guard let pl = r.playlist else { throw SubsonicError.missingData }
         return pl
     }
@@ -191,12 +285,12 @@ class SubsonicClient: ObservableObject {
         if let c = comment { params.append(URLQueryItem(name: "comment", value: c)) }
         params += songIdsToAdd.map { URLQueryItem(name: "songIdToAdd", value: $0) }
         params += indexesToRemove.map { URLQueryItem(name: "songIndexToRemove", value: "\($0)") }
-        _ = try await fetch(endpoint: "updatePlaylist.view", params: params, server: srv)
+        _ = try await fetch(endpoint: "updatePlaylist.view", params: params, server: srv, hedged: false)
     }
 
     func deletePlaylist(id: String, server srv: Server? = nil) async throws {
         _ = try await fetch(endpoint: "deletePlaylist.view",
-                            params: [URLQueryItem(name: "id", value: id)], server: srv)
+                            params: [URLQueryItem(name: "id", value: id)], server: srv, hedged: false)
     }
 
     // MARK: - Starred
@@ -210,7 +304,7 @@ class SubsonicClient: ObservableObject {
         if let id = songId   { params.append(URLQueryItem(name: "id", value: id)) }
         if let id = albumId  { params.append(URLQueryItem(name: "albumId", value: id)) }
         if let id = artistId { params.append(URLQueryItem(name: "artistId", value: id)) }
-        _ = try await fetch(endpoint: "star.view", params: params, server: srv)
+        _ = try await fetch(endpoint: "star.view", params: params, server: srv, hedged: false)
     }
 
     func unstar(songId: String? = nil, albumId: String? = nil, artistId: String? = nil, server srv: Server? = nil) async throws {
@@ -218,7 +312,7 @@ class SubsonicClient: ObservableObject {
         if let id = songId   { params.append(URLQueryItem(name: "id", value: id)) }
         if let id = albumId  { params.append(URLQueryItem(name: "albumId", value: id)) }
         if let id = artistId { params.append(URLQueryItem(name: "artistId", value: id)) }
-        _ = try await fetch(endpoint: "unstar.view", params: params, server: srv)
+        _ = try await fetch(endpoint: "unstar.view", params: params, server: srv, hedged: false)
     }
 
     // MARK: - Scrobble
@@ -226,7 +320,7 @@ class SubsonicClient: ObservableObject {
         _ = try await fetch(endpoint: "scrobble.view",
                             params: [URLQueryItem(name: "id", value: id),
                                      URLQueryItem(name: "submission", value: submission ? "true" : "false")],
-                            server: srv)
+                            server: srv, hedged: false)
     }
 
     // MARK: - Lyrics

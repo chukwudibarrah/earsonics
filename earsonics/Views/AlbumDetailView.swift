@@ -154,6 +154,22 @@ struct AlbumDetailView: View {
             if isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if songs.isEmpty {
+                VStack(spacing: 20) {
+                    Image(systemName: "wifi.exclamationmark")
+                        .font(.system(size: 50))
+                        .foregroundColor(.secondary)
+                    Text("Couldn't load tracks")
+                        .font(.headline)
+                    Button {
+                        Task { await load() }
+                    } label: {
+                        Label("Retry", systemImage: "arrow.clockwise")
+                            .padding(.horizontal, 8)
+                    }
+                    .buttonStyle(AccentPillButtonStyle())
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 5) {
@@ -174,17 +190,19 @@ struct AlbumDetailView: View {
         }
         .padding(.top, 20)
         .padding(.horizontal, AppLayout.horizontalPadding)
-        .task {
-            isLoading = true
-            async let albumLoad = SubsonicClient.shared.getAlbum(id: album.id)
-            async let playlistLoad = SubsonicClient.shared.getPlaylists()
-            if let detailed = try? await albumLoad {
-                loadedAlbum = detailed
-                isStarred = detailed.starred != nil
-            }
-            playlists = (try? await playlistLoad) ?? []
-            isLoading = false
+        .task { await load() }
+    }
+
+    private func load() async {
+        isLoading = true
+        async let albumLoad = SubsonicClient.shared.getAlbum(id: album.id)
+        async let playlistLoad = SubsonicClient.shared.getPlaylists()
+        if let detailed = try? await albumLoad {
+            loadedAlbum = detailed
+            isStarred = detailed.starred != nil
         }
+        playlists = (try? await playlistLoad) ?? []
+        isLoading = false
     }
 }
 

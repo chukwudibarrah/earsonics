@@ -29,18 +29,14 @@ struct CoverArtView: View {
     }
 
     private func loadImage() async {
-        guard let artId = id,
-              let url = SubsonicClient.shared.coverArtURL(id: artId, size: size) else {
+        guard let artId = id else {
             isLoading = false
             return
         }
         isLoading = true
-        do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            if let uiImage = UIImage(data: data) {
-                image = Image(uiImage: uiImage)
-            }
-        } catch { }
+        if let uiImage = await ImageCache.shared.image(for: artId, size: size) {
+            image = Image(uiImage: uiImage)
+        }
         isLoading = false
     }
 }

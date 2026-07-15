@@ -9,26 +9,41 @@ class LibraryViewModel: ObservableObject {
     @Published var randomAlbums: [Album] = []
     @Published var keepSpinningSongs: [Song] = []
     @Published var artists: [Artist] = []
-    @Published var genres: [Genre] = []
+    @Published var playlists: [Playlist] = []
     @Published var isLoading: Bool = false
     @Published var error: String? = nil
 
+    /// Loads the Home screen: the album shelves, plus (in the background) the
+    /// playlists used by card context menus and the "Keep spinning" shelf.
+    ///
+    /// Deliberately does NOT fetch artists or genres — Home shows neither, and
+    /// `getArtists` can be large enough on a big library to stall the whole
+    /// screen for a minute or more. The spinner clears as soon as the first
+    /// shelves arrive; the rest fills in progressively.
     func loadHome() async {
         isLoading = true
         error = nil
-        do {
-            async let recent  = SubsonicClient.shared.getAlbumList(type: "recent",  size: 20)
-            async let newest  = SubsonicClient.shared.getAlbumList(type: "newest",  size: 20)
-            async let random  = SubsonicClient.shared.getAlbumList(type: "random",  size: 20)
-            async let arts    = SubsonicClient.shared.getArtists()
-            async let genres  = SubsonicClient.shared.getGenres()
-            (recentAlbums, newestAlbums, randomAlbums, artists, self.genres) =
-                try await (recent, newest, random, arts, genres)
-        } catch {
-            self.error = error.localizedDescription
-        }
+        async let newest = SubsonicClient.shared.getAlbumList(type: "newest", size: 20)
+        async let recent = SubsonicClient.shared.getAlbumList(type: "recent", size: 20)
+        async let random = SubsonicClient.shared.getAlbumList(type: "random", size: 20)
+        async let pls    = SubsonicClient.shared.getPlaylists()
+
+        // Show the screen as soon as the first two shelves are ready.
+        newestAlbums = (try? await newest) ?? []
+        recentAlbums = (try? await recent) ?? []
         isLoading = false
+
+        randomAlbums = (try? await random) ?? []
+        playlists = (try? await pls) ?? []
         await loadKeepSpinning()
+    }
+
+    /// Loads the artist list for the Artists tab (only what that screen shows).
+    func loadArtists() async {
+        isLoading = true
+        error = nil
+        artists = (try? await SubsonicClient.shared.getArtists()) ?? []
+        isLoading = false
     }
 
     /// Builds the "Keep spinning" shelf: a couple of tracks from each of the

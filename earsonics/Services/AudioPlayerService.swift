@@ -77,6 +77,13 @@ class AudioPlayerService: NSObject, ObservableObject {
 
     private var originalQueue: [Song] = []
 
+    // Caching: one resource-loader delegate per streaming player item. The
+    // resource loader holds its delegate weakly, so we keep a strong reference
+    // here keyed by item and release it (cancelling its download) when the item
+    // is replaced. Items played straight from the cache file have no delegate.
+    private var loaderDelegates: [ObjectIdentifier: CachingResourceLoaderDelegate] = [:]
+    private static let cacheScheme = "earsonicscache"
+
     override init() {
         self.deckA = AVPlayer()
         self.deckB = AVPlayer()
@@ -203,6 +210,52 @@ class AudioPlayerService: NSObject, ObservableObject {
         return Float(min(peakSafeScalar, 1.0))
     }
 
+    // MARK: - Player item construction / teardown
+
+    /// Builds a player item for a song, honouring the streaming/cache quality
+    /// setting. Plays from the cache file on a hit; otherwise streams through the
+    /// caching resource loader (unless caching is disabled).
+    private func makePlayerItem(for song: Song, server srv: Server) -> AVPlayerItem? {
+        let quality = StreamQuality.current
+        guard let streamURL = SubsonicClient.shared.streamURL(songId: song.id, quality: quality, server: srv) else {
+            return nil
+        }
+        let cachingEnabled = UserDefaults.standard.object(forKey: "audioCacheEnabled") as? Bool ?? true
+        guard cachingEnabled else { return AVPlayerItem(url: streamURL) }
+
+        if let cached = AudioCache.cachedFileURL(for: song.id, quality: quality) {
+            return AVPlayerItem(url: cached)
+        }
+
+        // Swap the scheme to a custom one so AVFoundation routes byte requests
+        // through our resource-loader delegate.
+        guard var comps = URLComponents(url: streamURL, resolvingAgainstBaseURL: false) else {
+            return AVPlayerItem(url: streamURL)
+        }
+        comps.scheme = Self.cacheScheme
+        guard let customURL = comps.url else { return AVPlayerItem(url: streamURL) }
+
+        let delegate = CachingResourceLoaderDelegate(
+            realURL: streamURL, songId: song.id, quality: quality,
+            contentType: song.contentType, suffix: song.suffix,
+            size: song.size.map(Int64.init))
+        let asset = AVURLAsset(url: customURL)
+        asset.resourceLoader.setDelegate(delegate, queue: delegate.loaderQueue)
+        let item = AVPlayerItem(asset: asset)
+        loaderDelegates[ObjectIdentifier(item)] = delegate
+        return item
+    }
+
+    /// Replaces the current item on a deck, tearing down the outgoing item's
+    /// resource-loader delegate (if any) so its download is cancelled.
+    private func setItem(_ item: AVPlayerItem?, on deck: AVPlayer) {
+        if let old = deck.currentItem,
+           let delegate = loaderDelegates.removeValue(forKey: ObjectIdentifier(old)) {
+            delegate.invalidate()
+        }
+        deck.replaceCurrentItem(with: item)
+    }
+
     // MARK: - Rebuild: sets up current track on active deck
     func rebuildPlayerItems() {
         guard let srv = server else { return }
@@ -213,21 +266,20 @@ class AudioPlayerService: NSObject, ObservableObject {
 
         // Stop both decks
         deckA.pause()
-        deckA.replaceCurrentItem(with: nil)
+        setItem(nil, on: deckA)
         deckB.pause()
-        deckB.replaceCurrentItem(with: nil)
-        
+        setItem(nil, on: deckB)
+
         activeDeck = deckA
         activeDeck.volume = getTargetVolume(for: currentSong)
-        
+
         guard currentIndex >= 0, currentIndex < queue.count else { return }
         let currentSong = queue[currentIndex]
-        
-        guard let url = SubsonicClient.shared.streamURL(songId: currentSong.id, server: srv) else { return }
-        let item = AVPlayerItem(url: url)
-        
+
+        guard let item = makePlayerItem(for: currentSong, server: srv) else { return }
+
         // Setup observer for when it's ready to play (for latency telemetry if it was prewarmed, though here it's direct play)
-        activeDeck.replaceCurrentItem(with: item)
+        setItem(item, on: activeDeck)
         activeDeck.play()
         updateNowPlaying()
     }
@@ -284,14 +336,13 @@ class AudioPlayerService: NSObject, ObservableObject {
     private func startPrewarming() {
         guard transitionState == .idle else { return }
         guard let nextSong = getNextSong(), let srv = server else { return }
-        guard let url = SubsonicClient.shared.streamURL(songId: nextSong.id, server: srv) else { return }
-        
+        guard let item = makePlayerItem(for: nextSong, server: srv) else { return }
+
         transitionState = .prewarming
-        
+
         let standbyDeck = (activeDeck === deckA) ? deckB : deckA
         standbyDeck.volume = 0.0
-        
-        let item = AVPlayerItem(url: url)
+
         lastStreamRequestTime = CACurrentMediaTime()
         
         // KVO for ready to play status to update recentStartupLatencies
@@ -307,7 +358,7 @@ class AudioPlayerService: NSObject, ObservableObject {
             }
             .store(in: &cancellables)
         
-        standbyDeck.replaceCurrentItem(with: item)
+        setItem(item, on: standbyDeck)
         // Ensure standby deck starts loading
         standbyDeck.play()
         standbyDeck.pause() // Play/pause forces buffer to start
@@ -386,8 +437,8 @@ class AudioPlayerService: NSObject, ObservableObject {
         
         // Full reset and stop transcoder
         oldActiveDeck.pause()
-        oldActiveDeck.replaceCurrentItem(with: nil)
-        
+        setItem(nil, on: oldActiveDeck)
+
         transitionState = .idle
     }
     
@@ -435,7 +486,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         if transitionState == .prewarming {
             let standbyDeck = (activeDeck === deckA) ? deckB : deckA
             standbyDeck.pause()
-            standbyDeck.replaceCurrentItem(with: nil)
+            setItem(nil, on: standbyDeck)
             transitionState = .idle
         }
         
@@ -495,7 +546,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         if transitionState == .prewarming {
             let standbyDeck = (activeDeck === deckA) ? deckB : deckA
             standbyDeck.pause()
-            standbyDeck.replaceCurrentItem(with: nil)
+            setItem(nil, on: standbyDeck)
             transitionState = .idle
         }
     }

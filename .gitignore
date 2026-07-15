@@ -1,0 +1,28 @@
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# CocoaPods / Carthage (unused today, ignored defensively)
+Pods/
+Carthage/Build/
+
+# macOS
+.DS_Store
+
+# Scratch / local debugging artifacts
+*.log
+*.o

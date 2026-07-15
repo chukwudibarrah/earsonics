@@ -5,6 +5,16 @@ struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject private var player = AudioPlayerService.shared
     @State private var showDonationQR = false
+    @State private var cacheSize: Int64 = 0
+    @State private var audioCacheSize: Int64 = 0
+    @State private var isClearingCache = false
+
+    // Streaming/cache quality + audio-cache settings. Declared here (in a View)
+    // rather than in AppState so their changes drive SwiftUI correctly; the
+    // player and cache read the same keys live from UserDefaults.
+    @AppStorage(StreamQuality.defaultsKey) private var streamQualityRaw = StreamQuality.original.rawValue
+    @AppStorage("audioCacheEnabled") private var audioCacheEnabled = true
+    @AppStorage(AudioCache.limitKey) private var audioCacheLimitGB = 2
 
     var body: some View {
         NavigationStack {
@@ -42,10 +52,14 @@ struct SettingsView: View {
 
                 // Playback section
                 Section(header: Text("Playback").font(.headline)) {
-                    LabeledContent("Quality") {
-                        Text("Original (lossless)")
-                            .foregroundColor(.secondary)
+                    Picker("Quality", selection: $streamQualityRaw) {
+                        ForEach(StreamQuality.allCases) { quality in
+                            Text(quality.displayName).tag(quality.rawValue)
+                        }
                     }
+                    Text("Controls both live streaming and cached copies, so a replayed track matches its first play. Lower qualities are transcoded by the server and use less space.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text("Crossfade duration: \(Int(appState.crossfadeDuration))s")
@@ -107,6 +121,65 @@ struct SettingsView: View {
                 }
                 .padding()
 
+                // Storage section
+                Section(header: Text("Storage").font(.headline)) {
+                    Toggle(isOn: $audioCacheEnabled) {
+                        Text("Cache played songs")
+                    }
+                    if audioCacheEnabled {
+                        Text("Stores tracks you play so replaying them doesn't stream again.")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        HStack {
+                            Text("Music cache limit: \(audioCacheLimitGB) GB")
+                            Spacer()
+                            Button("-") {
+                                if audioCacheLimitGB > 1 { audioCacheLimitGB -= 1 }
+                            }
+                            .buttonStyle(.bordered)
+                            Button("+") {
+                                if audioCacheLimitGB < 10 { audioCacheLimitGB += 1 }
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    }
+
+                    HStack {
+                        Label("Music cache", systemImage: "music.note")
+                        Spacer()
+                        Text(ByteCountFormatter.string(fromByteCount: audioCacheSize, countStyle: .file))
+                            .foregroundColor(.secondary)
+                    }
+                    HStack {
+                        Label("Artwork cache", systemImage: "photo.stack")
+                        Spacer()
+                        Text(ByteCountFormatter.string(fromByteCount: cacheSize, countStyle: .file))
+                            .foregroundColor(.secondary)
+                    }
+                    Button {
+                        Task {
+                            isClearingCache = true
+                            await ImageCache.shared.clear()
+                            await AudioCache.shared.clear()
+                            await refreshCacheSizes()
+                            isClearingCache = false
+                        }
+                    } label: {
+                        HStack {
+                            Label("Clear cache", systemImage: "trash")
+                            if isClearingCache {
+                                Spacer()
+                                ProgressView()
+                            }
+                        }
+                    }
+                    .disabled(isClearingCache || (cacheSize == 0 && audioCacheSize == 0))
+                    Text("Removes cached music and cover art. Both are re-fetched as needed.")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .padding()
+
                 // About section
                 Section(header: Text("About").font(.headline)) {
                     Button {
@@ -145,6 +218,12 @@ struct SettingsView: View {
             .padding(.horizontal, AppLayout.horizontalPadding)
             .padding(.top, AppLayout.contentTopPadding)
         }
+        .task { await refreshCacheSizes() }
+    }
+
+    private func refreshCacheSizes() async {
+        cacheSize = await ImageCache.shared.diskUsage()
+        audioCacheSize = await AudioCache.shared.diskUsage()
     }
 }
 // MARK: - Accent colour swatch
