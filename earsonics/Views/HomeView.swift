@@ -19,6 +19,15 @@ struct HomeView: View {
                 } else if vm.isLoading && vm.recentAlbums.isEmpty {
                     ProgressView("Loading library...")
                         .font(.headline)
+                } else if let error = vm.error,
+                          vm.newestAlbums.isEmpty,
+                          vm.recentAlbums.isEmpty,
+                          vm.randomAlbums.isEmpty {
+                    HomeLoadErrorView(
+                        serverName: appState.serverStore.activeServer?.name,
+                        message: error,
+                        retry: { Task { await vm.loadHome() } }
+                    )
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: AppLayout.verticalSpacing) {
@@ -48,6 +57,43 @@ struct HomeView: View {
             .task { await vm.loadHome() }
             .refreshable { await vm.loadHome() }
         }
+    }
+}
+
+// MARK: - Home Load Error
+struct HomeLoadErrorView: View {
+    let serverName: String?
+    let message: String
+    let retry: () -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "wifi.exclamationmark")
+                .font(.system(size: 70))
+                .foregroundColor(.secondary)
+            Text("Couldn’t load your library")
+                .font(.title2.bold())
+            if let serverName {
+                Text("The active server, \(serverName), did not respond successfully.")
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            Text(message)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(3)
+            Button(action: retry) {
+                Label("Retry", systemImage: "arrow.clockwise")
+            }
+            .buttonStyle(AccentPillButtonStyle())
+            Text("Check the server in Settings, or choose a different active server.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(60)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

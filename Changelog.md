@@ -29,3 +29,8 @@
 * **Fixed intermittent failures to load an album's tracks or cover art**, especially noticeable after the app had been idle for a while. Network requests now hedge against dead pooled connections — a slow or stalled request is raced against a fresh one rather than just timed out, so first-open failures that used to require backing out and reopening now resolve on their own, typically within a few seconds. A "Couldn't load tracks" screen with a Retry button now covers the rare case where the server is genuinely unreachable, instead of an empty screen.
 * Servers screen restyled to match the rest of the app (card rows instead of a plain list).
 * Home screen loads faster: the artist list (which can be slow on large libraries) is no longer fetched as part of Home, and playlists are now fetched once and shared across shelves instead of once per shelf.
+
+## 1.07: Clearer Home errors & rebuilt server editor
+
+* When the library can't be loaded — for example the active server is unreachable or returns an error — Home now shows a clear "Couldn't load your library" message that names the active server, along with a Retry button and a reminder to check the server (or switch servers) in Settings, instead of a silent blank screen.
+* Rebuilt the Add/Edit server screen. It's now a single screen (no separate detail step), with clean full-width fields instead of a grouped form — fixing the "field inside a field" look — and Save and Delete return you to the servers list. This also removes the grouped-form text-field machinery implicated in a freeze when opening the server editor on tvOS, and cuts the navigation depth to reach it.

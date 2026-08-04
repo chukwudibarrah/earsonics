@@ -19,6 +19,23 @@
 - Multiple servers, switchable from Settings; credentials are stored in the Keychain, never in plain text
 - A focus-driven tvOS interface: marquee text for long titles, accent-colour focus rings, and a safe-area-aware now-playing bar
 
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%"><img src="screenshots/earsonics-1.jpeg" alt="Home screen with album shelves"><br><sub>Home — album shelves</sub></td>
+    <td width="50%"><img src="screenshots/earsonics-3.jpeg" alt="Sidebar navigation open over the Home screen"><br><sub>Sidebar navigation</sub></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/earsonics-5.jpg" alt="Keep spinning and Recently played shelves"><br><sub>Keep spinning &amp; Recently played</sub></td>
+    <td><img src="screenshots/earsonics-2.jpeg" alt="Album detail with track list and actions"><br><sub>Album detail &amp; track list</sub></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/earsonics-4.jpeg" alt="Full-screen Now Playing with scrubber and transport controls"><br><sub>Now Playing</sub></td>
+    <td><img src="screenshots/earsonics-6.jpeg" alt="Settings screen showing server status and playback options"><br><sub>Settings</sub></td>
+  </tr>
+</table>
+
 ## Requirements
 
 - Apple TV running tvOS 26.4 or later

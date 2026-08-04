@@ -29,12 +29,38 @@ class LibraryViewModel: ObservableObject {
         async let pls    = SubsonicClient.shared.getPlaylists()
 
         // Show the screen as soon as the first two shelves are ready.
-        newestAlbums = (try? await newest) ?? []
-        recentAlbums = (try? await recent) ?? []
+        var failures: [Error] = []
+        do {
+            newestAlbums = try await newest
+        } catch {
+            newestAlbums = []
+            failures.append(error)
+        }
+        do {
+            recentAlbums = try await recent
+        } catch {
+            recentAlbums = []
+            failures.append(error)
+        }
         isLoading = false
 
-        randomAlbums = (try? await random) ?? []
-        playlists = (try? await pls) ?? []
+        do {
+            randomAlbums = try await random
+        } catch {
+            randomAlbums = []
+            failures.append(error)
+        }
+        do {
+            playlists = try await pls
+        } catch {
+            playlists = []
+            failures.append(error)
+        }
+
+        if newestAlbums.isEmpty && recentAlbums.isEmpty && randomAlbums.isEmpty,
+           let failure = failures.first {
+            error = failure.localizedDescription
+        }
         await loadKeepSpinning()
     }
 
