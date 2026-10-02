@@ -34,6 +34,7 @@ struct Song: Identifiable, Codable, Hashable {
     let artist: String?
     let artistId: String?
     let track: Int?
+    let discNumber: Int?
     let year: Int?
     let genre: String?
     let coverArt: String?

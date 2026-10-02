@@ -5,13 +5,15 @@ struct QueueView: View {
     @EnvironmentObject var appState: AppState
     let onDismiss: () -> Void
 
-    var player: AudioPlayerService { appState.player }
+    // Observed directly: changes inside the player don't propagate through appState.
+    @ObservedObject private var player = AudioPlayerService.shared
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: 2) {
-                    ForEach(Array(player.queue.enumerated()), id: \.element.id) { idx, song in
+                    // Keyed by position: the same song can be queued more than once.
+                    ForEach(Array(player.queue.enumerated()), id: \.offset) { idx, song in
                         Button {
                             player.playFromQueue(index: idx)
                         } label: {
@@ -34,7 +36,10 @@ struct QueueView: View {
                 }
                 ToolbarItem(placement: .primaryAction) {
                     Button {
-                        player.queue.removeAll(keepingCapacity: false)
+                        // Stops playback too — emptying the array alone left
+                        // the track playing with no way to control it.
+                        player.clearQueue()
+                        onDismiss()
                     } label: {
                         Text("Clear").foregroundColor(.red)
                     }

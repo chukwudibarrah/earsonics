@@ -142,7 +142,12 @@ struct NowPlayingView: View {
                         Text(formatTime(player.currentTime))
                             .font(.callout.monospacedDigit()).foregroundColor(.secondary)
                         Spacer()
-                        if player.isBuffering {
+                        if let error = player.playbackError {
+                            Label(error, systemImage: "exclamationmark.triangle.fill")
+                                .font(.callout)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        } else if player.isBuffering {
                             HStack(spacing: 6) {
                                 ProgressView().scaleEffect(0.7)
                                 Text("Buffering").font(.callout).foregroundColor(.secondary)

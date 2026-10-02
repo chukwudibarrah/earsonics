@@ -1,6 +1,7 @@
 // Views/SongsView.swift
 import SwiftUI
 import Combine
+import os
 
 struct SongsView: View {
     @EnvironmentObject var appState: AppState
@@ -119,7 +120,10 @@ class SongsViewModel: ObservableObject {
                 hasMore = false
             }
         } catch {
-            print("Failed to fetch paginated tracks: \(error)")
+            // Only the localized description: a URLError's full description
+            // includes the request URL, which carries the auth token and salt.
+            Logger(subsystem: "com.wonderworks.earsonics", category: "library")
+                .error("Failed to fetch paginated tracks: \(error.localizedDescription, privacy: .public)")
         }
     }
 }

@@ -213,8 +213,12 @@ struct ArtistDetailView: View {
                     return
                 }
                 
+                // Chronological by album, keeping each album's tracks together
+                // in disc/track order. (Year + track alone interleaved albums
+                // released in the same year.)
                 let sorted = allTracks.sorted {
-                    ($0.year ?? 0, $0.track ?? 0) < ($1.year ?? 0, $1.track ?? 0)
+                    ($0.year ?? 0, $0.album ?? "", $0.albumId ?? "", $0.discNumber ?? 1, $0.track ?? 0)
+                        < ($1.year ?? 0, $1.album ?? "", $1.albumId ?? "", $1.discNumber ?? 1, $1.track ?? 0)
                 }
                 
                 appState.player.isShuffled = shuffle

@@ -128,8 +128,30 @@ struct ServerEditView: View {
         return appState.serverStore.activeServerID == s.id
     }
 
+    private var urlCheck: Server.URLCheck { Server.check(url: url) }
+
+    /// A domain over plain HTTP still saves: the warning explains it will be
+    /// blocked, and Test connection confirms it, but a misjudged host name
+    /// shouldn't lock someone out of saving a server that works.
     private var isValid: Bool {
-        !name.isEmpty && !url.isEmpty && !username.isEmpty && !password.isEmpty
+        !name.isEmpty && urlCheck != .invalid && !username.isEmpty && !password.isEmpty
+    }
+
+    /// Feedback under the URL field. The invalid hint is held back while the
+    /// field still holds only the prefilled scheme, so the form doesn't open
+    /// with an error showing.
+    private var urlMessage: (text: String, isError: Bool)? {
+        switch urlCheck {
+        case .ok:
+            return nil
+        case .invalid:
+            let untouched = ["", "https://", "http://"].contains(url.trimmingCharacters(in: .whitespaces))
+            return untouched ? nil : ("Enter a full address starting with https:// or http://, e.g. https://music.example.com", true)
+        case .unencryptedPublic:
+            return ("This connection isn’t encrypted. Your login token and music travel over the internet in plain text, and anyone along the way could reuse the token to access your server. Use https:// if your server supports it.", false)
+        case .blockedHTTPDomain:
+            return ("Apple TV only allows unencrypted (http://) connections to local addresses, such as 192.168.1.20 or nas.local, so this address will be blocked. Use https://, or the server’s local IP address.", true)
+        }
     }
 
     var body: some View {
@@ -151,6 +173,14 @@ struct ServerEditView: View {
                         TextField("https://music.example.com", text: $url)
                             .autocapitalization(.none)
                             .keyboardType(.URL)
+                    }
+                    // A sibling below the field, not a wrapper around it —
+                    // fields stay plain and full-width on tvOS.
+                    if let message = urlMessage {
+                        Label(message.text, systemImage: message.isError ? "xmark.octagon.fill" : "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundColor(message.isError ? .red : .orange)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
 

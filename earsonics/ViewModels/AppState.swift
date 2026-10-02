@@ -15,6 +15,11 @@ class AppState: ObservableObject {
     @Published var isConnected: Bool = false
     @Published var connectionError: String? = nil
 
+    /// Id of the server the API client is currently pointed at. Published here
+    /// (`serverStore` is a nested object whose changes don't propagate through
+    /// AppState) so views can reset their library data when it changes.
+    @Published private(set) var activeServerID: UUID? = nil
+
     @AppStorage("crossfadeDuration") var crossfadeDuration: Double = 0.0
     @AppStorage("preventScreenSaver") var preventScreenSaver: Bool = false
     @AppStorage("accentColourChoice") var accentColourRaw: String = AccentColorChoice.orange.rawValue
@@ -76,11 +81,16 @@ class AppState: ObservableObject {
 
     func syncActiveServer() {
         guard let server = serverStore.activeServer else {
+            // Last server deleted: detach so nothing keeps talking to it.
+            api.server = nil
+            player.server = nil
+            if activeServerID != nil { activeServerID = nil }
             isConnected = false
             return
         }
         api.server = server
         player.server = server
+        if activeServerID != server.id { activeServerID = server.id }
         Task { await testConnection(server: server) }
     }
 

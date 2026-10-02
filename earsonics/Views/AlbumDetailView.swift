@@ -12,6 +12,12 @@ struct AlbumDetailView: View {
 
     var songs: [Song] { loadedAlbum?.songs ?? [] }
 
+    /// True when tracks span more than one disc, so the list shows disc
+    /// headers (track numbers restart on each disc).
+    var isMultiDisc: Bool {
+        Set(songs.map { $0.discNumber ?? 1 }).count > 1
+    }
+
     var isThisAlbumPlaying: Bool {
         player.currentSong?.albumId == album.id
     }
@@ -174,6 +180,14 @@ struct AlbumDetailView: View {
                 ScrollView {
                     LazyVStack(spacing: 5) {
                         ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
+                            if isMultiDisc, idx == 0 || songs[idx - 1].discNumber != song.discNumber {
+                                Text("Disc \(song.discNumber ?? 1)")
+                                    .font(.caption).bold()
+                                    .foregroundColor(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.top, idx == 0 ? 0 : 20)
+                                    .padding(.bottom, 4)
+                            }
                             Button {
                                 appState.player.load(songs: songs, startIndex: idx)
                             } label: {

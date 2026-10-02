@@ -111,11 +111,17 @@ class SubsonicClient: ObservableObject {
         guard let u = url(endpoint: endpoint, params: params, server: srv) else {
             throw SubsonicError.invalidURL
         }
-        let data = try await requestData(from: u, hedged: hedged)
+        let data: Data
+        do {
+            data = try await requestData(from: u, hedged: hedged)
+        } catch let error as URLError where error.code == .appTransportSecurityRequiresSecureConnection {
+            throw SubsonicError.insecureConnectionBlocked
+        }
         // Parse subsonic response wrapper
         let wrapper = try decoder.decode(SubsonicResponse<SubsonicResponseBody>.self, from: data)
         guard wrapper.subsonicResponse.status == "ok" else {
-            throw SubsonicError.serverError(wrapper.subsonicResponse.error?.message ?? "Unknown error")
+            let error = wrapper.subsonicResponse.error
+            throw SubsonicError.serverError(code: error?.code, message: error?.message ?? "Unknown error")
         }
         return wrapper.subsonicResponse
     }
@@ -384,15 +390,36 @@ class SubsonicClient: ObservableObject {
 enum SubsonicError: LocalizedError {
     case invalidURL
     case httpError(Int)
-    case serverError(String)
+    case serverError(code: Int?, message: String)
     case missingData
+    case insecureConnectionBlocked
 
     var errorDescription: String? {
         switch self {
         case .invalidURL: return "Invalid server URL"
+        case .httpError(404):
+            return "No Subsonic server was found at this address (HTTP 404). Check the URL, including any path such as /navidrome."
         case .httpError(let code): return "HTTP error \(code)"
-        case .serverError(let msg): return "Server error: \(msg)"
+        case .serverError(let code, let msg):
+            return Self.description(forCode: code) ?? "Server error: \(msg)"
         case .missingData: return "Missing data in response"
+        case .insecureConnectionBlocked:
+            return "Apple TV blocked this unencrypted (http://) connection. Use https://, or the server’s local IP address."
+        }
+    }
+
+    /// Plain-language messages for the Subsonic error codes a user can act on.
+    /// Codes not listed fall back to the server's own message.
+    private static func description(forCode code: Int?) -> String? {
+        switch code {
+        case 40: return "Wrong username or password."
+        case 41: return "This server doesn’t support token sign-in for your account (common with LDAP accounts)."
+        case 44: return "The server rejected the sign-in credentials."
+        case 50: return "Your account isn’t allowed to do that on this server."
+        case 20: return "The server needs a newer client than this version of earsonics."
+        case 30: return "The server’s Subsonic API version is too old for earsonics."
+        case 70: return "The item couldn’t be found on the server. It may have been removed."
+        default: return nil
         }
     }
 }

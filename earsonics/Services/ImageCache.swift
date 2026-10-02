@@ -32,16 +32,32 @@ actor ImageCache {
         return URLSession(configuration: cfg)
     }()
 
+    /// Cap on the on-disk artwork cache. Trimmed (oldest-used first) once per
+    /// launch; disk hits refresh a file's modification date so covers in
+    /// regular use survive.
+    private static let diskLimitBytes: Int64 = 500 * 1_048_576
+    private var didTrimDisk = false
+
     init() {
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         directory = caches.appendingPathComponent("CoverArt", isDirectory: true)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     }
 
-    /// Returns the cover art for `id` at `size`, fetching and caching it if
-    /// necessary. Returns `nil` if the id is unusable or the download fails.
-    func image(for id: String, size: Int) async -> UIImage? {
-        let key = "\(id)-\(size)"
+    /// Returns the cover art for `id` at `size`, fetching it from `url` and
+    /// caching it if necessary. Cover-art ids are only unique within one
+    /// server, so the cache is scoped by `serverID`. The caller builds `url`
+    /// (on the main actor, where the API client lives); it's only used on a
+    /// cache miss. Returns `nil` if the download fails.
+    func image(for id: String, size: Int, serverID: UUID, url: URL) async -> UIImage? {
+        let key = "\(serverID.uuidString)-\(id)-\(size)"
+
+        if !didTrimDisk {
+            didTrimDisk = true
+            // Queued behind this request rather than run inline, so the first
+            // cover of the session isn't held up by a directory scan.
+            Task { self.trimDisk() }
+        }
 
         // 1. Memory
         if let cached = memory.object(forKey: key as NSString) { return cached }
@@ -53,6 +69,7 @@ actor ImageCache {
             // 3. Disk
             let fileURL = directory.appendingPathComponent(Self.filename(for: key))
             if let data = try? Data(contentsOf: fileURL), let image = UIImage(data: data) {
+                try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: fileURL.path)
                 return image
             }
             // 4. Network. A pooled connection can be silently dead after the
@@ -61,7 +78,6 @@ actor ImageCache {
             // connection, which is what "back out and reopen" achieved by
             // hand. The retry keeps the default 60s timeout so artwork a slow
             // server takes a while to produce arrives late rather than never.
-            guard let url = SubsonicClient.shared.coverArtURL(id: id, size: size) else { return nil }
             do {
                 return try await Self.download(url, with: session, storingAt: fileURL)
             } catch let error as URLError where error.code != .cancelled {
@@ -98,6 +114,25 @@ actor ImageCache {
         if let files = try? FileManager.default.contentsOfDirectory(
             at: directory, includingPropertiesForKeys: nil) {
             files.forEach { try? FileManager.default.removeItem(at: $0) }
+        }
+    }
+
+    /// Deletes the least recently used covers until the disk cache is under
+    /// `diskLimitBytes`.
+    private func trimDisk() {
+        let keys: [URLResourceKey] = [.fileSizeKey, .contentModificationDateKey]
+        guard let urls = try? FileManager.default.contentsOfDirectory(
+            at: directory, includingPropertiesForKeys: keys) else { return }
+        var files = urls.map { url -> (url: URL, size: Int64, modified: Date) in
+            let values = try? url.resourceValues(forKeys: Set(keys))
+            return (url, Int64(values?.fileSize ?? 0), values?.contentModificationDate ?? .distantPast)
+        }
+        var total = files.reduce(0) { $0 + $1.size }
+        guard total > Self.diskLimitBytes else { return }
+        files.sort { $0.modified < $1.modified }
+        for file in files where total > Self.diskLimitBytes {
+            try? FileManager.default.removeItem(at: file.url)
+            total -= file.size
         }
     }
 

@@ -37,16 +37,16 @@ actor AudioCache {
     /// played tracks survive eviction (LRU). `nonisolated` so the player can
     /// check for a cache hit synchronously when building a player item — it only
     /// touches the (thread-safe) file system, no actor state.
-    nonisolated static func cachedFileURL(for songId: String, quality: StreamQuality) -> URL? {
-        let url = fileURL(songId: songId, quality: quality)
+    nonisolated static func cachedFileURL(for songId: String, serverID: UUID, quality: StreamQuality) -> URL? {
+        let url = fileURL(songId: songId, serverID: serverID, quality: quality)
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
         try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: url.path)
         return url
     }
 
     /// Moves a completed download into the cache, then enforces the size cap.
-    func store(tempFile: URL, songId: String, quality: StreamQuality) {
-        let destination = Self.fileURL(songId: songId, quality: quality)
+    func store(tempFile: URL, songId: String, serverID: UUID, quality: StreamQuality) {
+        let destination = Self.fileURL(songId: songId, serverID: serverID, quality: quality)
         try? FileManager.default.removeItem(at: destination)
         do {
             try FileManager.default.moveItem(at: tempFile, to: destination)
@@ -99,8 +99,11 @@ actor AudioCache {
         }
     }
 
-    private nonisolated static func fileURL(songId: String, quality: StreamQuality) -> URL {
-        let key = "\(songId)-\(quality.cacheTag)"
+    /// Song ids are only unique within one server (many servers use small
+    /// integers), so the key is scoped by server. Files cached before this
+    /// scoping are never matched again and age out via LRU eviction.
+    private nonisolated static func fileURL(songId: String, serverID: UUID, quality: StreamQuality) -> URL {
+        let key = "\(serverID.uuidString)-\(songId)-\(quality.cacheTag)"
         let digest = SHA256.hash(data: Data(key.utf8))
         var name = digest.map { String(format: "%02x", $0) }.joined()
         if let suffix = quality.fileSuffix { name += ".\(suffix)" }

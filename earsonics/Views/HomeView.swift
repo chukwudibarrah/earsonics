@@ -122,7 +122,13 @@ struct AlbumShelf: View {
                         .buttonStyle(CardlessButtonStyle())
                         .contextMenu {
                             Button {
-                                AudioPlayerService.shared.load(songs: album.songs ?? [], startIndex: 0)
+                                // Album-list results don't include tracks, so
+                                // fetch the album before playing it.
+                                Task {
+                                    guard let detailed = try? await SubsonicClient.shared.getAlbum(id: album.id),
+                                          let songs = detailed.songs, !songs.isEmpty else { return }
+                                    AudioPlayerService.shared.load(songs: songs, startIndex: 0)
+                                }
                             } label: {
                                 Label("Play", systemImage: "play.fill")
                             }

@@ -23,6 +23,7 @@ nonisolated final class CachingResourceLoaderDelegate: NSObject,
 
     private let realURL: URL
     private let songId: String
+    private let serverID: UUID
     private let quality: StreamQuality
     private let seedContentType: String?
     private let seedSuffix: String?
@@ -42,6 +43,9 @@ nonisolated final class CachingResourceLoaderDelegate: NSObject,
     private var cacheFillStarted = false
     private var stored = false
     private var invalidated = false
+    /// Set when the server answered the cache-fill request with something other
+    /// than audio; every loading request then fails with it.
+    private var fillError: NSError?
 
     private var pendingRequests: [AVAssetResourceLoadingRequest] = []
     private var farRequestByTask: [ObjectIdentifier: AVAssetResourceLoadingRequest] = [:]
@@ -57,10 +61,11 @@ nonisolated final class CachingResourceLoaderDelegate: NSObject,
         return URLSession(configuration: cfg, delegate: self, delegateQueue: opQueue)
     }()
 
-    init(realURL: URL, songId: String, quality: StreamQuality,
+    init(realURL: URL, songId: String, serverID: UUID, quality: StreamQuality,
          contentType: String?, suffix: String?, size: Int64?) {
         self.realURL = realURL
         self.songId = songId
+        self.serverID = serverID
         self.quality = quality
         self.seedContentType = contentType
         self.seedSuffix = suffix
@@ -104,6 +109,10 @@ nonisolated final class CachingResourceLoaderDelegate: NSObject,
 
     func resourceLoader(_ resourceLoader: AVAssetResourceLoader,
                         shouldWaitForLoadingOfRequestedResource loadingRequest: AVAssetResourceLoadingRequest) -> Bool {
+        if let fillError {
+            loadingRequest.finishLoading(with: fillError)
+            return true
+        }
         startCacheFillIfNeeded()
         pendingRequests.append(loadingRequest)
         serviceRequests()
@@ -222,15 +231,51 @@ nonisolated final class CachingResourceLoaderDelegate: NSObject,
         task.cancel()
     }
 
+    /// Returns an error if a response doesn't carry audio bytes: an unexpected
+    /// HTTP status, or a Subsonic error document. `stream.view` reports
+    /// failures (unknown id, bad credentials, transcoder errors) as a JSON/XML
+    /// body with HTTP 200, which would otherwise be handed to the player — and,
+    /// worse, cached as the song, failing every replay until the cache is cleared.
+    private static func validationError(for response: URLResponse, expectedStatus: Int) -> NSError? {
+        guard let http = response as? HTTPURLResponse else { return nil }
+        let mime = http.mimeType?.lowercased() ?? ""
+        let isErrorDocument = mime.contains("json") || mime.contains("xml") || mime.hasPrefix("text/")
+        guard http.statusCode != expectedStatus || isErrorDocument else { return nil }
+        let message = isErrorDocument
+            ? "The server returned an error instead of audio."
+            : "The server returned HTTP \(http.statusCode)."
+        return NSError(domain: "earsonics.audioloader", code: http.statusCode,
+                       userInfo: [NSLocalizedDescriptionKey: message])
+    }
+
     // MARK: - URLSessionDataDelegate
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask,
                     didReceive response: URLResponse,
                     completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
-        if dataTask === cacheFillTask, expectedLength == nil {
-            let length = response.expectedContentLength
-            if length > 0 { expectedLength = length }
-            serviceRequests()
+        if dataTask === cacheFillTask {
+            if let error = Self.validationError(for: response, expectedStatus: 200) {
+                // Cancelling triggers didCompleteWithError, which fails the
+                // pending requests with `fillError`; nothing is cached.
+                fillError = error
+                completionHandler(.cancel)
+                return
+            }
+            if expectedLength == nil {
+                let length = response.expectedContentLength
+                if length > 0 { expectedLength = length }
+                serviceRequests()
+            }
+        } else if let request = farRequestByTask[ObjectIdentifier(dataTask)] {
+            // A ranged request must come back as 206; a 200 means the server
+            // ignored the Range header and is sending from byte 0, which would
+            // feed the player the wrong bytes.
+            if let error = Self.validationError(for: response, expectedStatus: 206) {
+                if !request.isFinished { request.finishLoading(with: error) }
+                finishFarTask(dataTask)
+                completionHandler(.cancel)
+                return
+            }
         }
         completionHandler(.allow)
     }
@@ -275,15 +320,18 @@ nonisolated final class CachingResourceLoaderDelegate: NSObject,
             }
             if complete {
                 stored = true
-                let temp = tempURL, sid = songId, q = quality
-                Task.detached { await AudioCache.shared.store(tempFile: temp, songId: sid, quality: q) }
+                let temp = tempURL, sid = songId, server = serverID, q = quality
+                Task.detached {
+                    await AudioCache.shared.store(tempFile: temp, songId: sid, serverID: server, quality: q)
+                }
             }
             // Resolve any request still waiting for the tail / total length.
             if expectedLength == nil { expectedLength = downloadedLength }
             serviceRequests()
         } else if let error {
+            let reported = fillError ?? (error as NSError)
             for request in pendingRequests where !request.isFinished {
-                request.finishLoading(with: error as NSError)
+                request.finishLoading(with: reported)
             }
             pendingRequests.removeAll()
         }

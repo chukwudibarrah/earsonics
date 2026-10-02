@@ -29,14 +29,18 @@ struct CoverArtView: View {
     }
 
     private func loadImage() async {
-        guard let artId = id else {
+        guard let artId = id,
+              let server = SubsonicClient.shared.server,
+              let url = SubsonicClient.shared.coverArtURL(id: artId, size: size, server: server) else {
+            image = nil
             isLoading = false
             return
         }
         isLoading = true
-        if let uiImage = await ImageCache.shared.image(for: artId, size: size) {
-            image = Image(uiImage: uiImage)
-        }
+        let uiImage = await ImageCache.shared.image(for: artId, size: size, serverID: server.id, url: url)
+        // Replace (not just set on success) so a failed load never leaves the
+        // previous id's artwork showing.
+        image = uiImage.map { Image(uiImage: $0) }
         isLoading = false
     }
 }

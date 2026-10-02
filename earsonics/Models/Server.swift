@@ -19,6 +19,65 @@ struct Server: Identifiable, Codable, Equatable, Hashable {
     }
 }
 
+// MARK: - URL checks
+extension Server {
+    /// How a server URL will behave, for feedback in the server editor.
+    enum URLCheck: Equatable {
+        /// HTTPS, or plain HTTP to a private-network address.
+        case ok
+        /// Not a usable http(s) URL with a host.
+        case invalid
+        /// Plain HTTP to a public IP address. App Transport Security exempts IP
+        /// literals, so it connects, but traffic crosses the internet unencrypted.
+        case unencryptedPublic
+        /// Plain HTTP to a domain name. App Transport Security blocks this, so
+        /// it can never connect.
+        case blockedHTTPDomain
+    }
+
+    static func check(url: String) -> URLCheck {
+        let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let comps = URLComponents(string: trimmed),
+              let scheme = comps.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              let host = comps.host?.lowercased(), !host.isEmpty else { return .invalid }
+        guard scheme == "http" else { return .ok }
+
+        if let octets = ipv4Octets(host) {
+            return isPrivateIPv4(octets) ? .ok : .unencryptedPublic
+        }
+        if host.contains(":") {   // IPv6 literal; URLComponents keeps the brackets
+            let ip = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+            let isPrivate = ip == "::1" || ip.hasPrefix("fe80:")
+                || ip.hasPrefix("fc") || ip.hasPrefix("fd")
+            return isPrivate ? .ok : .unencryptedPublic
+        }
+        // ATS allows plain HTTP only to unqualified names ("nas") and .local
+        // (Bonjour) hosts; anything else with a dot is treated as a public domain.
+        if host == "localhost" || !host.contains(".") || host.hasSuffix(".local") {
+            return .ok
+        }
+        return .blockedHTTPDomain
+    }
+
+    private static func ipv4Octets(_ host: String) -> [Int]? {
+        let parts = host.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count == 4 else { return nil }
+        let octets = parts.compactMap { Int($0) }.filter { (0...255).contains($0) }
+        return octets.count == 4 ? octets : nil
+    }
+
+    /// Loopback, link-local, RFC 1918 private and CGNAT (used by Tailscale) ranges.
+    private static func isPrivateIPv4(_ o: [Int]) -> Bool {
+        switch (o[0], o[1]) {
+        case (10, _), (127, _): return true
+        case (172, 16...31): return true
+        case (192, 168), (169, 254): return true
+        case (100, 64...127): return true
+        default: return false
+        }
+    }
+}
+
 // MARK: - Persistence
 class ServerStore: ObservableObject {
     static let shared = ServerStore()

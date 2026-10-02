@@ -21,29 +21,39 @@ struct ContentView: View {
         ZStack {
             // Sidebar navigation: collapses to an icon rail while browsing,
             // expands with labels when focus moves onto it
+            // Library tabs are keyed to the active server: switching servers
+            // recreates them, discarding the previous library's data and
+            // navigation stacks so they reload from the new server. Settings
+            // is deliberately not keyed — the switch happens from inside it.
             TabView(selection: $selectedTab) {
                 Tab(value: AppTab.search, role: .search) {
                     SearchView(goHome: { selectedTab = .home })
+                        .id(appState.activeServerID)
                 }
 
                 Tab("Home", systemImage: "house", value: AppTab.home) {
                     HomeView()
+                        .id(appState.activeServerID)
                 }
 
                 Tab("Artists", systemImage: "person", value: AppTab.artists) {
                     ArtistsView()
+                        .id(appState.activeServerID)
                 }
 
                 Tab("Tracks", systemImage: "music.note", value: AppTab.songs) {
                     SongsView()
+                        .id(appState.activeServerID)
                 }
 
                 Tab("Playlists", systemImage: "music.note.list", value: AppTab.playlists) {
                     PlaylistsView()
+                        .id(appState.activeServerID)
                 }
 
                 Tab("Favourites", systemImage: "bookmark", value: AppTab.starred) {
                     StarredView()
+                        .id(appState.activeServerID)
                 }
 
                 Tab("Settings", systemImage: "gearshape", value: AppTab.settings) {

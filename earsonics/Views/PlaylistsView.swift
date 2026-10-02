@@ -19,10 +19,13 @@ struct PlaylistsView: View {
                         .font(.system(size: 60)).foregroundColor(.secondary)
                     Text("No Playlists").font(.title)
                     Text("Create a playlist to get started").foregroundColor(.secondary)
+                    newPlaylistButton
                 }
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 8) {
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        newPlaylistButton
+                            .padding(.bottom, 12)
                         ForEach(playlists) { playlist in
                             NavigationLink {
                                 PlaylistDetailView(playlist: playlist)
@@ -49,13 +52,6 @@ struct PlaylistsView: View {
                 }
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button { showCreate = true } label: {
-                    Image(systemName: "plus")
-                }
-            }
-        }
         .task { await loadPlaylists() }
         .alert("New playlist", isPresented: $showCreate) {
             TextField("Name", text: $newPlaylistName)
@@ -70,6 +66,15 @@ struct PlaylistsView: View {
             }
             Button("Cancel", role: .cancel) { newPlaylistName = "" }
         }
+    }
+
+    // In the content rather than a toolbar item: the screen has no visible
+    // navigation bar, so a toolbar button never appeared.
+    private var newPlaylistButton: some View {
+        Button { showCreate = true } label: {
+            Label("New playlist", systemImage: "plus")
+        }
+        .buttonStyle(AccentPillButtonStyle())
     }
 
     private func loadPlaylists() async {
@@ -202,7 +207,11 @@ struct PlaylistDetailView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 5) {
-                        ForEach(Array(songs.enumerated()), id: \.element.id) { idx, song in
+                        // Keyed by position because a playlist can hold the same
+                        // song twice; the inner `.id` recreates a row (and its
+                        // star state) when a removal shifts a different song
+                        // into that position.
+                        ForEach(Array(songs.enumerated()), id: \.offset) { idx, song in
                             SongRow(
                                 song: song,
                                 index: idx,
@@ -216,6 +225,7 @@ struct PlaylistDetailView: View {
                                     await reload()
                                 }
                             }
+                            .id(song.id)
                         }
                     }
                     .padding(.horizontal, 20)
