@@ -27,10 +27,23 @@ actor ImageCache {
     private let session: URLSession = {
         let cfg = URLSessionConfiguration.default
         cfg.urlCache = nil
-        cfg.httpMaximumConnectionsPerHost = 6
         cfg.timeoutIntervalForRequest = 15
         return URLSession(configuration: cfg)
     }()
+
+    /// Cover downloads allowed in flight at once. Servers resize artwork on
+    /// request, which is CPU-heavy: Home alone asks for ~60 covers, and
+    /// letting them all run at once (over HTTP/2 a per-host connection limit
+    /// doesn't throttle anything — every request shares one connection)
+    /// starved the server. Measured against the Navidrome demo, 30
+    /// concurrent covers made API calls take 6–11s instead of <1s — stalling
+    /// "Keep spinning" and occasionally leaving Favourites stuck loading —
+    /// and the covers themselves finished slower (32s vs 18s at 4 at a time).
+    /// Queued requests also don't start their timeout until they run, so a
+    /// backlog no longer turns into timeouts and retries.
+    private static let maxConcurrentDownloads = 4
+    private var activeDownloads = 0
+    private var downloadWaiters: [CheckedContinuation<Void, Never>] = []
 
     /// Cap on the on-disk artwork cache. Trimmed (oldest-used first) once per
     /// launch; disk hits refresh a file's modification date so covers in
@@ -65,30 +78,15 @@ actor ImageCache {
         // 2. Coalesce concurrent requests for the same key
         if let existing = inFlight[key] { return await existing.value }
 
-        let task = Task<UIImage?, Never> { [directory, session] in
+        let task = Task<UIImage?, Never> { [directory] in
             // 3. Disk
             let fileURL = directory.appendingPathComponent(Self.filename(for: key))
             if let data = try? Data(contentsOf: fileURL), let image = UIImage(data: data) {
                 try? FileManager.default.setAttributes([.modificationDate: Date()], ofItemAtPath: fileURL.path)
                 return image
             }
-            // 4. Network. A pooled connection can be silently dead after the
-            // app idles or is suspended, so a network failure gets one retry
-            // on a brand-new single-use session — a guaranteed-fresh
-            // connection, which is what "back out and reopen" achieved by
-            // hand. The retry keeps the default 60s timeout so artwork a slow
-            // server takes a while to produce arrives late rather than never.
-            do {
-                return try await Self.download(url, with: session, storingAt: fileURL)
-            } catch let error as URLError where error.code != .cancelled {
-                let cfg = URLSessionConfiguration.ephemeral
-                cfg.urlCache = nil
-                let fresh = URLSession(configuration: cfg)
-                defer { fresh.finishTasksAndInvalidate() }
-                return try? await Self.download(url, with: fresh, storingAt: fileURL)
-            } catch {
-                return nil
-            }
+            // 4. Network, throttled
+            return await self.fetchFromNetwork(url, storingAt: fileURL)
         }
         inFlight[key] = task
         let image = await task.value
@@ -96,6 +94,49 @@ actor ImageCache {
 
         if let image { memory.setObject(image, forKey: key as NSString) }
         return image
+    }
+
+    /// Downloads one cover once a download slot is free (see
+    /// `maxConcurrentDownloads`). A pooled connection can be silently dead
+    /// after the app idles or is suspended, so a network failure gets one
+    /// retry on a brand-new single-use session — a guaranteed-fresh
+    /// connection, which is what "back out and reopen" achieved by hand. The
+    /// retry keeps the default 60s timeout so artwork a slow server takes a
+    /// while to produce arrives late rather than never.
+    private func fetchFromNetwork(_ url: URL, storingAt fileURL: URL) async -> UIImage? {
+        await acquireDownloadSlot()
+        defer { releaseDownloadSlot() }
+        do {
+            return try await Self.download(url, with: session, storingAt: fileURL)
+        } catch let error as URLError where error.code != .cancelled {
+            let cfg = URLSessionConfiguration.ephemeral
+            cfg.urlCache = nil
+            let fresh = URLSession(configuration: cfg)
+            defer { fresh.finishTasksAndInvalidate() }
+            return try? await Self.download(url, with: fresh, storingAt: fileURL)
+        } catch {
+            return nil
+        }
+    }
+
+    /// Waits for a free download slot. Slots are handed to waiters in request
+    /// order, so covers load roughly top-to-bottom as screens request them.
+    private func acquireDownloadSlot() async {
+        if activeDownloads < Self.maxConcurrentDownloads {
+            activeDownloads += 1
+            return
+        }
+        // The releasing download hands its slot straight to this waiter, so
+        // `activeDownloads` stays unchanged.
+        await withCheckedContinuation { downloadWaiters.append($0) }
+    }
+
+    private func releaseDownloadSlot() {
+        if downloadWaiters.isEmpty {
+            activeDownloads -= 1
+        } else {
+            downloadWaiters.removeFirst().resume()
+        }
     }
 
     /// Total size of the on-disk artwork cache, in bytes.

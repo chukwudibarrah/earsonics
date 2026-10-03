@@ -16,14 +16,17 @@ struct SettingsView: View {
     @AppStorage("audioCacheEnabled") private var audioCacheEnabled = true
     @AppStorage(AudioCache.limitKey) private var audioCacheLimitGB = 2
 
+    @State private var navPath = NavigationPath()
+
+    // Pages open by value (NavigationLink(value:) + navigationDestination).
+    // `NavigationLink { destination }` left the server list/editor on screen
+    // after switching tabs from the sidebar.
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navPath) {
             Form {
                 // Server management section
                 Section(header: Text("Servers").font(.headline)) {
-                    NavigationLink {
-                        ServerManagementView()
-                    } label: {
+                    NavigationLink(value: SettingsRoute.servers) {
                         HStack {
                             Label("Manage servers", systemImage: "server.rack")
                             Spacer()
@@ -217,6 +220,13 @@ struct SettingsView: View {
             }
             .padding(.horizontal, AppLayout.horizontalPadding)
             .padding(.top, AppLayout.contentTopPadding)
+            .navigationDestination(for: SettingsRoute.self) { route in
+                switch route {
+                case .servers: ServerManagementView()
+                case .addServer: ServerEditView(mode: .add)
+                case .editServer(let server): ServerEditView(mode: .edit(server))
+                }
+            }
         }
         .task { await refreshCacheSizes() }
     }
@@ -225,6 +235,14 @@ struct SettingsView: View {
         cacheSize = await ImageCache.shared.diskUsage()
         audioCacheSize = await AudioCache.shared.diskUsage()
     }
+}
+
+/// Pages reachable from Settings, opened by value through SettingsView's
+/// navigation path.
+enum SettingsRoute: Hashable {
+    case servers
+    case addServer
+    case editServer(Server)
 }
 // MARK: - Accent colour swatch
 private struct AccentSwatchButton: View {

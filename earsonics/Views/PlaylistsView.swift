@@ -7,64 +7,78 @@ struct PlaylistsView: View {
     @State private var isLoading = true
     @State private var showCreate = false
     @State private var newPlaylistName = ""
+    @State private var navPath = NavigationPath()
     @ObservedObject private var player = AudioPlayerService.shared
 
+    // Same structure as HomeView: a path-based stack whose root is one stable
+    // container, destinations registered with navigationDestination, and the
+    // navigation bar hidden. The previous version — a conditional directly
+    // as the stack's root, pushing via NavigationLink, with modifiers on the
+    // stack itself — could leave a playlist on screen over other tabs.
     var body: some View {
-        NavigationStack {
-            if isLoading && playlists.isEmpty {
-                ProgressView("Loading Playlists...")
-            } else if playlists.isEmpty {
-                VStack(spacing: 20) {
-                    Image(systemName: "music.note.list")
-                        .font(.system(size: 60)).foregroundColor(.secondary)
-                    Text("No Playlists").font(.title)
-                    Text("Create a playlist to get started").foregroundColor(.secondary)
-                    newPlaylistButton
-                }
-            } else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 8) {
+        NavigationStack(path: $navPath) {
+            Group {
+                if isLoading && playlists.isEmpty {
+                    FocusableProgressView(title: "Loading Playlists...")
+                } else if playlists.isEmpty {
+                    VStack(spacing: 20) {
+                        Image(systemName: "music.note.list")
+                            .font(.system(size: 60)).foregroundColor(.secondary)
+                        Text("No Playlists").font(.title)
+                        Text("Create a playlist to get started").foregroundColor(.secondary)
                         newPlaylistButton
-                            .padding(.bottom, 12)
-                        ForEach(playlists) { playlist in
-                            NavigationLink {
-                                PlaylistDetailView(playlist: playlist)
-                                    .environmentObject(appState)
-                            } label: {
-                                PlaylistRow(playlist: playlist) {
-                                    Task { await loadPlaylists() }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 8) {
+                            newPlaylistButton
+                                .padding(.bottom, 12)
+                            ForEach(playlists) { playlist in
+                                Button {
+                                    navPath.append(playlist)
+                                } label: {
+                                    PlaylistRow(playlist: playlist) {
+                                        Task { await loadPlaylists() }
+                                    }
+                                }
+                                .buttonStyle(CardlessButtonStyle())
+                                .contextMenu {
+                                    Button(role: .destructive) {
+                                        Task {
+                                            try? await SubsonicClient.shared.deletePlaylist(id: playlist.id)
+                                            await loadPlaylists()
+                                        }
+                                    } label: { Label("Delete Playlist", systemImage: "trash") }
                                 }
                             }
-                            .buttonStyle(CardlessButtonStyle())
-                            .contextMenu {
-                                Button(role: .destructive) {
-                                    Task {
-                                        try? await SubsonicClient.shared.deletePlaylist(id: playlist.id)
-                                        await loadPlaylists()
-                                    }
-                                } label: { Label("Delete Playlist", systemImage: "trash") }
-                            }
+                        }
+                        .padding(.top, AppLayout.contentTopPadding)
+                        .padding(.horizontal, AppLayout.horizontalPadding)
+                        .padding(.bottom, 120)
+                    }
+                }
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: Playlist.self) { playlist in
+                PlaylistDetailView(playlist: playlist)
+            }
+            // Re-runs when returning from a playlist, picking up renames and
+            // track-count changes.
+            .task { await loadPlaylists() }
+            .alert("New playlist", isPresented: $showCreate) {
+                TextField("Name", text: $newPlaylistName)
+                Button("Create") {
+                    Task {
+                        if !newPlaylistName.isEmpty {
+                            _ = await PlaylistAdder.shared.create(name: newPlaylistName, songIDs: [])
+                            newPlaylistName = ""
+                            await loadPlaylists()
                         }
                     }
-                    .padding(.top, AppLayout.contentTopPadding)
-                    .padding(.horizontal, AppLayout.horizontalPadding)
-                    .padding(.bottom, 120)
                 }
+                Button("Cancel", role: .cancel) { newPlaylistName = "" }
             }
-        }
-        .task { await loadPlaylists() }
-        .alert("New playlist", isPresented: $showCreate) {
-            TextField("Name", text: $newPlaylistName)
-            Button("Create") {
-                Task {
-                    if !newPlaylistName.isEmpty {
-                        _ = try? await SubsonicClient.shared.createPlaylist(name: newPlaylistName)
-                        newPlaylistName = ""
-                        await loadPlaylists()
-                    }
-                }
-            }
-            Button("Cancel", role: .cancel) { newPlaylistName = "" }
         }
     }
 
@@ -169,7 +183,10 @@ struct PlaylistDetailView: View {
                             .font(.caption2)
                     }
 
-                    Button { isEditing = true } label: {
+                    Button {
+                        editName = loadedPlaylist?.name ?? playlist.name
+                        isEditing = true
+                    } label: {
                         Label("Rename", systemImage: "pencil")
                             .frame(maxWidth: .infinity)
                             .font(.caption2)
@@ -191,7 +208,7 @@ struct PlaylistDetailView: View {
                     Text(comment).foregroundColor(.secondary).font(.caption2)
                 }
 
-                if let count = playlist.songCount {
+                if let count = loadedPlaylist?.songCount ?? playlist.songCount {
                     Text("\(count) tracks")
                         .font(.caption2)
                         .foregroundColor(.secondary)
@@ -250,7 +267,6 @@ struct PlaylistDetailView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
-        .onAppear { editName = playlist.name }
     }
 
     private func reload() async {

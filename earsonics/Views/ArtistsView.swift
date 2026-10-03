@@ -5,6 +5,7 @@ struct ArtistsView: View {
     @EnvironmentObject var appState: AppState
     @StateObject private var vm = LibraryViewModel()
     @State private var searchText: String = ""
+    @State private var navPath = NavigationPath()
 
     var filtered: [Artist] {
         searchText.isEmpty ? vm.artists : vm.artists.filter {
@@ -12,28 +13,57 @@ struct ArtistsView: View {
         }
     }
 
+    // Pages open by value (NavigationLink(value:) + navigationDestination).
+    // `NavigationLink { destination }` left the page on screen after
+    // switching tabs from the sidebar. The Album destination serves the
+    // album links inside ArtistDetailView.
     var body: some View {
-        NavigationStack {
-            if vm.isLoading && vm.artists.isEmpty {
-                ProgressView("Loading artists...")
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 2) {
-                        ForEach(filtered) { artist in
-                            NavigationLink {
-                                ArtistDetailView(artist: artist)
-                                    .environmentObject(appState)
-                            } label: {
-                                ArtistRow(artist: artist)
-                            }
-                            .buttonStyle(CardlessButtonStyle())
+        NavigationStack(path: $navPath) {
+            Group {
+                if vm.isLoading && vm.artists.isEmpty {
+                    FocusableProgressView(title: "Loading artists...")
+                } else if vm.artists.isEmpty {
+                    // Failed or empty load: say so, and keep a focusable control
+                    // on screen so Menu reaches the sidebar.
+                    VStack(spacing: 16) {
+                        Image(systemName: vm.error == nil ? "person" : "wifi.exclamationmark")
+                            .font(.system(size: 60))
+                            .foregroundColor(.secondary)
+                        Text(vm.error == nil ? "No artists" : "Couldn’t load artists").font(.title)
+                        Text(vm.error ?? "No artists were found on the server.")
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        Button {
+                            Task { await vm.loadArtists() }
+                        } label: {
+                            Label("Reload", systemImage: "arrow.clockwise")
                         }
+                        .buttonStyle(AccentPillButtonStyle())
                     }
-                    .padding(.top, 20)
-                    .padding(.horizontal, AppLayout.horizontalPadding)
-                    .padding(.bottom, 100)
+                    .padding(60)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 2) {
+                            ForEach(filtered) { artist in
+                                NavigationLink(value: artist) {
+                                    ArtistRow(artist: artist)
+                                }
+                                .buttonStyle(CardlessButtonStyle())
+                            }
+                        }
+                        .padding(.top, 20)
+                        .padding(.horizontal, AppLayout.horizontalPadding)
+                        .padding(.bottom, 100)
+                    }
+                    .searchable(text: $searchText, prompt: "Search artists")
                 }
-                .searchable(text: $searchText, prompt: "Search artists")
+            }
+            .navigationDestination(for: Artist.self) { artist in
+                ArtistDetailView(artist: artist)
+            }
+            .navigationDestination(for: Album.self) { album in
+                AlbumDetailView(album: album)
             }
         }
         .task { if vm.artists.isEmpty { await vm.loadArtists() } }
@@ -147,9 +177,10 @@ struct ArtistDetailView: View {
                     } else {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 350), spacing: 10)], spacing: 50) {
                             ForEach(albums) { album in
-                                NavigationLink {
-                                    AlbumDetailView(album: album)
-                                } label: {
+                                // By value: resolved by the Album destination of
+                                // whichever tab's stack this page is in
+                                // (Artists, Search or Favourites).
+                                NavigationLink(value: album) {
                                     AlbumCard(album: album)
                                 }
                                 .buttonStyle(CardlessButtonStyle())

@@ -89,11 +89,15 @@ class ServerStore: ObservableObject {
     }
     @Published var activeServerID: UUID? {
         didSet {
-            if let id = activeServerID {
+            if let id = activeServerID, !isEphemeral {
                 UserDefaults.standard.set(id.uuidString, forKey: activeKey)
             }
         }
     }
+
+    /// True when the server list came from the UI-test environment (below);
+    /// nothing is then read from or written to UserDefaults or the Keychain.
+    private var isEphemeral = false
 
     var activeServer: Server? {
         guard let id = activeServerID else { return servers.first }
@@ -101,6 +105,21 @@ class ServerStore: ObservableObject {
     }
 
     init() {
+        #if DEBUG
+        // UI tests pass a server in the launch environment so they run against
+        // a known library (the public Navidrome demo) without reading or
+        // overwriting the servers saved on the device. Debug builds only.
+        let env = ProcessInfo.processInfo.environment
+        if let url = env["EARSONICS_UITEST_SERVER_URL"],
+           let username = env["EARSONICS_UITEST_USERNAME"],
+           let password = env["EARSONICS_UITEST_PASSWORD"] {
+            isEphemeral = true
+            let server = Server(name: "UI Test Server", url: url, username: username, password: password)
+            servers = [server]
+            activeServerID = server.id
+            return
+        }
+        #endif
         load()
         if let str = UserDefaults.standard.string(forKey: activeKey),
            let id = UUID(uuidString: str) {
@@ -137,6 +156,7 @@ class ServerStore: ObservableObject {
     /// Persists passwords to the Keychain and a password-free copy of the
     /// server list to UserDefaults, so secrets never touch UserDefaults.
     private func save() {
+        guard !isEphemeral else { return }
         for server in servers {
             KeychainHelper.save(server.password, account: server.id.uuidString)
         }

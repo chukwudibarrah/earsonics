@@ -12,15 +12,24 @@ struct SongsView: View {
     var body: some View {
         NavigationStack {
             if vm.isLoading && vm.songs.isEmpty {
-                ProgressView("Loading songs...")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                FocusableProgressView(title: "Loading songs...")
             } else if vm.songs.isEmpty {
                 VStack(spacing: 16) {
-                    Image(systemName: "music.note")
+                    Image(systemName: vm.error == nil ? "music.note" : "wifi.exclamationmark")
                         .font(.system(size: 60))
                         .foregroundColor(.secondary)
-                    Text("No songs").font(.title)
-                    Text("No songs were found on the server.").foregroundColor(.secondary)
+                    Text(vm.error == nil ? "No songs" : "Couldn’t load songs").font(.title)
+                    Text(vm.error ?? "No songs were found on the server.")
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                    // Also keeps something focusable on screen, so Menu
+                    // reaches the sidebar instead of exiting the app.
+                    Button {
+                        Task { await vm.reload() }
+                    } label: {
+                        Label("Reload", systemImage: "arrow.clockwise")
+                    }
+                    .buttonStyle(AccentPillButtonStyle())
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -86,17 +95,29 @@ class SongsViewModel: ObservableObject {
     @Published var songs: [Song] = []
     @Published var isLoading = false
     @Published var hasMore = true
-    
+    /// Message from the last failed load, shown when there are no songs.
+    @Published var error: String?
+
     private var currentOffset = 0
     private let pageSize = 1000
     private let fixedQuery = "" // empty query to match everything
+
+    /// Starts over from the first page.
+    func reload() async {
+        guard !isLoading else { return }
+        songs = []
+        currentOffset = 0
+        hasMore = true
+        await loadNextPage()
+    }
 
     func loadNextPage() async {
         guard !isLoading && hasMore else { return }
         
         isLoading = true
         defer { isLoading = false }
-        
+        error = nil
+
         do {
             let result = try await SubsonicClient.shared.search(
                 query: fixedQuery,
@@ -124,6 +145,7 @@ class SongsViewModel: ObservableObject {
             // includes the request URL, which carries the auth token and salt.
             Logger(subsystem: "com.wonderworks.earsonics", category: "library")
                 .error("Failed to fetch paginated tracks: \(error.localizedDescription, privacy: .public)")
+            self.error = error.localizedDescription
         }
     }
 }

@@ -17,30 +17,44 @@ struct NowPlayingView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
-
-            CoverArtView(id: player.currentSong?.coverArt, size: 100)
-                .scaleEffect(1.8)
-                .blur(radius: 60)
-                .opacity(0.45)
+            // The blurred artwork is an overlay so it can't affect layout: as
+            // a ZStack sibling, its fill-scaled image made this whole screen
+            // taller than the display, pushing top-aligned content (the lyrics
+            // and queue headers, with their Back buttons) off the top.
+            Color.black
+                .overlay {
+                    CoverArtView(id: player.currentSong?.coverArt, size: 100)
+                        .scaleEffect(1.8)
+                        .blur(radius: 60)
+                        .opacity(0.45)
+                }
+                .clipped()
                 .ignoresSafeArea()
 
             if player.currentSong == nil {
+                // Normally never seen — the overlay closes itself when the
+                // queue empties (see onChange below) — but it must still offer
+                // something focusable, or Menu would exit the app.
                 VStack(spacing: 24) {
                     Image(systemName: "music.note.tv")
                         .font(.system(size: 100)).foregroundColor(.secondary)
                     Text("Nothing playing").font(.largeTitle).bold()
                     Text("Browse your library and start playing music.")
                         .font(.title3).foregroundColor(.secondary)
+                    Button("Close") { dismiss() }
+                        .buttonStyle(AccentPillButtonStyle())
                 }
             } else if showQueue {
                 QueueView { showQueue = false }
                     .transition(.move(edge: .trailing))
-                    .onExitCommand { showQueue = false }
             } else if showLyrics {
-                LyricsView(structured: lyrics, plain: plainLyrics, currentTime: player.currentTime) {
-                    showLyrics = false
-                }
+                LyricsView(
+                    structured: lyrics,
+                    plain: plainLyrics,
+                    currentTime: player.currentTime,
+                    onSeek: { player.seek(to: $0) },
+                    onDismiss: { showLyrics = false }
+                )
                 .transition(.move(edge: .trailing))
             } else {
                 mainPlayerView.transition(.opacity)
@@ -48,8 +62,25 @@ struct NowPlayingView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: showQueue)
         .animation(.easeInOut(duration: 0.3), value: showLyrics)
+        // Menu steps back one level at a time — lyrics/queue → player →
+        // close — wherever focus is inside this screen.
+        .onExitCommand {
+            if showLyrics {
+                showLyrics = false
+            } else if showQueue {
+                showQueue = false
+            } else {
+                dismiss()
+            }
+        }
         .onChange(of: player.currentSong?.id) {
-            showQueue = false; showLyrics = false
+            // Queue cleared or playback stopped: nothing left to show here.
+            guard player.currentSong != nil else {
+                dismiss()
+                return
+            }
+            // Lyrics and queue stay open across track changes; lyrics follow
+            // the new track.
             isStarred = player.currentSong?.starred != nil
             Task { await loadLyrics() }
         }
@@ -63,10 +94,9 @@ struct NowPlayingView: View {
             Button("Create") {
                 if !newPlaylistName.isEmpty {
                     Task {
-                        if let song = player.currentSong {
-                            if let newPl = try? await SubsonicClient.shared.createPlaylist(name: newPlaylistName, songIds: [song.id]) {
-                                playlists.append(newPl)
-                            }
+                        if let song = player.currentSong,
+                           let newPl = await PlaylistAdder.shared.create(name: newPlaylistName, songIDs: [song.id]) {
+                            playlists.append(newPl)
                         }
                         newPlaylistName = ""
                     }
@@ -192,10 +222,7 @@ struct NowPlayingView: View {
                             ForEach(playlists) { playlist in
                                 Button {
                                     if let song = player.currentSong {
-                                        Task {
-                                            try? await SubsonicClient.shared.updatePlaylist(
-                                                id: playlist.id, songIdsToAdd: [song.id])
-                                        }
+                                        Task { await PlaylistAdder.shared.add(songIDs: [song.id], to: playlist) }
                                     }
                                 } label: {
                                     Label(playlist.name, systemImage: "music.note.list")

@@ -8,8 +8,43 @@ struct QueueView: View {
     // Observed directly: changes inside the player don't propagate through appState.
     @ObservedObject private var player = AudioPlayerService.shared
 
+    @FocusState private var focusedRow: Int?
+
+    // A plain header rather than a NavigationStack toolbar: this screen is an
+    // overlay, not a navigation destination, and a stack here would be nested
+    // inside the tab's own. Menu is handled by NowPlayingView.
     var body: some View {
-        NavigationStack {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Button(action: onDismiss) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "chevron.left")
+                            .font(.title2)
+                        Text("Back")
+                            .font(.headline)
+                    }
+                }
+                .buttonStyle(AccentIconButtonStyle())
+
+                Text("Queue")
+                    .font(.largeTitle).bold()
+                    .padding(.leading, 30)
+                Spacer()
+
+                Button {
+                    // Stops playback too — emptying the array alone left the
+                    // track playing with no way to control it. Now Playing
+                    // closes itself once the queue is empty.
+                    player.clearQueue()
+                } label: {
+                    Label("Clear", systemImage: "trash")
+                        .foregroundColor(.red)
+                }
+                .buttonStyle(AccentIconButtonStyle())
+            }
+            .padding(.horizontal, AppLayout.horizontalPadding)
+            .padding(.vertical, 30)
+
             ScrollView {
                 LazyVStack(spacing: 2) {
                     // Keyed by position: the same song can be queued more than once.
@@ -20,31 +55,14 @@ struct QueueView: View {
                             QueueRow(song: song, index: idx, isCurrent: idx == player.currentIndex)
                         }
                         .buttonStyle(CardlessButtonStyle())
+                        .focused($focusedRow, equals: idx)
                     }
                 }
-                .padding(.top, 350)
-                .padding(.bottom, 600)
+                .padding(.vertical, 20)
                 .padding(.horizontal, AppLayout.horizontalPadding)
             }
-            .navigationTitle("Queue")
-            .toolbar {
-                ToolbarItem(placement: .navigation) {
-                    Button(action: onDismiss) {
-                        Image(systemName: "chevron.left")
-                        Text("Back")
-                    }
-                }
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        // Stops playback too — emptying the array alone left
-                        // the track playing with no way to control it.
-                        player.clearQueue()
-                        onDismiss()
-                    } label: {
-                        Text("Clear").foregroundColor(.red)
-                    }
-                }
-            }
+            // Open on the playing track rather than the top of the queue.
+            .defaultFocus($focusedRow, player.currentIndex)
         }
     }
 }

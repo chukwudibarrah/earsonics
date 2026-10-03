@@ -8,12 +8,17 @@ struct SearchView: View {
     @State private var isSearching = false
     @State private var searchTask: Task<Void, Never>? = nil
     @State private var playlists: [Playlist] = []
+    @State private var navPath = NavigationPath()
     @ObservedObject private var player = AudioPlayerService.shared
 
     var goHome: () -> Void = {}
 
+    // Pages open by value (NavigationLink(value:) + navigationDestination).
+    // `NavigationLink { destination }` left the page on screen after
+    // switching tabs from the sidebar. The Album destination also serves the
+    // album links inside ArtistDetailView.
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navPath) {
             VStack(spacing: 0) {
                 HStack {
                     Image(systemName: "magnifyingglass").foregroundColor(.secondary)
@@ -60,9 +65,7 @@ struct SearchView: View {
                             if !results.artists.isEmpty {
                                 ResultSection(title: "Artists") {
                                     ForEach(results.artists) { artist in
-                                        NavigationLink {
-                                            ArtistDetailView(artist: artist)
-                                        } label: {
+                                        NavigationLink(value: artist) {
                                             ArtistRow(artist: artist)
                                         }
                                         .buttonStyle(CardlessButtonStyle())
@@ -74,9 +77,7 @@ struct SearchView: View {
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack(spacing: 24) {
                                             ForEach(results.albums) { album in
-                                                NavigationLink {
-                                                    AlbumDetailView(album: album)
-                                                } label: {
+                                                NavigationLink(value: album) {
                                                     AlbumCard(album: album)
                                                 }
                                                 .buttonStyle(CardlessButtonStyle())
@@ -109,6 +110,9 @@ struct SearchView: View {
             }
             .navigationDestination(for: Album.self) { album in
                 AlbumDetailView(album: album)
+            }
+            .navigationDestination(for: Artist.self) { artist in
+                ArtistDetailView(artist: artist)
             }
             .onExitCommand {
                 if !query.isEmpty {

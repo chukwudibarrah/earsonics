@@ -9,6 +9,14 @@ struct HomeView: View {
     @State private var navPath = NavigationPath()
     @ObservedObject private var player = AudioPlayerService.shared
 
+    /// Whether Home is the selected tab (set by ContentView).
+    var isSelectedTab = true
+    @FocusState private var firstAlbumFocused: Bool
+    @State private var didPlaceInitialFocus = false
+
+    /// The shelf whose first album receives initial focus.
+    private var focusShelfIsNewest: Bool { !vm.newestAlbums.isEmpty }
+
     var body: some View {
         // Use path-based NavigationStack so we can push programmatically
         // from a plain Button — no NavigationLink card effect
@@ -17,8 +25,7 @@ struct HomeView: View {
                 if !appState.isConnected && appState.serverStore.servers.isEmpty {
                     NoServerView()
                 } else if vm.isLoading && vm.recentAlbums.isEmpty {
-                    ProgressView("Loading library...")
-                        .font(.headline)
+                    FocusableProgressView(title: "Loading library...")
                 } else if let error = vm.error,
                           vm.newestAlbums.isEmpty,
                           vm.recentAlbums.isEmpty,
@@ -28,17 +35,41 @@ struct HomeView: View {
                         message: error,
                         retry: { Task { await vm.loadHome() } }
                     )
+                } else if vm.newestAlbums.isEmpty && vm.recentAlbums.isEmpty
+                            && vm.randomAlbums.isEmpty && vm.keepSpinningSongs.isEmpty {
+                    // Loaded fine but nothing to show (e.g. an empty library).
+                    // Needs a focusable control, or Menu would exit the app.
+                    VStack(spacing: 20) {
+                        Image(systemName: "music.note.house")
+                            .font(.system(size: 70))
+                            .foregroundColor(.secondary)
+                        Text("Your library is empty")
+                            .font(.title2.bold())
+                        Text("Albums will appear here once your server has scanned some music.")
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                        Button {
+                            Task { await vm.loadHome() }
+                        } label: {
+                            Label("Reload", systemImage: "arrow.clockwise")
+                        }
+                        .buttonStyle(AccentPillButtonStyle())
+                    }
+                    .padding(60)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: AppLayout.verticalSpacing) {
                             if !vm.newestAlbums.isEmpty {
-                                AlbumShelf(title: "Just arrived", albums: vm.newestAlbums, playlists: vm.playlists, navPath: $navPath)
+                                AlbumShelf(title: "Just arrived", albums: vm.newestAlbums, playlists: vm.playlists, navPath: $navPath,
+                                           focusFirstCard: $firstAlbumFocused)
                             }
                             if !vm.keepSpinningSongs.isEmpty {
                                 TrackShelf(title: "Keep spinning", songs: vm.keepSpinningSongs)
                             }
                             if !vm.recentAlbums.isEmpty {
-                                AlbumShelf(title: "Recently played", albums: vm.recentAlbums, playlists: vm.playlists, navPath: $navPath)
+                                AlbumShelf(title: "Recently played", albums: vm.recentAlbums, playlists: vm.playlists, navPath: $navPath,
+                                           focusFirstCard: focusShelfIsNewest ? nil : $firstAlbumFocused)
                             }
                             if !vm.randomAlbums.isEmpty {
                                 AlbumShelf(title: "Discover", albums: vm.randomAlbums, playlists: vm.playlists, navPath: $navPath)
@@ -56,6 +87,20 @@ struct HomeView: View {
             }
             .task { await vm.loadHome() }
             .refreshable { await vm.loadHome() }
+            // At launch tvOS gives focus to a sidebar item — even though the
+            // sidebar is collapsed and invisible — because Home has nothing to
+            // focus yet. Select then just re-picks the tab, Menu exits the
+            // app, and tvOS only moves focus into the content ~8s later. So
+            // once the first shelf exists, put focus on its first album.
+            // Once per Home instance, so later reloads never move focus.
+            .onChange(of: vm.newestAlbums.isEmpty && vm.recentAlbums.isEmpty) { _, noShelves in
+                guard !noShelves, isSelectedTab, !didPlaceInitialFocus, navPath.isEmpty else { return }
+                didPlaceInitialFocus = true
+                Task {
+                    await Task.yield()   // let the shelf join the hierarchy first
+                    firstAlbumFocused = true
+                }
+            }
         }
     }
 }
@@ -103,6 +148,8 @@ struct AlbumShelf: View {
     let albums: [Album]
     let playlists: [Playlist]
     @Binding var navPath: NavigationPath
+    /// Bound to the first card, so Home can give it initial focus.
+    var focusFirstCard: FocusState<Bool>.Binding? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -120,6 +167,7 @@ struct AlbumShelf: View {
                             AlbumCard(album: album)
                         }
                         .buttonStyle(CardlessButtonStyle())
+                        .modifier(OptionalFocus(binding: album.id == albums.first?.id ? focusFirstCard : nil))
                         .contextMenu {
                             Button {
                                 // Album-list results don't include tracks, so
@@ -136,14 +184,7 @@ struct AlbumShelf: View {
                                 Divider()
                                 ForEach(playlists) { playlist in
                                     Button {
-                                        Task {
-                                            // Get the album detail to get all song IDs, if needed
-                                            guard let detailed = try? await SubsonicClient.shared.getAlbum(id: album.id),
-                                                  let songs = detailed.songs else { return }
-                                            let songIds = songs.map { $0.id }
-                                            try? await SubsonicClient.shared.updatePlaylist(
-                                                id: playlist.id, songIdsToAdd: songIds)
-                                        }
+                                        Task { await PlaylistAdder.shared.addAlbum(id: album.id, to: playlist) }
                                     } label: {
                                         Label("Add to \(playlist.name)", systemImage: "music.note.list")
                                     }
@@ -157,6 +198,20 @@ struct AlbumShelf: View {
             }
             .clipShape(Rectangle())
             .contentShape(Rectangle())
+        }
+    }
+}
+
+/// Applies `.focused(binding)` only when a binding is given.
+private struct OptionalFocus: ViewModifier {
+    let binding: FocusState<Bool>.Binding?
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if let binding {
+            content.focused(binding)
+        } else {
+            content
         }
     }
 }
@@ -276,6 +331,8 @@ struct TrackCard: View {
 
 // MARK: - No Server View
 struct NoServerView: View {
+    @Environment(\.openSettings) private var openSettings
+
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "server.rack")
@@ -283,10 +340,19 @@ struct NoServerView: View {
                 .foregroundColor(.secondary)
             Text("No server configured")
                 .font(.title).bold()
-            Text("Go to settings to add your Navidrome/Subsonic server.")
+            Text("Add your Navidrome/Subsonic server in Settings.")
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
+            // Also the screen's only focusable element — without it, nothing
+            // can take focus and Menu exits the app.
+            Button {
+                openSettings()
+            } label: {
+                Label("Open Settings", systemImage: "gearshape")
+            }
+            .buttonStyle(AccentPillButtonStyle())
         }
         .padding(60)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

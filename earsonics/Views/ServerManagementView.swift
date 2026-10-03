@@ -8,21 +8,17 @@ struct ServerManagementView: View {
         // No NavigationStack here — this is pushed into the Settings stack, and
         // nesting stacks is an anti-pattern on tvOS. Tapping a server (or Add)
         // goes straight to the editor: List → Editor, so Save/Delete return to
-        // this list.
+        // this list. Links open by value; SettingsView resolves SettingsRoute.
         ScrollView {
             LazyVStack(spacing: 8) {
                 ForEach(appState.serverStore.servers) { server in
-                    NavigationLink {
-                        ServerEditView(mode: .edit(server))
-                    } label: {
+                    NavigationLink(value: SettingsRoute.editServer(server)) {
                         ServerRow(server: server, isActive: server.id == appState.serverStore.activeServerID)
                     }
                     .buttonStyle(CardlessButtonStyle())
                 }
 
-                NavigationLink {
-                    ServerEditView(mode: .add)
-                } label: {
+                NavigationLink(value: SettingsRoute.addServer) {
                     AddServerRow()
                 }
                 .buttonStyle(CardlessButtonStyle())

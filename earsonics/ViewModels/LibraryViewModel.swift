@@ -29,16 +29,24 @@ class LibraryViewModel: ObservableObject {
         async let pls    = SubsonicClient.shared.getPlaylists()
 
         // Show the screen as soon as the first two shelves are ready.
+        //
+        // A cancelled load must leave the screen alone: SwiftUI can start
+        // this task twice at launch and cancel the first, whose requests then
+        // all fail with CancellationError. Without the checks below, that run
+        // emptied the shelves and set `error`, flashing "Couldn't load your
+        // library" on every launch until the second run's results arrived.
         var failures: [Error] = []
         do {
             newestAlbums = try await newest
         } catch {
+            if Task.isCancelled { return }
             newestAlbums = []
             failures.append(error)
         }
         do {
             recentAlbums = try await recent
         } catch {
+            if Task.isCancelled { return }
             recentAlbums = []
             failures.append(error)
         }
@@ -47,12 +55,14 @@ class LibraryViewModel: ObservableObject {
         do {
             randomAlbums = try await random
         } catch {
+            if Task.isCancelled { return }
             randomAlbums = []
             failures.append(error)
         }
         do {
             playlists = try await pls
         } catch {
+            if Task.isCancelled { return }
             playlists = []
             failures.append(error)
         }
@@ -68,7 +78,12 @@ class LibraryViewModel: ObservableObject {
     func loadArtists() async {
         isLoading = true
         error = nil
-        artists = (try? await SubsonicClient.shared.getArtists()) ?? []
+        do {
+            artists = try await SubsonicClient.shared.getArtists()
+        } catch {
+            artists = []
+            self.error = error.localizedDescription
+        }
         isLoading = false
     }
 
@@ -93,6 +108,8 @@ class LibraryViewModel: ObservableObject {
                 songsByAlbum[id] = songs
             }
         }
+        // Cancelled requests come back empty; keep whatever is showing.
+        guard !Task.isCancelled else { return }
         keepSpinningSongs = sourceAlbums.flatMap { songsByAlbum[$0.id] ?? [] }
     }
 

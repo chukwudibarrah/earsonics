@@ -96,9 +96,7 @@ struct AlbumDetailView: View {
                             ForEach(playlists) { playlist in
                                 Button {
                                     Task {
-                                        let ids = songs.map { $0.id }
-                                        try? await SubsonicClient.shared.updatePlaylist(
-                                            id: playlist.id, songIdsToAdd: ids)
+                                        await PlaylistAdder.shared.add(songIDs: songs.map(\.id), to: playlist)
                                     }
                                 } label: {
                                     Label("Add to \(playlist.name)", systemImage: "music.note.list")
@@ -351,10 +349,7 @@ struct SongRow: View {
             Divider()
             ForEach(playlists) { playlist in
                 Button {
-                    Task {
-                        try? await SubsonicClient.shared.updatePlaylist(
-                            id: playlist.id, songIdsToAdd: [song.id])
-                    }
+                    Task { await PlaylistAdder.shared.add(songIDs: [song.id], to: playlist) }
                 } label: {
                     Label("Add to \(playlist.name)", systemImage: "music.note.list")
                 }

@@ -9,6 +9,7 @@ struct StarredView: View {
     @State private var playlists: [Playlist] = []
     @State private var isLoading = true
     @State private var selectedTab: StarredTab = .songs
+    @State private var navPath = NavigationPath()
     @ObservedObject private var player = AudioPlayerService.shared
 
     enum StarredTab: String, CaseIterable {
@@ -17,8 +18,13 @@ struct StarredView: View {
         case artists = "Artists"
     }
 
+    // Pages open by value through `navPath`, resolved by the
+    // navigationDestination modifiers below. Opening them with
+    // `NavigationLink { destination }` instead left the album/artist page on
+    // screen after switching tabs from the sidebar (the new tab only showed
+    // after pressing Menu) — see the tab-switch UI tests.
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navPath) {
             VStack(spacing: 0) {
                 Picker("", selection: $selectedTab) {
                     ForEach(StarredTab.allCases, id: \.self) { tab in
@@ -77,9 +83,7 @@ struct StarredView: View {
                                 ScrollView {
                                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 280), spacing: 80)], spacing: 80) {
                                         ForEach(starredAlbums) { album in
-                                            NavigationLink {
-                                                AlbumDetailView(album: album)
-                                            } label: {
+                                            NavigationLink(value: album) {
                                                 AlbumCard(album: album)
                                             }
                                             .buttonStyle(CardlessButtonStyle())
@@ -97,9 +101,7 @@ struct StarredView: View {
                                 ScrollView {
                                     LazyVStack(spacing: 4) {
                                         ForEach(starredArtists) { artist in
-                                            NavigationLink {
-                                                ArtistDetailView(artist: artist)
-                                            } label: {
+                                            NavigationLink(value: artist) {
                                                 ArtistRow(artist: artist)
                                             }
                                             .buttonStyle(CardlessButtonStyle())
@@ -117,6 +119,9 @@ struct StarredView: View {
             }
             .navigationDestination(for: Album.self) { album in
                 AlbumDetailView(album: album)
+            }
+            .navigationDestination(for: Artist.self) { artist in
+                ArtistDetailView(artist: artist)
             }
             .task { await loadStarred() }
         }
@@ -142,8 +147,8 @@ struct EmptyStarredView: View {
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "heart").font(.system(size: 60)).foregroundColor(.secondary)
-            Text("No starred \(type)").font(.title)
-            Text("Tap the heart icon to save your favourites.").foregroundColor(.secondary)
+            Text("No starred \(type.lowercased())").font(.title)
+            Text("Select the heart on any song, album or artist to save it here.").foregroundColor(.secondary)
         }
     }
 }
