@@ -8,6 +8,11 @@
   A native tvOS client for Subsonic-compatible music servers (Navidrome, Airsonic, Subsonic, Gonic, etc.), built with SwiftUI.
 </p>
 
+<p align="center">
+  <a href="https://apps.apple.com/app/id6766037499"><b>Get earsonics on the App Store for Apple TV</b></a><br>
+  This repository is the app's full source.
+</p>
+
 ## Features
 
 - Browse by artist, album, genre, and playlist, with a Home screen of shelves (Just arrived, Keep spinning, Recently played, Discover)
@@ -40,7 +45,7 @@
 
 - Apple TV running tvOS 26.4 or later
 - A running Subsonic-API-compatible server ([Navidrome](https://www.navidrome.org/), [Airsonic-Advanced](https://github.com/airsonic-advanced/airsonic-advanced), [Gonic](https://github.com/sentriz/gonic), etc.) reachable from the Apple TV
-- Xcode 16+ to build and run (this is a source project — there is currently no App Store or TestFlight distribution)
+- To build from source: Xcode 26 or later (the app targets tvOS 26.4). To just use the app, [install it from the App Store](https://apps.apple.com/app/id6766037499) on your Apple TV.
 
 ## Building & running
 
