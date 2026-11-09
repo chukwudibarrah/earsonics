@@ -1,3 +1,35 @@
+## Roadmap
+
+Planned for upcoming versions. Order and contents may change; suggestions are welcome as GitHub issues.
+
+**1.10: Code health**
+- Swift 6 language mode (fix the remaining concurrency warnings in the caching code).
+- Move from `ObservableObject`/Combine to `@Observable`, so screens refresh reliably when nested state changes.
+- One shared store for playlists and favourites: starring a song in Now Playing updates every list, and playlists are fetched once instead of on six screens.
+- A brief message for every action that can fail (star, rename, delete, search) instead of failing silently.
+- Accessibility labels on the icon-only buttons (transport controls, hearts, close).
+- More unit tests: server URL checks, decoding sample replies from different servers, and the Keychain migration.
+
+**1.11 and later: Features**
+- Queue editing: remove, play next and reorder from the Queue screen.
+- "Go to artist" / "Go to album" from Now Playing and album pages.
+- Browse by genre, an artist's top songs, and song "radio".
+- Correct timing for synced lyrics that include an offset.
+- A Top Shelf extension showing recently played and newly added music.
+
+## 1.09: Remote, Now Playing, synced queue & autoplay
+
+- **The remote's play/pause button works everywhere.** It used to work only while a song row in an album had focus; now it plays and pauses from any screen.
+- **Now Playing shows the right state and artwork.** The system's Now Playing display showed "paused" while music played and had no cover; both are fixed, and a new track no longer briefly shows the previous track's elapsed time.
+- **Interruptions are handled.** Playback pauses when another app or Siri takes the audio and resumes afterwards if it was playing and the system says to. Disconnecting Bluetooth headphones or an AirPlay speaker pauses instead of switching to the TV speakers mid-song.
+- **Your queue is saved and restored.** The queue and position are saved as you play and come back when you open the app (Settings → Queue → On launch: restore paused, keep playing, or start empty). With "Sync queue with server" (on by default) the queue is also saved on your server, so you can carry on in another Subsonic app or on another Apple TV — and pick up here what you started there. Each server keeps its own queue.
+- **Autoplay when a queue ends.** Choose what happens after an album and after a playlist or mix: stop, similar songs, more from the same artist, similar artists, same genre, or random. Defaults: albums stop, playlists and mixes continue with similar songs. If a source has nothing (similar songs need your server to have Last.fm or similar set up), it falls back to similar songs, then the same artist, then random. Songs added this way are marked "Autoplay" in the queue, and your own queued songs always play before them.
+- **Scrobbling follows the usual rules.** Your server now shows what's playing as soon as it starts, and a play is only counted after half the track or four minutes of actual listening — skipping a song after a few seconds no longer counts it. The last song of a queue and each Repeat One loop now count too.
+- **Replaying cached songs works again.** Since 1.06, songs cached at Original quality (the default) were saved without a file extension, so replaying them from the cache failed — playback stopped (1.06–1.07) or skipped the song (1.08). Cached songs now keep their format's extension, and the old unplayable files are cleared out automatically.
+- **Queue fixes:** turning shuffle on no longer removes other copies of the playing song from the queue; turning it off returns to the right copy of a duplicated song; an album's "Play next" queues the whole album after the current song (it used to queue only the first track next and the rest at the end); an album's Shuffle now turns shuffle on, so switching it off returns to album order.
+- **Smaller fixes:** Next and Previous work during a crossfade (they were ignored for the whole fade); "Disable screen saver while playing" applies immediately; server passwords are updated in the Keychain in place rather than deleted and re-added.
+- **Tests:** unit tests (Swift Testing) for the queue, scrobbling, queue saving/restoring, autoplay, interruptions and the Keychain, plus UI tests for the remote's play/pause button, scrobbling and queue restore against the Navidrome demo.
+
 ## 1.08: Navigation, playback & reliability fixes
 
 - **The remote works straight after launch.** tvOS was parking focus on the hidden sidebar for the first ~8 seconds, so Select seemed to do nothing and Menu exited the app. Home now takes focus as soon as its first shelf appears. Also fixed a brief "Couldn't load your library" flash on every launch.

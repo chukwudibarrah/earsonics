@@ -47,12 +47,14 @@ struct QueueView: View {
 
             ScrollView {
                 LazyVStack(spacing: 2) {
-                    // Keyed by position: the same song can be queued more than once.
-                    ForEach(Array(player.queue.enumerated()), id: \.offset) { idx, song in
+                    // Keyed by queue entry: the same song can be queued more
+                    // than once, and each copy has its own entry.
+                    ForEach(Array(player.playQueue.entries.enumerated()), id: \.element.id) { idx, entry in
                         Button {
                             player.playFromQueue(index: idx)
                         } label: {
-                            QueueRow(song: song, index: idx, isCurrent: idx == player.currentIndex)
+                            QueueRow(song: entry.song, index: idx, isCurrent: idx == player.currentIndex,
+                                     isAutoplay: entry.isAutoplay)
                         }
                         .buttonStyle(CardlessButtonStyle())
                         .focused($focusedRow, equals: idx)
@@ -71,6 +73,8 @@ struct QueueRow: View {
     let song: Song
     let index: Int
     let isCurrent: Bool
+    /// Added by autoplay when the queue ran out.
+    var isAutoplay = false
     @EnvironmentObject var appState: AppState
     @Environment(\.appAccent) private var appAccent
 
@@ -102,6 +106,12 @@ struct QueueRow: View {
             }
 
             Spacer()
+
+            if isAutoplay {
+                Label("Autoplay", systemImage: "sparkles")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
 
             FormatBadge(song: song)
 

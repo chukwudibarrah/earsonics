@@ -127,6 +127,11 @@ struct ContentView: View {
                 .transition(.opacity)
             }
         }
+        // The Siri Remote's play/pause button goes to whatever has focus, and
+        // most focusable views ignore it, so handle it for the whole app
+        // here. (The remote command center's toggle only covers presses that
+        // reach the system, e.g. while the app is in the background.)
+        .onPlayPauseCommand { player.togglePlayPause() }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: showNowPlaying)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: player.currentSong != nil)
         .animation(.easeInOut(duration: 0.25), value: playlistAdder.banner)

@@ -175,7 +175,7 @@ struct AlbumShelf: View {
                                 Task {
                                     guard let detailed = try? await SubsonicClient.shared.getAlbum(id: album.id),
                                           let songs = detailed.songs, !songs.isEmpty else { return }
-                                    AudioPlayerService.shared.load(songs: songs, startIndex: 0)
+                                    AudioPlayerService.shared.load(songs: songs, startIndex: 0, context: .album(id: album.id))
                                 }
                             } label: {
                                 Label("Play", systemImage: "play.fill")

@@ -95,6 +95,10 @@ class ServerStore: ObservableObject {
         }
     }
 
+    #if DEBUG
+    static let uiTestServerID = UUID(uuidString: "E5E5E5E5-0000-4000-8000-0000000000E5")!
+    #endif
+
     /// True when the server list came from the UI-test environment (below);
     /// nothing is then read from or written to UserDefaults or the Keychain.
     private var isEphemeral = false
@@ -110,11 +114,24 @@ class ServerStore: ObservableObject {
         // a known library (the public Navidrome demo) without reading or
         // overwriting the servers saved on the device. Debug builds only.
         let env = ProcessInfo.processInfo.environment
+        // Hosting unit tests: never load the device's real servers, so a test
+        // can't touch a real library (e.g. saving an empty play queue over the
+        // user's own). XCTest sets this variable in the test host process.
+        if env["XCTestConfigurationFilePath"] != nil {
+            isEphemeral = true
+            return
+        }
         if let url = env["EARSONICS_UITEST_SERVER_URL"],
            let username = env["EARSONICS_UITEST_USERNAME"],
            let password = env["EARSONICS_UITEST_PASSWORD"] {
             isEphemeral = true
-            let server = Server(name: "UI Test Server", url: url, username: username, password: password)
+            // A fixed id, so the server's saved queue survives a relaunch
+            // within a test.
+            let server = Server(id: Self.uiTestServerID, name: "UI Test Server",
+                                url: url, username: username, password: password)
+            if env["EARSONICS_UITEST_CLEAR_LOCAL_QUEUE"] == "1" {
+                LocalQueueStore.delete(serverID: server.id)
+            }
             servers = [server]
             activeServerID = server.id
             return
@@ -143,22 +160,32 @@ class ServerStore: ObservableObject {
     func delete(at offsets: IndexSet) {
         let removed = offsets.map { servers[$0] }
         servers.remove(atOffsets: offsets)
-        removed.forEach { KeychainHelper.delete(account: $0.id.uuidString) }
+        removed.forEach {
+            KeychainHelper.delete(account: $0.id.uuidString)
+            LocalQueueStore.delete(serverID: $0.id)
+        }
         if activeServer == nil { activeServerID = servers.first?.id }
     }
 
     func delete(_ server: Server) {
         servers.removeAll { $0.id == server.id }
         KeychainHelper.delete(account: server.id.uuidString)
+        LocalQueueStore.delete(serverID: server.id)
         if activeServer == nil { activeServerID = servers.first?.id }
     }
 
     /// Persists passwords to the Keychain and a password-free copy of the
     /// server list to UserDefaults, so secrets never touch UserDefaults.
+    /// Last password written to the Keychain per server, so unchanged ones
+    /// aren't rewritten on every edit to the list.
+    private var savedPasswords: [UUID: String] = [:]
+
     private func save() {
         guard !isEphemeral else { return }
-        for server in servers {
-            KeychainHelper.save(server.password, account: server.id.uuidString)
+        for server in servers where savedPasswords[server.id] != server.password {
+            if KeychainHelper.save(server.password, account: server.id.uuidString) {
+                savedPasswords[server.id] = server.password
+            }
         }
         let sanitized = servers.map { server -> Server in
             var copy = server
@@ -183,6 +210,7 @@ class ServerStore: ObservableObject {
             let account = server.id.uuidString
             if let stored = KeychainHelper.read(account: account) {
                 copy.password = stored
+                savedPasswords[server.id] = stored
             } else if !server.password.isEmpty {
                 KeychainHelper.save(server.password, account: account)
                 needsResave = true

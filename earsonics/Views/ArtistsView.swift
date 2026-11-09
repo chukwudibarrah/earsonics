@@ -252,8 +252,9 @@ struct ArtistDetailView: View {
                         < ($1.year ?? 0, $1.album ?? "", $1.albumId ?? "", $1.discNumber ?? 1, $1.track ?? 0)
                 }
                 
-                appState.player.isShuffled = shuffle
-                appState.player.load(songs: sorted, startIndex: 0)
+                appState.player.load(songs: sorted,
+                                     startIndex: shuffle ? Int.random(in: sorted.indices) : 0,
+                                     shuffle: shuffle, context: .artist(id: artist.id))
             }
         }
     }

@@ -49,15 +49,14 @@ struct StarredView: View {
                                     VStack(alignment: .leading, spacing: 20) {
                                         HStack(spacing: 16) {
                                             Button {
-                                                appState.player.isShuffled = false
-                                                appState.player.load(songs: starredSongs, startIndex: 0)
+                                                appState.player.load(songs: starredSongs, startIndex: 0, shuffle: false)
                                             } label: {
                                                 Label("Play all", systemImage: "play.fill")
                                             }
                                             Button {
-                                                appState.player.isShuffled = false
-                                                appState.player.load(songs: starredSongs, startIndex: 0)
-                                                appState.player.toggleShuffle()
+                                                appState.player.load(songs: starredSongs,
+                                                                     startIndex: Int.random(in: starredSongs.indices),
+                                                                     shuffle: true)
                                             } label: {
                                                 Label("Shuffle play", systemImage: "shuffle")
                                             }

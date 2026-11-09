@@ -13,21 +13,27 @@ enum KeychainHelper {
     private static let service = "com.wonderworks.earsonics.servers"
 
     /// Stores `value` for `account`, replacing any existing entry.
+    ///
+    /// Updates in place, and only adds when there's nothing to update — never
+    /// delete-then-add, which would lose the password if the add failed.
     @discardableResult
     static func save(_ value: String, account: String) -> Bool {
         guard let data = value.data(using: .utf8) else { return false }
 
-        // Delete any existing item first so we always insert cleanly.
-        delete(account: account)
-
-        let query: [String: Any] = [
+        let match: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
+            kSecAttrAccount as String: account
+        ]
+        let changes: [String: Any] = [
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
-        return SecItemAdd(query as CFDictionary, nil) == errSecSuccess
+        let status = SecItemUpdate(match as CFDictionary, changes as CFDictionary)
+        if status == errSecSuccess { return true }
+        guard status == errSecItemNotFound else { return false }
+        let add = match.merging(changes) { $1 }
+        return SecItemAdd(add as CFDictionary, nil) == errSecSuccess
     }
 
     /// Reads the stored value for `account`, or `nil` if none exists.

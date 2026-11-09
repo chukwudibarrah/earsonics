@@ -9,10 +9,9 @@ struct SettingsView: View {
     @State private var audioCacheSize: Int64 = 0
     @State private var isClearingCache = false
 
-    // Streaming/cache quality + audio-cache settings. Declared here (in a View)
+    // Audio-cache settings. Declared here (in a View)
     // rather than in AppState so their changes drive SwiftUI correctly; the
     // player and cache read the same keys live from UserDefaults.
-    @AppStorage(StreamQuality.defaultsKey) private var streamQualityRaw = StreamQuality.original.rawValue
     @AppStorage("audioCacheEnabled") private var audioCacheEnabled = true
     @AppStorage(AudioCache.limitKey) private var audioCacheLimitGB = 2
 
@@ -55,11 +54,7 @@ struct SettingsView: View {
 
                 // Playback section
                 Section(header: Text("Playback").font(.headline)) {
-                    Picker("Quality", selection: $streamQualityRaw) {
-                        ForEach(StreamQuality.allCases) { quality in
-                            Text(quality.displayName).tag(quality.rawValue)
-                        }
-                    }
+                    SettingsChoiceRow(choice: .quality)
                     Text("Controls both live streaming and cached copies, so a replayed track matches its first play. Lower qualities are transcoded by the server and use less space.")
                         .font(.caption2)
                         .foregroundColor(.secondary)
@@ -102,6 +97,9 @@ struct SettingsView: View {
                     }
                 }
                 .padding()
+
+                QueueSettingsSection()
+                    .padding()
 
                 // Appearance section
                 Section(header: Text("Appearance").font(.headline)) {
@@ -209,7 +207,7 @@ struct SettingsView: View {
 
                     HStack { Text("App"); Spacer(); Text("earsonics").foregroundColor(.secondary) }
                         .focusable()
-                    HStack { Text("Version"); Spacer(); Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.02").foregroundColor(.secondary) }
+                    HStack { Text("Version"); Spacer(); Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown").foregroundColor(.secondary) }
                         .focusable()
                     HStack { Text("Protocol"); Spacer(); Text("Subsonic/Navidrome").foregroundColor(.secondary) }
                         .focusable()
@@ -225,6 +223,7 @@ struct SettingsView: View {
                 case .servers: ServerManagementView()
                 case .addServer: ServerEditView(mode: .add)
                 case .editServer(let server): ServerEditView(mode: .edit(server))
+                case .choice(let choice): SettingsChoiceList(choice: choice)
                 }
             }
         }
@@ -243,6 +242,7 @@ enum SettingsRoute: Hashable {
     case servers
     case addServer
     case editServer(Server)
+    case choice(SettingsChoice)
 }
 // MARK: - Accent colour swatch
 private struct AccentSwatchButton: View {
@@ -276,3 +276,153 @@ private struct AccentSwatchButton: View {
     }
 }
 
+// MARK: - Queue settings
+/// What happens when a queue ends, and how the queue is kept between
+/// launches. The player reads the same keys (see `PlaybackPreferences`).
+struct QueueSettingsSection: View {
+    @AppStorage(PlaybackPreferences.syncQueueKey) private var syncQueueWithServer = true
+
+    var body: some View {
+        Section {
+            SettingsChoiceRow(choice: .afterAlbum)
+            SettingsChoiceRow(choice: .afterPlaylist)
+            SettingsChoiceRow(choice: .launch)
+            Toggle(isOn: $syncQueueWithServer) {
+                Text("Sync queue with server")
+            }
+        } header: {
+            Text("Queue").font(.headline)
+        } footer: {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Albums include an artist’s “Play all”; mixes are Home shelves, Favourites, Tracks and Search. Songs added when a queue ends are marked “Autoplay” in the queue.")
+                Text(syncQueueWithServer
+                     ? "Sync saves your queue and position to the server, so you can carry on in other Subsonic apps or on another Apple TV."
+                     : "Your queue is only saved on this Apple TV.")
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+        }
+    }
+}
+
+// MARK: - Choice rows
+/// A setting with a fixed list of choices. Each opens its own page through
+/// the Settings navigation path: the standard `Picker` pushes its list
+/// outside that path, and in this app such pages open blank (see
+/// `SettingsRoute`).
+enum SettingsChoice: Hashable {
+    case quality
+    case afterAlbum
+    case afterPlaylist
+    case launch
+
+    var title: String {
+        switch self {
+        case .quality:       return "Quality"
+        case .afterAlbum:    return "When an album ends"
+        case .afterPlaylist: return "When a playlist or mix ends"
+        case .launch:        return "On launch"
+        }
+    }
+
+    /// UserDefaults key, shared with whatever reads the setting.
+    var key: String {
+        switch self {
+        case .quality:       return StreamQuality.defaultsKey
+        case .afterAlbum:    return PlaybackPreferences.afterAlbumKey
+        case .afterPlaylist: return PlaybackPreferences.afterPlaylistKey
+        case .launch:        return PlaybackPreferences.launchBehaviourKey
+        }
+    }
+
+    var defaultValue: String {
+        switch self {
+        case .quality:       return StreamQuality.original.rawValue
+        case .afterAlbum:    return QueueContinuation.defaultAfterAlbum.rawValue
+        case .afterPlaylist: return QueueContinuation.defaultAfterPlaylist.rawValue
+        case .launch:        return QueueLaunchBehaviour.restorePaused.rawValue
+        }
+    }
+
+    /// Stored value and display name of each choice, in order.
+    var options: [(value: String, name: String)] {
+        switch self {
+        case .quality:
+            return StreamQuality.allCases.map { ($0.rawValue, $0.displayName) }
+        case .afterAlbum, .afterPlaylist:
+            return QueueContinuation.allCases.map { ($0.rawValue, $0.displayName) }
+        case .launch:
+            return QueueLaunchBehaviour.allCases.map { ($0.rawValue, $0.displayName) }
+        }
+    }
+
+    func name(for value: String) -> String {
+        options.first { $0.value == value }?.name
+            ?? options.first { $0.value == defaultValue }?.name ?? value
+    }
+}
+
+/// A Settings row showing the setting's name and current choice; selecting
+/// it opens the list of choices.
+struct SettingsChoiceRow: View {
+    let choice: SettingsChoice
+    @AppStorage private var value: String
+
+    init(choice: SettingsChoice) {
+        self.choice = choice
+        _value = AppStorage(wrappedValue: choice.defaultValue, choice.key)
+    }
+
+    var body: some View {
+        NavigationLink(value: SettingsRoute.choice(choice)) {
+            HStack {
+                Text(choice.title)
+                Spacer()
+                Text(choice.name(for: value))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+/// The list of choices for one setting. Selecting one saves it and goes back.
+struct SettingsChoiceList: View {
+    let choice: SettingsChoice
+    @AppStorage private var value: String
+    @Environment(\.dismiss) private var dismiss
+
+    init(choice: SettingsChoice) {
+        self.choice = choice
+        _value = AppStorage(wrappedValue: choice.defaultValue, choice.key)
+    }
+
+    var body: some View {
+        Form {
+            Section(header: Text(choice.title).font(.headline)) {
+                ForEach(choice.options, id: \.value) { option in
+                    Button {
+                        value = option.value
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Text(option.name)
+                            Spacer()
+                            if option.value == value {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            }
+            .padding()
+        }
+    }
+}
+
+#Preview("Queue settings") {
+    NavigationStack {
+        Form {
+            QueueSettingsSection()
+        }
+    }
+}

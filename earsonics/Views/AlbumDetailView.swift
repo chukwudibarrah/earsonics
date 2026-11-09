@@ -32,7 +32,7 @@ struct AlbumDetailView: View {
                         if isThisAlbumPlaying {
                             player.togglePlayPause()
                         } else if !songs.isEmpty {
-                            appState.player.load(songs: songs, startIndex: 0)
+                            appState.player.load(songs: songs, startIndex: 0, context: .album(id: album.id))
                         }
                     } label: {
                         Label(isThisAlbumPlaying && player.isPlaying ? "Pause" : "Play", systemImage: isThisAlbumPlaying && player.isPlaying ? "pause.fill" : "play.fill")
@@ -42,9 +42,12 @@ struct AlbumDetailView: View {
                     
 
                     Button {
-                        var shuffled = songs
-                        shuffled.shuffle()
-                        appState.player.load(songs: shuffled, startIndex: 0)
+                        // Turns shuffle on (rather than loading a pre-shuffled
+                        // copy), so switching it off returns to album order.
+                        if !songs.isEmpty {
+                            appState.player.load(songs: songs, startIndex: Int.random(in: songs.indices),
+                                                 shuffle: true, context: .album(id: album.id))
+                        }
                     } label: {
                         Label("Shuffle", systemImage: "shuffle")
                             .frame(maxWidth: .infinity)
@@ -69,12 +72,9 @@ struct AlbumDetailView: View {
                     }
                     
                     Button {
-                        if !songs.isEmpty {
-                            appState.player.addToQueueNext(songs[0])
-                            for song in songs.dropFirst() {
-                                appState.player.addToQueue(song)
-                            }
-                        }
+                        // The whole album, in order, straight after the
+                        // current track (only the first track used to go next).
+                        appState.player.addToQueueNext(songs)
                     } label: {
                         Label("Play next", systemImage: "text.insert")
                             .frame(maxWidth: .infinity)
@@ -82,9 +82,7 @@ struct AlbumDetailView: View {
                     }
                     
                     Button {
-                        for song in songs {
-                            appState.player.addToQueue(song)
-                        }
+                        appState.player.addToQueue(songs)
                     } label: {
                         Label("Add to queue", systemImage: "text.badge.plus")
                             .frame(maxWidth: .infinity)
@@ -187,7 +185,7 @@ struct AlbumDetailView: View {
                                     .padding(.bottom, 4)
                             }
                             Button {
-                                appState.player.load(songs: songs, startIndex: idx)
+                                appState.player.load(songs: songs, startIndex: idx, context: .album(id: album.id))
                             } label: {
                                 SongRow(song: song, index: idx, playlists: playlists)
                             }
@@ -227,13 +225,16 @@ struct SongRow: View {
     var playlists: [Playlist] = []
     var showTrackNumber: Bool = true
     var onRemove: (() -> Void)? = nil
+    /// Where `contextSongs` came from; decides what happens when they run out.
+    var playContext: PlayContext = .mix
     @EnvironmentObject var appState: AppState
     @State private var isStarred: Bool
 
-    init(song: Song, index: Int, contextSongs: [Song] = [], playlists: [Playlist] = [], showTrackNumber: Bool = true, onRemove: (() -> Void)? = nil) {
+    init(song: Song, index: Int, contextSongs: [Song] = [], playContext: PlayContext = .mix, playlists: [Playlist] = [], showTrackNumber: Bool = true, onRemove: (() -> Void)? = nil) {
         self.song = song
         self.index = index
         self.contextSongs = contextSongs
+        self.playContext = playContext
         self.playlists = playlists
         self.showTrackNumber = showTrackNumber
         self.onRemove = onRemove
@@ -250,7 +251,7 @@ struct SongRow: View {
                 .contextMenu { contextMenuItems }
         } else {
             Button {
-                appState.player.load(songs: contextSongs, startIndex: index)
+                appState.player.load(songs: contextSongs, startIndex: index, context: playContext)
             } label: {
                 rowContent
             }
@@ -309,7 +310,6 @@ struct SongRow: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .cardSurface(cornerRadius: 10)
-        .onPlayPauseCommand { appState.player.togglePlayPause() }
     }
 
     @ViewBuilder

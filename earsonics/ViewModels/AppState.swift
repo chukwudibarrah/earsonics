@@ -21,7 +21,10 @@ class AppState: ObservableObject {
     @Published private(set) var activeServerID: UUID? = nil
 
     @AppStorage("crossfadeDuration") var crossfadeDuration: Double = 0.0
-    @AppStorage("preventScreenSaver") var preventScreenSaver: Bool = false
+    @AppStorage("preventScreenSaver") var preventScreenSaver: Bool = false {
+        // Apply straight away, not only at the next play/pause.
+        didSet { updateIdleTimer(isPlaying: player.isPlaying) }
+    }
     @AppStorage("accentColourChoice") var accentColourRaw: String = AccentColorChoice.orange.rawValue
 
     /// The user-selected highlight colour (see `AccentColorChoice`).
@@ -57,9 +60,12 @@ class AppState: ObservableObject {
             
         // Observe app state for safe idle timer resetting
         NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
-            .sink { _ in
+            .sink { [weak self] _ in
                 // Always allow screen saver when app is in background
                 UIApplication.shared.isIdleTimerDisabled = false
+                // The app may not come back (the system can end it while
+                // it's in the background), so save the queue and position now.
+                self?.player.saveQueueNow()
             }
             .store(in: &cancellables)
             
@@ -92,6 +98,9 @@ class AppState: ObservableObject {
         player.server = server
         if activeServerID != server.id { activeServerID = server.id }
         Task { await testConnection(server: server) }
+        // At launch, and when switching to another server: bring back its
+        // saved queue (as the user's "On launch" setting says).
+        Task { await player.restoreSavedQueue() }
     }
 
     func testConnection(server: Server) async {

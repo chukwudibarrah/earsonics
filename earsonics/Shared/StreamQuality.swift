@@ -5,7 +5,8 @@ import Foundation
 /// both live playback and what gets cached, so a replayed track always matches
 /// its first play. All transcoding is server-side via Subsonic `stream.view`
 /// params — the app never converts audio itself.
-enum StreamQuality: String, CaseIterable, Identifiable {
+/// `nonisolated`: also used by the cache and resource loader off the main actor.
+nonisolated enum StreamQuality: String, CaseIterable, Identifiable {
     case original          // format=raw — the original lossless/library file
     case mp3_320           // server transcode to MP3 @ 320 kbps
     case mp3_192           // server transcode to MP3 @ 192 kbps

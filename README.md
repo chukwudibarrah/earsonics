@@ -17,7 +17,10 @@
 
 - Browse by artist, album, genre, and playlist, with a Home screen of shelves (Just arrived, Keep spinning, Recently played, Discover)
 - Search across your whole library
-- Gapless-ish playback with configurable crossfade, ReplayGain volume normalisation, and a persistent play queue
+- Gapless-ish playback with configurable crossfade and ReplayGain volume normalisation
+- A play queue that's saved and restored, and synced through your server so you can carry on in other Subsonic apps
+- Autoplay when an album, playlist or mix ends — similar songs, the same artist, similar artists, same genre or random (or stop), set separately for albums and for playlists/mixes
+- Scrobbling with the usual rules (half the track or four minutes), and the Siri Remote's play/pause button from anywhere
 - Star/unstar and playlist management synced back to your server
 - Selectable stream quality — original (lossless) or server-transcoded MP3 at 320/192 kbps
 - On-device caching of played songs and cover art, with a configurable size cap and one-tap clearing
@@ -59,11 +62,17 @@ No API keys, secrets, or backend configuration are required — the app talks di
 ## Architecture at a glance
 
 - **`Services/SubsonicClient.swift`** — the Subsonic REST API client. Requests are hedged: a slow/dead connection triggers a duplicate attempt on a fresh connection rather than a blind retry, so a stale pooled socket (e.g. after the app has been idle) can't silently stall a screen.
+- **`Services/PlayQueue.swift`** — the queue's rules (order, shuffle, repeat, autoplay songs) as a plain value type with unit tests; `AudioPlayerService` turns its changes into playback.
+- **`Services/QueuePersistence.swift`** — saving and restoring the queue, on the device and (optionally) on the server.
 - **`Services/AudioCache.swift`** / **`CachingResourceLoaderDelegate.swift`** — an LRU on-disk cache that fills in the background as a track streams, so replays don't re-download.
 - **`Services/ImageCache.swift`** — memory + disk cover-art cache, keyed by cover-art id (not URL, since every request carries a fresh auth salt).
 - **`Shared/KeychainHelper.swift`** — Keychain-backed storage for server passwords.
 - **`ViewModels/`** — `@MainActor` view models that own network state per screen.
 - **`Views/`** — SwiftUI views, tvOS-focus-first.
+
+## Roadmap
+
+What's planned next is listed at the top of [`Changelog.md`](Changelog.md#roadmap).
 
 ## Contributing
 

@@ -37,15 +37,13 @@ struct SongsView: View {
                     VStack(alignment: .leading, spacing: 20) {
                         HStack(spacing: 16) {
                             Button {
-                                appState.player.isShuffled = false
-                                appState.player.load(songs: vm.songs, startIndex: 0)
+                                appState.player.load(songs: vm.songs, startIndex: 0, shuffle: false)
                             } label: {
                                 Label("Play", systemImage: "play.fill")
                             }
                             Button {
-                                appState.player.isShuffled = false
-                                appState.player.load(songs: vm.songs, startIndex: 0)
-                                appState.player.toggleShuffle()
+                                appState.player.load(songs: vm.songs, startIndex: Int.random(in: vm.songs.indices),
+                                                     shuffle: true)
                             } label: {
                                 Label("Shuffle play", systemImage: "shuffle")
                             }

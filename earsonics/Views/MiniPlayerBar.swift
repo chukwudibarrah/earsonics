@@ -21,6 +21,15 @@ struct MiniPlayerBar: View {
         )
     }
 
+    /// "Title, Artist, playing" — plus the player's error, if a track
+    /// couldn't be played (otherwise only shown on the Now Playing screen).
+    private func accessibilityState(for song: Song) -> String {
+        var parts = [song.title, song.artist ?? ""]
+        if let error = player.playbackError { parts.append(error) }
+        parts.append(player.isPlaying ? "playing" : "paused")
+        return parts.joined(separator: ", ")
+    }
+
     var body: some View {
         if let song = player.currentSong {
             Button(action: onTap) {
@@ -53,6 +62,10 @@ struct MiniPlayerBar: View {
             }
             .buttonStyle(CardlessButtonStyle())
             .focused($isFocused)
+            .accessibilityIdentifier("miniPlayer")
+            .accessibilityLabel("Now playing")
+            .accessibilityValue(accessibilityState(for: song))
+            .accessibilityHint("Opens the player")
         }
     }
 }

@@ -16,30 +16,15 @@ import XCTest
 /// The main check is the tab-switch bug: open a page inside a tab, switch tab
 /// from the sidebar, and the new tab must actually appear — the page must not
 /// stay on screen with the new tab loading behind it.
-@MainActor
-final class earsonicsUITests: XCTestCase {
-
-    private var app: XCUIApplication!
-    private let remote = XCUIRemote.shared
-    private let tabOrder = ["Search", "Home", "Artists", "Tracks", "Playlists", "Favourites", "Settings"]
+final class earsonicsUITests: RemoteTestCase {
 
     override func setUpWithError() throws {
-        continueAfterFailure = false
-        app = XCUIApplication()
-        app.launchEnvironment = [
-            "EARSONICS_UITEST_SERVER_URL": "https://demo.navidrome.org",
-            "EARSONICS_UITEST_USERNAME": "demo",
-            "EARSONICS_UITEST_PASSWORD": "demo",
-        ]
-        app.launch()
-        // A short settle only: launch used to strand focus on the hidden
-        // sidebar for ~8s (Select ignored, Menu exiting the app); Home now
-        // claims focus as soon as its first shelf exists, so these tests also
-        // guard that fix.
-        XCTAssertTrue(app.staticTexts["Keep spinning"].waitForExistence(timeout: 30),
-                      "Home didn't finish loading from the demo server")
-        Thread.sleep(forTimeInterval: 2)
-        XCTAssertTrue(waitUntil(timeout: 10) { self.focused.exists }, "nothing took focus after launch")
+        try super.setUpWithError()
+        // No restored queue, and nothing shared with other tests through the
+        // demo account's server-side queue (tests run in parallel): these
+        // checks are about navigation, with no music playing.
+        app.launchArguments = ["-queueLaunchBehaviour", "startFresh", "-syncQueueWithServer", "NO"]
+        launchToHome()
     }
 
     // MARK: - Tab switching from detail pages
@@ -120,122 +105,46 @@ final class earsonicsUITests: XCTestCase {
         waitFor(app.buttons["Test connection"], "server editor didn't open")
         switchTabFromDetail(to: "Home", detailMarker: app.buttons["Test connection"])
     }
+}
 
-    // MARK: - Steps
+/// Settings choice rows open their list, save the choice, and leave the
+/// other Settings pages working. Silent: starts with an empty queue.
+final class SettingsNavigationUITests: RemoteTestCase {
+    func testChoosingAQualityThenOpeningManageServers() {
+        // No launch argument for the quality itself: arguments override what
+        // the app saves, so the new choice could never show.
+        app.launchArguments = ["-queueLaunchBehaviour", "startFresh", "-syncQueueWithServer", "NO"]
+        launchToHome()
+        selectTabFromRoot("Settings")
 
-    private func openFirstArtistFromArtistsTab() {
-        selectTabFromRoot("Artists")
-        // Focus lands in the search field's keyboard; move down to the list.
-        for _ in 0..<10 where !focused.label.localizedCaseInsensitiveContains("album") {
-            press(.down)
-        }
-        XCTAssertTrue(focused.label.localizedCaseInsensitiveContains("album"),
-                      "couldn't reach an artist row; focused: \(focused.debugDescription)")
-        press(.select)
-        waitFor(app.buttons["Play all"], "artist page didn't open")
+        for _ in 0..<6 where !focused.label.hasPrefix("Quality") { press(.down, pause: 0.5) }
+        XCTAssertTrue(focused.label.hasPrefix("Quality"), "couldn't reach Quality; focused: \(focused.label)")
+
+        choose("MP3 320 kbps")
+        XCTAssertTrue(focused.label.contains("MP3 320 kbps"), "Quality didn't update: \(focused.label)")
+        choose("Original (lossless)")   // leave the setting as it was
+        XCTAssertTrue(focused.label.contains("Original (lossless)"), "Quality didn't update: \(focused.label)")
+
+        // Other pages still open with their content.
+        for _ in 0..<6 where !focused.label.contains("Manage servers") { press(.up, pause: 0.5) }
+        press(.select, pause: 1.5)
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Add server'")).firstMatch
+                        .waitForExistence(timeout: 5),
+                      "Manage servers opened blank after using a choice list")
     }
 
-    /// Favourites shows a full-screen spinner until its data arrives; pressing
-    /// before then finds nothing to move to (a slow demo server made this flaky).
-    private func waitForFavouritesToLoad() {
-        waitFor(app.buttons["Albums"], "Favourites didn't open")
-        XCTAssertTrue(waitUntil(timeout: 30) { !self.app.activityIndicators["Loading favourites..."].exists },
-                      "Favourites didn't finish loading")
-    }
-
-    /// On an artist page, moves down from the header buttons into the album
-    /// grid and opens the first album.
-    private func openFirstAlbumFromArtistPage() {
-        for _ in 0..<4 {
-            press(.down)
-            if focused.frame.minY > 400 { break }
-        }
-        press(.select)
-        waitFor(app.buttons["Play next"], "album page didn't open from the artist page")
-    }
-
-    /// From a tab's root screen, Menu opens the sidebar (nothing to pop).
-    private func selectTabFromRoot(_ name: String) {
-        press(.menu, pause: 0.5)
-        let opened = waitUntil(timeout: 5) { self.focusedSidebarTab != nil }
-        XCTAssertTrue(opened, "Menu didn't open the sidebar; focused: \(focused.debugDescription)")
-        moveSidebarFocus(to: name)
-        press(.select, pause: 0.5)
-        // Wait for focus to land in the new tab before the next press.
-        XCTAssertTrue(waitUntil(timeout: 10) { self.focused.exists && self.focusedSidebarTab == nil },
-                      "focus didn't move into \(name)")
-    }
-
-    /// From a pushed page, reach the sidebar by moving LEFT — the way a user
-    /// does — then pick another tab, and require the page to leave the screen.
-    /// Never presses Menu here: on a pushed page Menu pops it, which would
-    /// make the check pass for the wrong reason.
-    private func switchTabFromDetail(to name: String, detailMarker: XCUIElement,
-                                     file: StaticString = #filePath, line: UInt = #line) {
-        for _ in 0..<6 where focusedSidebarTab == nil {
-            press(.left)
-        }
-        guard focusedSidebarTab != nil else {
-            XCTFail("couldn't reach the sidebar by moving left; focused: \(focused.debugDescription)",
-                    file: file, line: line)
-            return
-        }
-        moveSidebarFocus(to: name)
-        press(.select, pause: 2)
-
-        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"),
-                                             object: detailMarker)
-        let result = XCTWaiter().wait(for: [gone], timeout: 6)
-        XCTAssertEqual(result, .completed,
-                       "after selecting \(name) in the sidebar, the previous page is still on screen",
-                       file: file, line: line)
-    }
-
-    private func moveSidebarFocus(to name: String) {
-        guard let target = tabOrder.firstIndex(of: name) else { return XCTFail("unknown tab \(name)") }
-        for _ in 0..<tabOrder.count {
-            guard let current = focusedSidebarTab, let index = tabOrder.firstIndex(of: current) else {
-                return XCTFail("sidebar not focused; focused: \(focused.debugDescription)")
-            }
-            if index == target { return }
-            press(index > target ? .up : .down, pause: 0.6)
-        }
-        XCTFail("couldn't move sidebar focus to \(name)")
-    }
-
-    // MARK: - Helpers
-
-    private var focused: XCUIElement {
-        app.descendants(matching: .any).element(matching: NSPredicate(format: "hasFocus == true"))
-    }
-
-    /// The tab name if a sidebar item has focus. The focused item is a cell
-    /// whose button carries the tab's label.
-    private var focusedSidebarTab: String? {
-        let element = focused
-        guard element.exists, element.elementType == .cell else { return nil }
-        let label = element.buttons.firstMatch.label
-        return tabOrder.contains(label) ? label : nil
-    }
-
-    /// Polls `condition` until it holds or `timeout` passes.
-    private func waitUntil(timeout: TimeInterval, _ condition: () -> Bool) -> Bool {
-        let deadline = Date().addingTimeInterval(timeout)
-        while Date() < deadline {
-            if condition() { return true }
-            Thread.sleep(forTimeInterval: 0.25)
-        }
-        return condition()
-    }
-
-    private func press(_ button: XCUIRemote.Button, pause: TimeInterval = 1) {
-        remote.press(button)
-        Thread.sleep(forTimeInterval: pause)
-    }
-
-    private func waitFor(_ element: XCUIElement, _ message: String,
-                         file: StaticString = #filePath, line: UInt = #line) {
-        let found = element.waitForExistence(timeout: 15)
-        XCTAssertTrue(found, "\(message); focused: \(focused.debugDescription)", file: file, line: line)
+    /// From the focused Quality row: opens its choices, picks `name`, and
+    /// waits to be back on the row.
+    private func choose(_ name: String, file: StaticString = #filePath, line: UInt = #line) {
+        press(.select, pause: 1.5)
+        XCTAssertTrue(app.buttons[name].waitForExistence(timeout: 5),
+                      "the Quality choices didn't open (blank page?)", file: file, line: line)
+        for _ in 0..<4 where !focused.label.hasPrefix(name) { press(.down, pause: 0.5) }
+        for _ in 0..<4 where !focused.label.hasPrefix(name) { press(.up, pause: 0.5) }
+        XCTAssertTrue(focused.label.hasPrefix(name), "couldn't move to \(name); focused: \(focused.label)",
+                      file: file, line: line)
+        press(.select, pause: 1.5)
+        XCTAssertTrue(waitUntil(timeout: 5) { self.focused.label.hasPrefix("Quality") },
+                      "didn't return to Settings; focused: \(focused.label)", file: file, line: line)
     }
 }

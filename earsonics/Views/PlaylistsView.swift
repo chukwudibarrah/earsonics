@@ -159,8 +159,8 @@ struct PlaylistDetailView: View {
                         if isThisPlaylistPlaying {
                             player.togglePlayPause()
                         } else if !songs.isEmpty {
-                            appState.player.isShuffled = false
-                            appState.player.load(songs: songs, startIndex: 0)
+                            appState.player.load(songs: songs, startIndex: 0, shuffle: false,
+                                                 context: .playlist(id: playlist.id))
                         }
                     } label: {
                         Label(isThisPlaylistPlaying && player.isPlaying ? "Pause" : "Play",
@@ -173,9 +173,8 @@ struct PlaylistDetailView: View {
                         if isThisPlaylistPlaying {
                             player.toggleShuffle()
                         } else if !songs.isEmpty {
-                            appState.player.isShuffled = false
-                            appState.player.load(songs: songs, startIndex: 0)
-                            player.toggleShuffle()
+                            appState.player.load(songs: songs, startIndex: Int.random(in: songs.indices),
+                                                 shuffle: true, context: .playlist(id: playlist.id))
                         }
                     } label: {
                         Label("Shuffle", systemImage: "shuffle")
@@ -233,6 +232,7 @@ struct PlaylistDetailView: View {
                                 song: song,
                                 index: idx,
                                 contextSongs: songs,
+                                playContext: .playlist(id: playlist.id),
                                 playlists: playlists,
                                 showTrackNumber: false
                             ) {

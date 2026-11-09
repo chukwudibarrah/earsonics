@@ -21,6 +21,10 @@ You are responsible for the server you connect earsonics to and the content on i
 
 Built with SwiftUI for tvOS, talking to your server over the [Subsonic REST API](http://www.subsonic.org/pages/api.jsp). No backend of its own, no analytics, no third-party SDKs. Source is available under the MIT license — see [`LICENSE`](LICENSE) — and contributions are welcome (see the [README](README.md#contributing)).
 
+## What's next
+
+The roadmap for upcoming versions is at the top of the [changelog](Changelog.md#roadmap).
+
 ## Author
 
 Built and maintained by [Chukwudi Barrah](https://github.com/chukwudibarrah).

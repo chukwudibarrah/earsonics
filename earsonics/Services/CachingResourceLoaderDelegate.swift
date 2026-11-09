@@ -321,8 +321,10 @@ nonisolated final class CachingResourceLoaderDelegate: NSObject,
             if complete {
                 stored = true
                 let temp = tempURL, sid = songId, server = serverID, q = quality
+                let ext = AudioCache.fileExtension(quality: quality, songSuffix: seedSuffix, contentType: seedContentType)
                 Task.detached {
-                    await AudioCache.shared.store(tempFile: temp, songId: sid, serverID: server, quality: q)
+                    await AudioCache.shared.store(tempFile: temp, songId: sid, serverID: server, quality: q,
+                                                  fileExtension: ext)
                 }
             }
             // Resolve any request still waiting for the tail / total length.
