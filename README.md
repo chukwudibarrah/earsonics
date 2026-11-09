@@ -72,7 +72,7 @@ No API keys, secrets, or backend configuration are required — the app talks di
 
 ## Roadmap
 
-What's planned next is listed at the top of [`Changelog.md`](Changelog.md#roadmap).
+What's planned next is listed in the [`Roadmap.md`](Roadmap.md).
 
 ## Contributing
 
@@ -96,7 +96,7 @@ Please open a GitHub issue. For bugs, include: what you did, what you expected, 
 ### Code style
 
 - No forced abstractions — prefer straightforward SwiftUI over premature generalisation.
-- Comments should explain *why*, not *what* — the code should already say what it does.
+- Comments should explain _why_, not _what_ — the code should already say what it does.
 - Match the existing formatting/structure of the file you're editing rather than introducing a new convention.
 
 ## License
@@ -105,7 +105,7 @@ MIT — see [`LICENSE`](LICENSE).
 
 ## Legal
 
-See [`about.md`](about.md) and [`terms-and-conditions.md`](terms-and-conditions.md). In short: earsonics is an independent, unofficial client. It is not affiliated with the Subsonic project, Navidrome, or any streaming service, and it does not host, provide, or distribute any music itself — it only connects to a server you already run and control.
+See [`about.md`](about.md), [`terms-and-conditions.md`](terms-and-conditions.md) and [`privacy-policy.md`](privacy-policy.md). In short: earsonics is an independent, unofficial client. It is not affiliated with the Subsonic project, Navidrome, or any streaming service, and it does not host, provide, or distribute any music itself — it only connects to a server you already run and control. It collects no personal data or analytics, and talks to nothing but your own server.
 
 ## Support
 
