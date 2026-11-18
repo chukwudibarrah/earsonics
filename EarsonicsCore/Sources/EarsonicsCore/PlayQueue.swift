@@ -21,6 +21,9 @@ public nonisolated enum PlayContext: Codable, Hashable, Sendable {
     case album(id: String)
     case artist(id: String)
     case playlist(id: String)
+    /// A genre's songs (Genres tab). When it runs out it carries on with
+    /// more from the same genre; see `PlaybackPreferences.continuation(for:)`.
+    case genre(name: String)
     /// Home shelves, Favourites, Tracks, Search results, and queues restored
     /// from another app (whose origin is unknown).
     case mix
@@ -30,10 +33,16 @@ public nonisolated enum PlayContext: Codable, Hashable, Sendable {
         case playlistsAndMixes
     }
 
+    /// The genre of a genre mix.
+    public var genreName: String? {
+        if case .genre(let name) = self { return name }
+        return nil
+    }
+
     public var group: Group {
         switch self {
         case .album, .artist: return .albums
-        case .playlist, .mix: return .playlistsAndMixes
+        case .playlist, .genre, .mix: return .playlistsAndMixes
         }
     }
 }

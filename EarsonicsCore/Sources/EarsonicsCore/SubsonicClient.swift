@@ -510,6 +510,18 @@ public final class SubsonicClient {
         return r.genres?.genre ?? []
     }
 
+    /// A genre's albums, alphabetically.
+    public func getAlbumsByGenre(genre: String, size: Int = 100, offset: Int = 0,
+                                 server srv: Server? = nil) async throws -> [Album] {
+        let r = try await fetch(endpoint: "getAlbumList2.view",
+                                params: [URLQueryItem(name: "type", value: "byGenre"),
+                                         URLQueryItem(name: "genre", value: genre),
+                                         URLQueryItem(name: "size", value: "\(size)"),
+                                         URLQueryItem(name: "offset", value: "\(offset)")],
+                                server: srv)
+        return r.albumList2?.album ?? []
+    }
+
     // MARK: - Songs by genre
     public func getSongsByGenre(genre: String, count: Int = 50, offset: Int = 0, server srv: Server? = nil) async throws -> [Song] {
         let r = try await fetch(endpoint: "getSongsByGenre.view",

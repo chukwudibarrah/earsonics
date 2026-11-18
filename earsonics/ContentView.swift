@@ -19,7 +19,7 @@ struct ContentView: View {
     @Environment(\.resetFocus) private var resetFocus
 
     enum AppTab: Hashable {
-        case home, artists, songs, playlists, starred, search, settings
+        case home, artists, genres, songs, playlists, starred, search, settings
     }
 
     var body: some View {
@@ -43,6 +43,11 @@ struct ContentView: View {
 
                 Tab("Artists", systemImage: "person", value: AppTab.artists) {
                     ArtistsView()
+                        .id(appState.activeServerID)
+                }
+
+                Tab("Genres", systemImage: "guitars", value: AppTab.genres) {
+                    GenresView()
                         .id(appState.activeServerID)
                 }
 
