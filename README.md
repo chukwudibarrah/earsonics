@@ -68,6 +68,7 @@ In `EarsonicsCore/Sources/EarsonicsCore/`:
 - **`SubsonicClient.swift`** — the Subsonic REST API client. Requests are hedged: a slow/dead connection triggers a duplicate attempt on a fresh connection rather than a blind retry, so a stale pooled socket (e.g. after the app has been idle) can't silently stall a screen.
 - **`PlayQueue.swift`** — the queue's rules (order, shuffle, repeat, autoplay songs) as a plain value type with unit tests; `AudioPlayerService.swift` turns its changes into playback (two-deck crossfade, Now Playing, interruptions).
 - **`QueuePersistence.swift`** — saving and restoring the queue, on the device and (optionally) on the server.
+- **`Loudness.swift`** — measures each song's loudness on the device (EBU R128) so "Normalise volume" works for untagged songs too, and picks each song's level from tags or measurements.
 - **`Autoplay.swift`** / **`ScrobbleTracker.swift`** — what plays when a queue ends, and when a play counts as a scrobble.
 - **`AudioCache.swift`** / **`CachingResourceLoaderDelegate.swift`** — an LRU on-disk cache that fills in the background as a track streams, so replays don't re-download.
 - **`ImageCache.swift`** — memory + disk cover-art cache, keyed by cover-art id (not URL, since every request carries a fresh auth salt).

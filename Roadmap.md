@@ -2,13 +2,6 @@
 
 Planned for upcoming versions. Order and contents may change; suggestions are welcome as GitHub issues.
 
-### 1.11: Navigation, volume and genres (Apple TV)
-
-- Up reaches the Now Playing button from the top of any page, wherever focus is. Today it only works from items directly below it, on the right, and not at all from the Play and Shuffle buttons on Tracks.
-- Investigate a Select press on a Home album being ignored about a second after launch: seen once in four UI-test runs, perhaps while Home's shelves were still updating.
-- More even volume: use the Replay Gain values Navidrome and other OpenSubsonic servers report, with a choice of track or album gain (album keeps an album's own loud and quiet songs; track evens out shuffles). Tracks without Replay Gain tags currently play unadjusted. Either measure them on the device or add a guide to tagging the library once on the server.
-- Genres in the sidebar: every genre with its song and album counts, each with Play, Shuffle and its albums. Genre mixes carry on with more from the same genre when they end. Built in the shared core, so the iPhone and iPad app gets it too.
-
 ### 2.0: iPhone and iPad
 
 A new app on the same App Store listing as the Apple TV app (universal purchase).
@@ -37,3 +30,7 @@ A new app on the same App Store listing as the Apple TV app (universal purchase)
 - An artist's top songs, and song "radio".
 - Correct timing for synced lyrics that include an offset.
 - A Top Shelf extension on Apple TV showing recently played and newly added music.
+
+### Known issues
+
+- Rarely (about once per full UI-test batch, never on its own), Select on the first Home album right after launch does nothing, even with focus on it. One cause was fixed in 1.11. The UI tests now record a screenshot and the element tree when it happens.
