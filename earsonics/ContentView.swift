@@ -96,6 +96,11 @@ struct ContentView: View {
                     }
                 }
                 .frame(height: AppLayout.topStripHeight)
+                // The whole strip is one focus target: Up from anywhere at
+                // the top of a page reaches the pill, not only from the items
+                // directly below it on the right (e.g. Tracks' Play button,
+                // on the left, couldn't reach it at all).
+                .focusSection()
             }
             .disabled(showNowPlaying)
 
