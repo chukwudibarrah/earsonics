@@ -1,3 +1,7 @@
+## 1.11 (in progress)
+
+- **Volume is now actually even between songs.** "Normalise volume" only used Replay Gain tags, and most libraries are only partly tagged (one test library: 2.5% of songs). Untagged songs played at full volume, and tags could only turn songs down, never up. Songs are now measured on the Apple TV as they download, using the same loudness standard Replay Gain uses (EBU R128), and the measurements are remembered. Tags are still used when present. Everything plays 4 dB quieter, to leave room to turn quiet songs up, and songs not yet measured play at a typical level instead of full volume. A new "Balance volume" setting chooses song by song (best for shuffles) or by album (keeps an album's own loud and quiet moments, using album tags). Changes apply straight away, not from the next song.
+
 ## 1.10: Code health, a shared core & rating
 
 - **Favourites stay in step everywhere.** Starring or unstarring a song, album or artist updates its heart on every screen at once (it used to update only where you pressed it, until that screen reloaded). Playlists are fetched once and shared, instead of separately by each screen that lists them.

@@ -2,19 +2,6 @@
 
 Planned for upcoming versions. Order and contents may change; suggestions are welcome as GitHub issues.
 
-### 1.10: Code health and a shared core (Apple TV)
-
-Mostly under the hood: this makes the app sturdier and prepares the code for more platforms.
-
-- Swift 6 language mode (fix the remaining concurrency warnings in the caching code).
-- Move from `ObservableObject`/Combine to `@Observable`, so screens refresh reliably when nested state changes.
-- One shared store for playlists and favourites: starring a song in Now Playing updates every list, and playlists are fetched once instead of on six screens.
-- A brief message for every action that can fail (star, rename, delete, search) instead of failing silently.
-- Accessibility labels on the icon-only buttons (transport controls, hearts, close).
-- A "Rate earsonics" item in Settings → About, with a QR code that opens the App Store review page on your phone.
-- More unit tests: server URL checks, decoding sample replies from different servers, and the Keychain migration.
-- Move the models, server client, queue, player, caches, sync, scrobbling and autoplay into a shared package (`EarsonicsCore`) that every platform's app builds on.
-
 ### 1.11: Navigation, volume and genres (Apple TV)
 
 - Up reaches the Now Playing button from the top of any page, wherever focus is. Today it only works from items directly below it, on the right, and not at all from the Play and Shuffle buttons on Tracks.

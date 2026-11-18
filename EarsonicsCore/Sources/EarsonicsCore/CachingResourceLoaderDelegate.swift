@@ -330,6 +330,10 @@ nonisolated final class CachingResourceLoaderDelegate: NSObject,
                 Task.detached {
                     await AudioCache.shared.store(tempFile: temp, songId: sid, serverID: server, quality: q,
                                                   fileExtension: ext)
+                    // Measure it for volume normalisation while it's fresh.
+                    if let file = AudioCache.cachedFileURL(for: sid, serverID: server, quality: q, fileExtension: ext) {
+                        await LoudnessStore.shared.measureIfNeeded(fileURL: file, songId: sid, serverID: server)
+                    }
                 }
             }
             // Resolve any request still waiting for the tail / total length.
