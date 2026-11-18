@@ -79,6 +79,9 @@ struct HomeView: View {
                         .padding(.top, AppLayout.contentTopPadding)
                         .padding(.bottom, 50)
                     }
+                    // Initial focus is placed once the shelves are actually on
+                    // screen (see below).
+                    .onAppear { placeInitialFocus() }
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -92,16 +95,31 @@ struct HomeView: View {
             // sidebar is collapsed and invisible — because Home has nothing to
             // focus yet. Select then just re-picks the tab, Menu exits the
             // app, and tvOS only moves focus into the content ~8s later. So
-            // once the first shelf exists, put focus on its first album.
+            // once the shelves are on screen, put focus on the first album.
             // Once per Home instance, so later reloads never move focus.
-            .onChange(of: vm.newestAlbums.isEmpty && vm.recentAlbums.isEmpty) { _, noShelves in
-                guard !noShelves, isSelectedTab, !didPlaceInitialFocus, navPath.isEmpty else { return }
-                didPlaceInitialFocus = true
-                Task {
-                    await Task.yield()   // let the shelf join the hierarchy first
-                    firstAlbumFocused = true
-                }
+            //
+            // This used to run when the first shelf's albums arrived, but the
+            // shelves only replace the loading screen once "Recently played"
+            // has arrived too. When that list was slower (e.g. just after a
+            // play, when the server's recent list has changed), focus was
+            // requested for a card that wasn't on screen yet and ignored: the
+            // sidebar kept the real focus, and Select only re-picked the tab.
+            .onChange(of: vm.newestAlbums.isEmpty && vm.recentAlbums.isEmpty) { _, _ in
+                placeInitialFocus()
             }
+        }
+    }
+
+    /// Focuses the first album of the first shelf, once per Home instance.
+    /// Called when the shelves appear, and when their albums arrive while
+    /// they're showing.
+    private func placeInitialFocus() {
+        guard !(vm.newestAlbums.isEmpty && vm.recentAlbums.isEmpty), !(vm.isLoading && vm.recentAlbums.isEmpty),
+              isSelectedTab, !didPlaceInitialFocus, navPath.isEmpty else { return }
+        didPlaceInitialFocus = true
+        Task {
+            await Task.yield()   // let the shelf join the hierarchy first
+            firstAlbumFocused = true
         }
     }
 }
