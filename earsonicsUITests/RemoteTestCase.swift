@@ -179,10 +179,31 @@ class RemoteTestCase: XCTestCase {
 extension RemoteTestCase {
     var miniPlayer: XCUIElement { app.buttons["miniPlayer"] }
 
+    /// Attaches a screenshot and the element tree to the test result, kept
+    /// even if the test later passes.
+    func recordEvidence(named name: String) {
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "\(name) – screen"
+        shot.lifetime = .keepAlways
+        add(shot)
+        let tree = XCTAttachment(string: app.debugDescription)
+        tree.name = "\(name) – elements"
+        tree.lifetime = .keepAlways
+        add(tree)
+    }
+
     /// Opens the first "Just arrived" album and presses Play.
     func startPlayingFirstHomeAlbum() {
         press(.select)
-        waitFor(app.buttons["Play next"], "album page didn't open")
+        if !app.buttons["Play next"].waitForExistence(timeout: 15) {
+            // Rare (about once per full batch, never reproduced on its own):
+            // keep evidence in the result bundle, and see whether a second
+            // press works (press lost) or not (focus really elsewhere).
+            recordEvidence(named: "Select ignored on Home")
+            press(.select)
+            let secondWorked = app.buttons["Play next"].waitForExistence(timeout: 10)
+            XCTFail("album page didn't open; a second Select \(secondWorked ? "did" : "didn't") open it; focused: \(focused.debugDescription)")
+        }
         // Wait for the tracks before pressing Play (Play does nothing while
         // the album is still loading).
         XCTAssertTrue(waitUntil(timeout: 20) { self.app.buttons.matching(NSPredicate(format: "label CONTAINS ':'")).count > 0 },
