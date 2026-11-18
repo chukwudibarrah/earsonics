@@ -7,11 +7,10 @@
 
 import XCTest
 
-/// Remote-driven navigation tests, run against the public Navidrome demo
-/// (https://demo.navidrome.org, demo/demo) through the debug-only launch hook
-/// in `ServerStore`, so the simulator's saved servers are never touched. They
-/// need network access and depend on the demo's library (starred albums,
-/// artists, playlists), which the demo keeps populated.
+/// Remote-driven navigation tests, run against the test server (`TestServer`)
+/// through the debug-only launch hook in `ServerStore`, so the simulator's
+/// saved servers are never touched. They need network access and a library
+/// with starred albums and artists and at least one playlist.
 ///
 /// The main check is the tab-switch bug: open a page inside a tab, switch tab
 /// from the sidebar, and the new tab must actually appear — the page must not
@@ -131,6 +130,24 @@ final class SettingsNavigationUITests: RemoteTestCase {
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS 'Add server'")).firstMatch
                         .waitForExistence(timeout: 5),
                       "Manage servers opened blank after using a choice list")
+    }
+
+    /// "Rate earsonics" shows its QR code and closes back to Settings.
+    func testRateEarsonicsShowsItsQRCode() {
+        app.launchArguments = ["-queueLaunchBehaviour", "startFresh", "-syncQueueWithServer", "NO"]
+        launchToHome()
+        selectTabFromRoot("Settings")
+
+        for _ in 0..<30 where !focused.label.hasPrefix("Rate earsonics") { press(.down, pause: 0.4) }
+        XCTAssertTrue(focused.label.hasPrefix("Rate earsonics"), "couldn't reach Rate earsonics; focused: \(focused.label)")
+
+        press(.select, pause: 1.5)
+        let qr = app.images["QR code for the earsonics App Store review page"]
+        XCTAssertTrue(qr.waitForExistence(timeout: 5), "the review QR code didn't appear")
+        XCTAssertTrue(focused.label == "Close", "Close isn't focused in the sheet; focused: \(focused.label)")
+        press(.select, pause: 1.5)
+        XCTAssertTrue(waitUntil(timeout: 5) { !qr.exists }, "the sheet didn't close")
+        XCTAssertTrue(focused.label.hasPrefix("Rate earsonics"), "didn't return to the row; focused: \(focused.label)")
     }
 
     /// From the focused Quality row: opens its choices, picks `name`, and

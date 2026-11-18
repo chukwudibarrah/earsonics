@@ -1,6 +1,7 @@
 // Shared/SharedLayout.swift
 import CoreFoundation
 import SwiftUI
+import EarsonicsCore
 
 enum AppLayout {
     static let horizontalPadding: CGFloat = 80

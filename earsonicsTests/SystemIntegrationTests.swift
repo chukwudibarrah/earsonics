@@ -3,6 +3,7 @@ import MediaPlayer
 import Testing
 import UIKit
 @testable import earsonics
+@testable import EarsonicsCore
 
 @Suite("Audio session interruptions")
 struct InterruptionParsingTests {
@@ -81,10 +82,14 @@ struct NowPlayingArtworkTests {
         }
         let artwork = AudioPlayerService.makeArtwork(image)
         #expect(artwork.bounds.size == CGSize(width: 8, height: 8))
-        let size = await Task.detached {
-            #expect(!Thread.isMainThread)
-            return artwork.image(at: CGSize(width: 4, height: 4))?.size
-        }.value
+        // Call it from a background queue, as the system does.
+        nonisolated(unsafe) let art = artwork
+        let (onMain, size) = await withCheckedContinuation { continuation in
+            DispatchQueue.global().async {
+                continuation.resume(returning: (Thread.isMainThread, art.image(at: CGSize(width: 4, height: 4))?.size))
+            }
+        }
+        #expect(!onMain)
         #expect(size != nil)
     }
 }

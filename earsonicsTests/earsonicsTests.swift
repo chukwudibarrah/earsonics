@@ -8,6 +8,7 @@
 
 import Foundation
 @testable import earsonics
+@testable import EarsonicsCore
 
 /// A minimal song for tests; only the id and title matter to the queue.
 func makeSong(_ id: String, duration: Int? = 200, artistId: String? = nil, genre: String? = nil) -> Song {

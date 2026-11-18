@@ -1,13 +1,13 @@
 // Views/SongsView.swift
 import SwiftUI
-import Combine
 import os
+import EarsonicsCore
 
 struct SongsView: View {
-    @EnvironmentObject var appState: AppState
-    @StateObject private var vm = SongsViewModel()
-    @State private var playlists: [Playlist] = []
-    @ObservedObject private var player = AudioPlayerService.shared
+    @Environment(AppState.self) var appState
+    @State private var vm = SongsViewModel()
+    private var playlists: [Playlist] { LibraryStore.shared.playlists }
+    private let player = AudioPlayerService.shared
 
     var body: some View {
         NavigationStack {
@@ -83,20 +83,21 @@ struct SongsView: View {
         }
         .task {
             if vm.songs.isEmpty { await vm.loadNextPage() }
-            playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []
+            await LibraryStore.shared.loadPlaylists()
         }
     }
 }
 
 @MainActor
-class SongsViewModel: ObservableObject {
-    @Published var songs: [Song] = []
-    @Published var isLoading = false
-    @Published var hasMore = true
+@Observable
+final class SongsViewModel {
+    var songs: [Song] = []
+    var isLoading = false
+    var hasMore = true
     /// Message from the last failed load, shown when there are no songs.
-    @Published var error: String?
+    var error: String?
 
-    private var currentOffset = 0
+    @ObservationIgnored private var currentOffset = 0
     private let pageSize = 1000
     private let fixedQuery = "" // empty query to match everything
 

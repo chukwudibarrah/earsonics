@@ -1,8 +1,9 @@
 // Views/ServerManagementView.swift
 import SwiftUI
+import EarsonicsCore
 
 struct ServerManagementView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState
 
     var body: some View {
         // No NavigationStack here — this is pushed into the Settings stack, and
@@ -94,7 +95,7 @@ struct ServerEditView: View {
     let mode: Mode
 
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState
 
     @State private var name: String = ""
     @State private var url: String = "https://"
@@ -226,17 +227,23 @@ struct ServerEditView: View {
                     .buttonStyle(AccentPillButtonStyle())
                     .disabled(!isValid)
 
-                    if editingServer != nil {
+                    // Saves too: it used to only switch servers, so edits made
+                    // before pressing it were lost. Offered when adding as
+                    // well, unless this will be the only server (Save already
+                    // makes that one active).
+                    if editingServer != nil || !appState.serverStore.servers.isEmpty {
                         Button {
-                            setActive()
+                            save(makeActive: true)
                         } label: {
-                            Label(isActive ? "Active server" : "Set as active server",
+                            Label(isActive ? "Active server" : "Save and set as active",
                                   systemImage: isActive ? "checkmark.circle.fill" : "circle")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(AccentPillButtonStyle())
-                        .disabled(isActive)
+                        .disabled(isActive || !isValid)
+                    }
 
+                    if editingServer != nil {
                         Button(role: .destructive) {
                             deleteServer()
                         } label: {
@@ -299,22 +306,18 @@ struct ServerEditView: View {
         isTesting = false
     }
 
-    private func save() {
+    private func save(makeActive: Bool = false) {
         let server = makeServer()
         if editingServer == nil {
             appState.serverStore.add(server)
         } else {
             appState.serverStore.update(server)
         }
+        if makeActive { appState.serverStore.activeServerID = server.id }
         appState.syncActiveServer()
         dismiss()
     }
 
-    private func setActive() {
-        guard let s = editingServer else { return }
-        appState.serverStore.activeServerID = s.id
-        appState.syncActiveServer()
-    }
 
     private func deleteServer() {
         guard let s = editingServer else { return }

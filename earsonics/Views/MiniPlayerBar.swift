@@ -1,12 +1,13 @@
 // Views/MiniPlayerBar.swift
 import SwiftUI
+import EarsonicsCore
 
 /// Floating now-playing pill shown at the top-right of the screen.
 /// The leading end is fully curved around the circular artwork; the glow
 /// takes the user-selected accent colour.
 struct MiniPlayerBar: View {
-    @EnvironmentObject var appState: AppState
-    @ObservedObject private var player = AudioPlayerService.shared
+    @Environment(AppState.self) var appState
+    private let player = AudioPlayerService.shared
     @FocusState private var isFocused: Bool
     @Environment(\.appAccent) private var appAccent
     var onTap: () -> Void

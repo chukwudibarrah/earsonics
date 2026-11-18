@@ -1,11 +1,10 @@
-// Services/PlayQueue.swift
+// EarsonicsCore/PlayQueue.swift
 import Foundation
-import SwiftUI   // `move(fromOffsets:toOffset:)` / `remove(atOffsets:)` on collections
 
 // MARK: - Repeat Mode
-enum RepeatMode: String, CaseIterable, Codable {
+public nonisolated enum RepeatMode: String, CaseIterable, Codable, Sendable {
     case off, one, all
-    var icon: String {
+    public var icon: String {
         switch self {
         case .off: return "repeat"
         case .one: return "repeat.1"
@@ -18,7 +17,7 @@ enum RepeatMode: String, CaseIterable, Codable {
 /// Where a queue came from. Decides what happens when it runs out (see
 /// `QueueContinuation`): albums and artists can stop while playlists and
 /// mixes carry on, or the other way round, as the user prefers.
-enum PlayContext: Codable, Hashable {
+public nonisolated enum PlayContext: Codable, Hashable, Sendable {
     case album(id: String)
     case artist(id: String)
     case playlist(id: String)
@@ -26,12 +25,12 @@ enum PlayContext: Codable, Hashable {
     /// from another app (whose origin is unknown).
     case mix
 
-    enum Group: String {
+    public nonisolated enum Group: String, Sendable {
         case albums
         case playlistsAndMixes
     }
 
-    var group: Group {
+    public var group: Group {
         switch self {
         case .album, .artist: return .albums
         case .playlist, .mix: return .playlistsAndMixes
@@ -43,13 +42,13 @@ enum PlayContext: Codable, Hashable {
 /// One slot in the queue. The same song can be queued more than once, so each
 /// slot has its own id; anything that needs to find "this copy" of a song
 /// (shuffle, removal, the Queue screen) uses the entry id, never the song id.
-struct QueueEntry: Identifiable, Hashable, Codable {
-    let id: UUID
-    let song: Song
+public nonisolated struct QueueEntry: Identifiable, Hashable, Codable, Sendable {
+    public let id: UUID
+    public let song: Song
     /// Added automatically when the queue ran out, rather than by the user.
-    let isAutoplay: Bool
+    public let isAutoplay: Bool
 
-    init(song: Song, isAutoplay: Bool = false, id: UUID = UUID()) {
+    public init(song: Song, isAutoplay: Bool = false, id: UUID = UUID()) {
         self.id = id
         self.song = song
         self.isAutoplay = isAutoplay
@@ -60,21 +59,21 @@ struct QueueEntry: Identifiable, Hashable, Codable {
 /// The play order and position, plus shuffle and repeat. A plain value with no
 /// playback side effects, so its rules can be unit tested; `AudioPlayerService`
 /// owns one and turns changes into player actions.
-struct PlayQueue: Codable, Equatable {
-    private(set) var entries: [QueueEntry] = []
-    private(set) var currentIndex: Int = 0
-    private(set) var isShuffled = false
-    private(set) var repeatMode: RepeatMode = .off
-    private(set) var context: PlayContext = .mix
+public nonisolated struct PlayQueue: Codable, Equatable, Sendable {
+    public private(set) var entries: [QueueEntry] = []
+    public private(set) var currentIndex: Int = 0
+    public private(set) var isShuffled = false
+    public private(set) var repeatMode: RepeatMode = .off
+    public private(set) var context: PlayContext = .mix
     /// The order to return to when shuffle is turned off. Only kept up to date
     /// while shuffled.
     private var unshuffledEntries: [QueueEntry] = []
 
-    init() {}
+    public init() {}
 
     /// A queue restored as-is, e.g. from the server. Shuffle starts off: the
     /// saved order is already the order things play in.
-    init(entries: [QueueEntry], currentIndex: Int, repeatMode: RepeatMode = .off, context: PlayContext = .mix) {
+    public init(entries: [QueueEntry], currentIndex: Int, repeatMode: RepeatMode = .off, context: PlayContext = .mix) {
         self.entries = entries
         self.currentIndex = entries.isEmpty ? 0 : min(max(currentIndex, 0), entries.count - 1)
         self.repeatMode = repeatMode
@@ -83,28 +82,28 @@ struct PlayQueue: Codable, Equatable {
 
     // MARK: Reading
 
-    var isEmpty: Bool { entries.isEmpty }
-    var count: Int { entries.count }
-    var songs: [Song] { entries.map(\.song) }
+    public var isEmpty: Bool { entries.isEmpty }
+    public var count: Int { entries.count }
+    public var songs: [Song] { entries.map(\.song) }
 
-    var current: QueueEntry? {
+    public var current: QueueEntry? {
         entries.indices.contains(currentIndex) ? entries[currentIndex] : nil
     }
-    var currentSong: Song? { current?.song }
+    public var currentSong: Song? { current?.song }
 
     /// The slot that plays after the current one; Repeat All wraps to the
     /// start. Repeat One isn't considered here: it loops at the end of the
     /// track (see `AudioPlayerService`), but an explicit skip still moves on.
-    var nextIndex: Int? {
+    public var nextIndex: Int? {
         guard !entries.isEmpty else { return nil }
         let next = currentIndex + 1
         if next < entries.count { return next }
         return repeatMode == .all ? 0 : nil
     }
-    var next: QueueEntry? { nextIndex.map { entries[$0] } }
+    public var next: QueueEntry? { nextIndex.map { entries[$0] } }
 
     /// The slot a "previous" press goes to; Repeat All wraps to the end.
-    var previousIndex: Int? {
+    public var previousIndex: Int? {
         guard !entries.isEmpty else { return nil }
         if currentIndex > 0 { return currentIndex - 1 }
         return repeatMode == .all ? entries.count - 1 : nil
@@ -113,14 +112,14 @@ struct PlayQueue: Codable, Equatable {
     /// True when something other than the current slot comes next. A failed
     /// track is only skipped when this holds, so a one-track Repeat All queue
     /// doesn't retry the same failing track forever.
-    var hasDifferentNext: Bool {
+    public var hasDifferentNext: Bool {
         guard let next = nextIndex else { return false }
         return next != currentIndex
     }
 
     /// True when the current slot is the last one and nothing follows it —
     /// the point where autoplay (if enabled) adds more.
-    var isAtEnd: Bool { !entries.isEmpty && nextIndex == nil }
+    public var isAtEnd: Bool { !entries.isEmpty && nextIndex == nil }
 
     // MARK: Loading
 
@@ -129,7 +128,7 @@ struct PlayQueue: Codable, Equatable {
     /// in random order. Returns false (leaving the queue untouched) for an
     /// empty list, so nothing that's playing is thrown away.
     @discardableResult
-    mutating func load(_ songs: [Song], startIndex: Int = 0, shuffle: Bool? = nil,
+    public mutating func load(_ songs: [Song], startIndex: Int = 0, shuffle: Bool? = nil,
                        context: PlayContext = .mix) -> Bool {
         guard !songs.isEmpty else { return false }
         let start = min(max(startIndex, 0), songs.count - 1)
@@ -152,7 +151,7 @@ struct PlayQueue: Codable, Equatable {
     }
 
     /// Empties the queue. Shuffle and repeat are preferences, so they stay.
-    mutating func clear() {
+    public mutating func clear() {
         entries = []
         unshuffledEntries = []
         currentIndex = 0
@@ -162,21 +161,21 @@ struct PlayQueue: Codable, Equatable {
     // MARK: Moving through the queue
 
     @discardableResult
-    mutating func moveToNext() -> Bool {
+    public mutating func moveToNext() -> Bool {
         guard let next = nextIndex else { return false }
         currentIndex = next
         return true
     }
 
     @discardableResult
-    mutating func moveToPrevious() -> Bool {
+    public mutating func moveToPrevious() -> Bool {
         guard let previous = previousIndex else { return false }
         currentIndex = previous
         return true
     }
 
     @discardableResult
-    mutating func jump(to index: Int) -> Bool {
+    public mutating func jump(to index: Int) -> Bool {
         guard entries.indices.contains(index) else { return false }
         currentIndex = index
         return true
@@ -186,7 +185,7 @@ struct PlayQueue: Codable, Equatable {
 
     /// Adds songs the user queued. They go after the user's own upcoming songs
     /// but before any upcoming autoplay songs, so autoplay never delays them.
-    mutating func append(_ songs: [Song]) {
+    public mutating func append(_ songs: [Song]) {
         guard !songs.isEmpty else { return }
         let added = songs.map { QueueEntry(song: $0) }
         entries.insert(contentsOf: added, at: firstUpcomingAutoplayIndex(in: entries, after: currentIndex) ?? entries.count)
@@ -198,7 +197,7 @@ struct PlayQueue: Codable, Equatable {
     }
 
     /// Adds songs fetched by autoplay at the very end.
-    mutating func appendAutoplay(_ songs: [Song]) {
+    public mutating func appendAutoplay(_ songs: [Song]) {
         guard !songs.isEmpty else { return }
         let added = songs.map { QueueEntry(song: $0, isAutoplay: true) }
         entries.append(contentsOf: added)
@@ -209,7 +208,7 @@ struct PlayQueue: Codable, Equatable {
     ///
     /// `skippingIncoming` is for the first half of a crossfade: the incoming
     /// track is already committed as "next", so the songs go after it.
-    mutating func insertNext(_ songs: [Song], skippingIncoming: Bool = false) {
+    public mutating func insertNext(_ songs: [Song], skippingIncoming: Bool = false) {
         guard !songs.isEmpty else { return }
         let added = songs.map { QueueEntry(song: $0) }
         let anchorEntry = skippingIncoming ? next : current
@@ -221,7 +220,7 @@ struct PlayQueue: Codable, Equatable {
         }
     }
 
-    enum RemovalOutcome: Equatable {
+    public nonisolated enum RemovalOutcome: Equatable, Sendable {
         /// Nothing is left.
         case emptied
         /// The playing slot was removed; whatever slid into its place (or the
@@ -232,7 +231,7 @@ struct PlayQueue: Codable, Equatable {
     }
 
     @discardableResult
-    mutating func remove(at offsets: IndexSet) -> RemovalOutcome {
+    public mutating func remove(at offsets: IndexSet) -> RemovalOutcome {
         let valid = offsets.filteredIndexSet { $0 < entries.count }
         guard !valid.isEmpty else { return .keptCurrent }
 
@@ -242,7 +241,7 @@ struct PlayQueue: Codable, Equatable {
             let removedIDs = Set(valid.map { entries[$0].id })
             unshuffledEntries.removeAll { removedIDs.contains($0.id) }
         }
-        entries.remove(atOffsets: valid)
+        entries.removeElements(atOffsets: valid)
 
         if entries.isEmpty {
             clear()
@@ -257,10 +256,10 @@ struct PlayQueue: Codable, Equatable {
     }
 
     /// Moves slots; the current slot keeps playing at its new index.
-    mutating func move(fromOffsets source: IndexSet, toOffset destination: Int) {
+    public mutating func move(fromOffsets source: IndexSet, toOffset destination: Int) {
         var positions = Array(entries.indices)
-        positions.move(fromOffsets: source, toOffset: destination)
-        entries.move(fromOffsets: source, toOffset: destination)
+        positions.moveElements(fromOffsets: source, toOffset: destination)
+        entries.moveElements(fromOffsets: source, toOffset: destination)
         if let newIndex = positions.firstIndex(of: currentIndex) { currentIndex = newIndex }
     }
 
@@ -270,7 +269,7 @@ struct PlayQueue: Codable, Equatable {
     /// user's songs behind it, and keeps any autoplay songs after those in
     /// their own order. Turning it off restores the unshuffled order (including
     /// any edits made meanwhile) and keeps the current song playing.
-    mutating func toggleShuffle() {
+    public mutating func toggleShuffle() {
         if isShuffled {
             isShuffled = false
             let currentID = current?.id
@@ -290,7 +289,7 @@ struct PlayQueue: Codable, Equatable {
         }
     }
 
-    mutating func cycleRepeat() {
+    public mutating func cycleRepeat() {
         switch repeatMode {
         case .off: repeatMode = .all
         case .all: repeatMode = .one
@@ -299,7 +298,7 @@ struct PlayQueue: Codable, Equatable {
     }
 
     /// Restores a saved repeat mode (e.g. after a launch).
-    mutating func setRepeatMode(_ mode: RepeatMode) {
+    public mutating func setRepeatMode(_ mode: RepeatMode) {
         repeatMode = mode
     }
 
@@ -309,5 +308,29 @@ struct PlayQueue: Codable, Equatable {
         let start = index + 1
         guard start < list.count else { return nil }
         return list[start...].firstIndex(where: \.isAutoplay)
+    }
+}
+
+// MARK: - Collection helpers
+// The same behaviour as SwiftUI's `remove(atOffsets:)` and
+// `move(fromOffsets:toOffset:)`, so the queue doesn't depend on SwiftUI.
+nonisolated extension Array {
+    /// Removes the elements at `offsets` (ignoring any out of range).
+    public mutating func removeElements(atOffsets offsets: IndexSet) {
+        for index in offsets.reversed() where indices.contains(index) {
+            remove(at: index)
+        }
+    }
+
+    /// Moves the elements at `source` to before the element that was at
+    /// `destination`, keeping their order (as a list's drag-to-reorder does).
+    public mutating func moveElements(fromOffsets source: IndexSet, toOffset destination: Int) {
+        let valid = source.filteredIndexSet { indices.contains($0) }
+        guard !valid.isEmpty else { return }
+        let moving = valid.map { self[$0] }
+        let movedBefore = valid.count(in: 0..<Swift.min(destination, count))
+        removeElements(atOffsets: valid)
+        let target = Swift.min(Swift.max(destination - movedBefore, 0), count)
+        insert(contentsOf: moving, at: target)
     }
 }

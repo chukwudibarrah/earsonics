@@ -1,12 +1,13 @@
 // Views/QueueView.swift
 import SwiftUI
+import EarsonicsCore
 
 struct QueueView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState
     let onDismiss: () -> Void
 
     // Observed directly: changes inside the player don't propagate through appState.
-    @ObservedObject private var player = AudioPlayerService.shared
+    private let player = AudioPlayerService.shared
 
     @FocusState private var focusedRow: Int?
 
@@ -75,7 +76,7 @@ struct QueueRow: View {
     let isCurrent: Bool
     /// Added by autoplay when the queue ran out.
     var isAutoplay = false
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState
     @Environment(\.appAccent) private var appAccent
 
     var body: some View {

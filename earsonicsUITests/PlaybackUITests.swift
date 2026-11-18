@@ -32,6 +32,7 @@ final class PlaybackUITests: RemoteTestCase {
     /// track starts, and the play is recorded once half of it has been heard
     /// — not before. Takes about two minutes of real playback.
     func testNowPlayingAndScrobbleReachTheServer() async throws {
+        continueAfterFailure = true   // see RemoteTestCase.continueAfterFailure
         launchToHome()
         startPlayingFirstHomeAlbum()
         let title = miniPlayerValue.components(separatedBy: ", ").first ?? ""

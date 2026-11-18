@@ -1,18 +1,26 @@
-// Models/Server.swift
+// EarsonicsCore/Server.swift
 import Foundation
-import Combine
-import SwiftUI
+import Observation
 
-struct Server: Identifiable, Codable, Equatable, Hashable {
-    var id: UUID = UUID()
-    var name: String
-    var url: String          // e.g. https://music.example.com
-    var username: String
-    var password: String     // held in memory only; persisted to the Keychain, never UserDefaults (see ServerStore)
-    var isActive: Bool = true
+public nonisolated struct Server: Identifiable, Codable, Equatable, Hashable, Sendable {
+    public var id: UUID = UUID()
+    public var name: String
+    public var url: String          // e.g. https://music.example.com
+    public var username: String
+    public var password: String     // held in memory only; persisted to the Keychain, never UserDefaults (see ServerStore)
+    public var isActive: Bool = true
+
+    public init(id: UUID = UUID(), name: String, url: String, username: String, password: String, isActive: Bool = true) {
+        self.id = id
+        self.name = name
+        self.url = url
+        self.username = username
+        self.password = password
+        self.isActive = isActive
+    }
 
     // Computed base URL normalised (no trailing slash)
-    var baseURL: String {
+    public var baseURL: String {
         var u = url.trimmingCharacters(in: .whitespacesAndNewlines)
         while u.hasSuffix("/") { u.removeLast() }
         return u
@@ -20,9 +28,9 @@ struct Server: Identifiable, Codable, Equatable, Hashable {
 }
 
 // MARK: - URL checks
-extension Server {
+nonisolated extension Server {
     /// How a server URL will behave, for feedback in the server editor.
-    enum URLCheck: Equatable {
+    public nonisolated enum URLCheck: Equatable, Sendable {
         /// HTTPS, or plain HTTP to a private-network address.
         case ok
         /// Not a usable http(s) URL with a host.
@@ -35,7 +43,7 @@ extension Server {
         case blockedHTTPDomain
     }
 
-    static func check(url: String) -> URLCheck {
+    public static func check(url: String) -> URLCheck {
         let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let comps = URLComponents(string: trimmed),
               let scheme = comps.scheme?.lowercased(), scheme == "http" || scheme == "https",
@@ -79,41 +87,54 @@ extension Server {
 }
 
 // MARK: - Persistence
-class ServerStore: ObservableObject {
-    static let shared = ServerStore()
-    private let key = "earsonics.servers"
+@MainActor
+@Observable
+public final class ServerStore {
+    public static let shared = ServerStore()
+    /// Settings key for the server list (passwords are in the Keychain).
+    public static let serversKey = "earsonics.servers"
+    private let key = ServerStore.serversKey
     private let activeKey = "earsonics.activeServerID"
 
-    @Published var servers: [Server] = [] {
+    public var servers: [Server] = [] {
         didSet { save() }
     }
-    @Published var activeServerID: UUID? {
+    public var activeServerID: UUID? {
         didSet {
             if let id = activeServerID, !isEphemeral {
-                UserDefaults.standard.set(id.uuidString, forKey: activeKey)
+                defaults.set(id.uuidString, forKey: activeKey)
             }
         }
     }
 
     #if DEBUG
-    static let uiTestServerID = UUID(uuidString: "E5E5E5E5-0000-4000-8000-0000000000E5")!
+    public static let uiTestServerID = UUID(uuidString: "E5E5E5E5-0000-4000-8000-0000000000E5")!
     #endif
 
     /// True when the server list came from the UI-test environment (below);
     /// nothing is then read from or written to UserDefaults or the Keychain.
-    private var isEphemeral = false
+    @ObservationIgnored private var isEphemeral = false
 
-    var activeServer: Server? {
+    public var activeServer: Server? {
         guard let id = activeServerID else { return servers.first }
         return servers.first(where: { $0.id == id }) ?? servers.first
     }
 
-    init() {
+    /// Where the server list (minus passwords) is kept.
+    @ObservationIgnored private let defaults: UserDefaults
+
+    public convenience init() {
+        self.init(defaults: .standard, environment: ProcessInfo.processInfo.environment)
+    }
+
+    /// `defaults` and `environment` are parameters so unit tests can use a
+    /// throwaway settings store and no launch environment.
+    public init(defaults: UserDefaults, environment env: [String: String] = [:]) {
+        self.defaults = defaults
         #if DEBUG
         // UI tests pass a server in the launch environment so they run against
         // a known library (the public Navidrome demo) without reading or
         // overwriting the servers saved on the device. Debug builds only.
-        let env = ProcessInfo.processInfo.environment
         // Hosting unit tests: never load the device's real servers, so a test
         // can't touch a real library (e.g. saving an empty play queue over the
         // user's own). XCTest sets this variable in the test host process.
@@ -138,7 +159,7 @@ class ServerStore: ObservableObject {
         }
         #endif
         load()
-        if let str = UserDefaults.standard.string(forKey: activeKey),
+        if let str = defaults.string(forKey: activeKey),
            let id = UUID(uuidString: str) {
             activeServerID = id
         } else {
@@ -146,20 +167,23 @@ class ServerStore: ObservableObject {
         }
     }
 
-    func add(_ server: Server) {
+    public func add(_ server: Server) {
         servers.append(server)
         if servers.count == 1 { activeServerID = server.id }
     }
 
-    func update(_ server: Server) {
+    public func update(_ server: Server) {
         if let idx = servers.firstIndex(where: { $0.id == server.id }) {
             servers[idx] = server
         }
     }
 
-    func delete(at offsets: IndexSet) {
+    public func delete(at offsets: IndexSet) {
         let removed = offsets.map { servers[$0] }
-        servers.remove(atOffsets: offsets)
+        // Highest index first, so earlier removals don't shift later ones.
+        for index in offsets.sorted(by: >) where servers.indices.contains(index) {
+            servers.remove(at: index)
+        }
         removed.forEach {
             KeychainHelper.delete(account: $0.id.uuidString)
             LocalQueueStore.delete(serverID: $0.id)
@@ -167,7 +191,7 @@ class ServerStore: ObservableObject {
         if activeServer == nil { activeServerID = servers.first?.id }
     }
 
-    func delete(_ server: Server) {
+    public func delete(_ server: Server) {
         servers.removeAll { $0.id == server.id }
         KeychainHelper.delete(account: server.id.uuidString)
         LocalQueueStore.delete(serverID: server.id)
@@ -178,7 +202,7 @@ class ServerStore: ObservableObject {
     /// server list to UserDefaults, so secrets never touch UserDefaults.
     /// Last password written to the Keychain per server, so unchanged ones
     /// aren't rewritten on every edit to the list.
-    private var savedPasswords: [UUID: String] = [:]
+    @ObservationIgnored private var savedPasswords: [UUID: String] = [:]
 
     private func save() {
         guard !isEphemeral else { return }
@@ -193,12 +217,12 @@ class ServerStore: ObservableObject {
             return copy
         }
         if let data = try? JSONEncoder().encode(sanitized) {
-            UserDefaults.standard.set(data, forKey: key)
+            defaults.set(data, forKey: key)
         }
     }
 
     private func load() {
-        guard let data = UserDefaults.standard.data(forKey: key),
+        guard let data = defaults.data(forKey: key),
               let decoded = try? JSONDecoder().decode([Server].self, from: data) else { return }
 
         // Hydrate each password from the Keychain. If the stored blob still

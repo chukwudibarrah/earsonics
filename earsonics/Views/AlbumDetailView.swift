@@ -1,16 +1,20 @@
 // Views/AlbumDetailView.swift
 import SwiftUI
+import EarsonicsCore
 
 struct AlbumDetailView: View {
     let album: Album
-    @EnvironmentObject var appState: AppState
-    @ObservedObject private var player = AudioPlayerService.shared
+    @Environment(AppState.self) var appState
+    private let player = AudioPlayerService.shared
     @State private var loadedAlbum: Album? = nil
     @State private var isLoading = true
-    @State private var isStarred: Bool = false
-    @State private var playlists: [Playlist] = []
+    private var playlists: [Playlist] { LibraryStore.shared.playlists }
 
     var songs: [Song] { loadedAlbum?.songs ?? [] }
+
+    private var isStarred: Bool {
+        LibraryStore.shared.isStarred(.album, id: album.id, fetched: loadedAlbum?.starred ?? album.starred)
+    }
 
     /// True when tracks span more than one disc, so the list shows disc
     /// headers (track numbers restart on each disc).
@@ -55,15 +59,7 @@ struct AlbumDetailView: View {
                     }
 
                     Button {
-                        Task {
-                            if isStarred {
-                                try? await SubsonicClient.shared.unstar(albumId: album.id)
-                                isStarred = false
-                            } else {
-                                try? await SubsonicClient.shared.star(albumId: album.id)
-                                isStarred = true
-                            }
-                        }
+                        Task { await LibraryStore.shared.toggleStar(.album, id: album.id, isStarred: isStarred) }
                     } label: {
                         Label(isStarred ? "Unstar" : "Star", systemImage: isStarred ? "heart.fill" : "heart")
                             .frame(maxWidth: .infinity)
@@ -206,12 +202,11 @@ struct AlbumDetailView: View {
     private func load() async {
         isLoading = true
         async let albumLoad = SubsonicClient.shared.getAlbum(id: album.id)
-        async let playlistLoad = SubsonicClient.shared.getPlaylists()
+        async let playlistsLoaded: Void = LibraryStore.shared.loadPlaylists()
         if let detailed = try? await albumLoad {
             loadedAlbum = detailed
-            isStarred = detailed.starred != nil
         }
-        playlists = (try? await playlistLoad) ?? []
+        await playlistsLoaded
         isLoading = false
     }
 }
@@ -227,8 +222,11 @@ struct SongRow: View {
     var onRemove: (() -> Void)? = nil
     /// Where `contextSongs` came from; decides what happens when they run out.
     var playContext: PlayContext = .mix
-    @EnvironmentObject var appState: AppState
-    @State private var isStarred: Bool
+    @Environment(AppState.self) var appState
+
+    private var isStarred: Bool {
+        LibraryStore.shared.isStarred(.song, id: song.id, fetched: song.starred)
+    }
 
     init(song: Song, index: Int, contextSongs: [Song] = [], playContext: PlayContext = .mix, playlists: [Playlist] = [], showTrackNumber: Bool = true, onRemove: (() -> Void)? = nil) {
         self.song = song
@@ -238,7 +236,6 @@ struct SongRow: View {
         self.playlists = playlists
         self.showTrackNumber = showTrackNumber
         self.onRemove = onRemove
-        _isStarred = State(initialValue: song.starred != nil)
     }
 
     var isCurrentSong: Bool {
@@ -315,15 +312,7 @@ struct SongRow: View {
     @ViewBuilder
     private var contextMenuItems: some View {
         Button {
-            Task {
-                if isStarred {
-                    try? await SubsonicClient.shared.unstar(songId: song.id)
-                    isStarred = false
-                } else {
-                    try? await SubsonicClient.shared.star(songId: song.id)
-                    isStarred = true
-                }
-            }
+            Task { await LibraryStore.shared.toggleStar(.song, id: song.id, isStarred: isStarred) }
         } label: {
             Label(isStarred ? "Unstar" : "Star", systemImage: isStarred ? "heart.slash" : "heart")
         }

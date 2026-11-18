@@ -1,16 +1,16 @@
 import CryptoKit
 import Foundation
 
-/// Direct calls to the demo server from the test runner, to check what the
+/// Direct calls to the test server (see `TestServer`) from the test runner, to check what the
 /// app reported (now playing, scrobbles, saved queue) from the server's side.
 enum DemoServerAPI {
-    private static let base = "https://demo.navidrome.org/rest/"
+    private static var base: String { TestServer.details.url + "/rest/" }
 
     static func call(_ endpoint: String, _ params: [(String, String)] = []) async throws -> [String: Any] {
         let salt = UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(12)
-        let token = Insecure.MD5.hash(data: Data(("demo" + salt).utf8)).map { String(format: "%02x", $0) }.joined()
+        let token = Insecure.MD5.hash(data: Data((TestServer.details.password + salt).utf8)).map { String(format: "%02x", $0) }.joined()
         var comps = URLComponents(string: base + endpoint)!
-        comps.queryItems = [("u", "demo"), ("t", token), ("s", String(salt)), ("v", "1.16.1"),
+        comps.queryItems = [("u", TestServer.details.username), ("t", token), ("s", String(salt)), ("v", "1.16.1"),
                             ("c", "earsonicsUITests"), ("f", "json")].map(URLQueryItem.init)
             + params.map(URLQueryItem.init)
         let (data, _) = try await URLSession.shared.data(from: comps.url!)

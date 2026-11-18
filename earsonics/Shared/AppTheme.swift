@@ -1,5 +1,6 @@
 // Shared/AppTheme.swift
 import SwiftUI
+import EarsonicsCore
 
 /// The palette of highlight colours the user can pick from in Settings.
 /// The chosen colour drives focus outlines, the now-playing glow and

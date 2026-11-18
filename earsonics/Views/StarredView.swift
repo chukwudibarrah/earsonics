@@ -1,16 +1,17 @@
 // Views/StarredView.swift
 import SwiftUI
+import EarsonicsCore
 
 struct StarredView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState
     @State private var starredSongs: [Song] = []
     @State private var starredAlbums: [Album] = []
     @State private var starredArtists: [Artist] = []
-    @State private var playlists: [Playlist] = []
+    private var playlists: [Playlist] { LibraryStore.shared.playlists }
     @State private var isLoading = true
     @State private var selectedTab: StarredTab = .songs
     @State private var navPath = NavigationPath()
-    @ObservedObject private var player = AudioPlayerService.shared
+    private let player = AudioPlayerService.shared
 
     enum StarredTab: String, CaseIterable {
         case songs = "Songs"
@@ -130,13 +131,16 @@ struct StarredView: View {
     private func loadStarred() async {
         isLoading = true
         async let starredLoad = SubsonicClient.shared.getStarred()
-        async let playlistLoad = SubsonicClient.shared.getPlaylists()
-        if let (artists, albums, songs) = try? await starredLoad {
+        async let playlistsLoaded: Void = LibraryStore.shared.loadPlaylists()
+        do {
+            let (artists, albums, songs) = try await starredLoad
             starredArtists = artists
             starredAlbums  = albums
             starredSongs   = songs
+        } catch {
+            if !Task.isCancelled { Messages.shared.showFailure("load Favourites", error) }
         }
-        playlists = (try? await playlistLoad) ?? []
+        await playlistsLoaded
         isLoading = false
     }
 }

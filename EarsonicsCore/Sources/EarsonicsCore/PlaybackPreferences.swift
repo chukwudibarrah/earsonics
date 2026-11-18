@@ -1,17 +1,18 @@
-// Shared/PlaybackPreferences.swift
+// EarsonicsCore/PlaybackPreferences.swift
 import Foundation
 
 /// User preferences for the play queue, read live from UserDefaults by the
 /// player and bound by the Settings screen through `@AppStorage` (same keys).
-enum PlaybackPreferences {
-    static let syncQueueKey = "syncQueueWithServer"
-    static let launchBehaviourKey = "queueLaunchBehaviour"
-    static let afterAlbumKey = "continuationAfterAlbum"
-    static let afterPlaylistKey = "continuationAfterPlaylist"
+public enum PlaybackPreferences: Sendable {
+    public static let crossfadeKey = "crossfadeDuration"
+    public static let syncQueueKey = "syncQueueWithServer"
+    public static let launchBehaviourKey = "queueLaunchBehaviour"
+    public static let afterAlbumKey = "continuationAfterAlbum"
+    public static let afterPlaylistKey = "continuationAfterPlaylist"
 
     /// Save the queue to the server so other Subsonic apps (and other Apple
     /// TVs) can pick up where you left off. On by default.
-    static var syncQueueWithServer: Bool {
+    public static var syncQueueWithServer: Bool {
         // `bool(forKey:)`, not `object(forKey:) as? Bool`: a value supplied
         // as a string ("NO", e.g. from a launch argument) isn't a Bool and
         // would silently read as the default.
@@ -19,13 +20,13 @@ enum PlaybackPreferences {
             ? true : UserDefaults.standard.bool(forKey: syncQueueKey)
     }
 
-    static var launchBehaviour: QueueLaunchBehaviour {
+    public static var launchBehaviour: QueueLaunchBehaviour {
         UserDefaults.standard.string(forKey: launchBehaviourKey)
             .flatMap(QueueLaunchBehaviour.init(rawValue:)) ?? .restorePaused
     }
 
     /// What plays when a queue from this kind of source runs out.
-    static func continuation(for group: PlayContext.Group) -> QueueContinuation {
+    public static func continuation(for group: PlayContext.Group) -> QueueContinuation {
         switch group {
         case .albums:
             return UserDefaults.standard.string(forKey: afterAlbumKey)
@@ -39,14 +40,14 @@ enum PlaybackPreferences {
 
 /// What happens to the saved queue when the app starts (or a server is
 /// switched to).
-enum QueueLaunchBehaviour: String, CaseIterable, Identifiable {
+public nonisolated enum QueueLaunchBehaviour: String, CaseIterable, Identifiable, Sendable {
     case restorePaused
     case resumePlaying
     case startFresh
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .restorePaused: return "Restore queue, paused"
         case .resumePlaying: return "Restore queue and keep playing"
@@ -56,7 +57,7 @@ enum QueueLaunchBehaviour: String, CaseIterable, Identifiable {
 }
 
 /// What plays after the last song of a queue.
-enum QueueContinuation: String, CaseIterable, Identifiable {
+public nonisolated enum QueueContinuation: String, CaseIterable, Identifiable, Sendable {
     case stop
     case similarSongs
     case sameArtist
@@ -64,12 +65,12 @@ enum QueueContinuation: String, CaseIterable, Identifiable {
     case sameGenre
     case random
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    static let defaultAfterAlbum: QueueContinuation = .stop
-    static let defaultAfterPlaylist: QueueContinuation = .similarSongs
+    public static let defaultAfterAlbum: QueueContinuation = .stop
+    public static let defaultAfterPlaylist: QueueContinuation = .similarSongs
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .stop:           return "Stop"
         case .similarSongs:   return "Similar songs"

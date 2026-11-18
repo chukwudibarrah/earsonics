@@ -1,13 +1,15 @@
 import Foundation
 import Testing
 @testable import earsonics
+@testable import EarsonicsCore
 
+@MainActor
 @Suite("Autoplay")
 struct AutoplayTests {
 
     /// A fake server: each source returns what the test gives it and records
     /// what it was asked for.
-    final class FakeServer: @unchecked Sendable {
+    @MainActor final class FakeServer {
         var similar: [Song] = []
         var top: [Song] = []
         var artistSongs: [String: [Song]] = [:]

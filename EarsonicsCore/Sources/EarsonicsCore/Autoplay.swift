@@ -1,4 +1,4 @@
-// Services/Autoplay.swift
+// EarsonicsCore/Autoplay.swift
 import Foundation
 
 /// Picks songs to keep playing after a queue runs out (see
@@ -8,15 +8,15 @@ import Foundation
 /// depend on the server having external metadata (e.g. Last.fm), and the
 /// Navidrome demo has no similar artists at all — so each choice falls back
 /// through similar songs → same artist → random until something turns up.
-struct Autoplay {
+public struct Autoplay {
     /// What the next batch is based on: the song that's ending.
-    struct Seed: Equatable {
-        let songID: String
-        let artistID: String?
-        let artistName: String?
-        let genre: String?
+    public struct Seed: Equatable, Sendable {
+        public let songID: String
+        public let artistID: String?
+        public let artistName: String?
+        public let genre: String?
 
-        init(_ song: Song) {
+        public init(_ song: Song) {
             songID = song.id
             artistID = song.artistId
             artistName = song.artist
@@ -25,23 +25,23 @@ struct Autoplay {
     }
 
     /// Where songs come from. Injected so the rules can be tested offline.
-    struct Source {
-        var similarSongs: (_ songID: String) async -> [Song]
-        var topSongs: (_ artistName: String) async -> [Song]
-        var artistSongs: (_ artistID: String) async -> [Song]
-        var similarArtists: (_ artistID: String) async -> [Artist]
-        var randomSongs: (_ genre: String?) async -> [Song]
+    public struct Source {
+        public var similarSongs: (_ songID: String) async -> [Song]
+        public var topSongs: (_ artistName: String) async -> [Song]
+        public var artistSongs: (_ artistID: String) async -> [Song]
+        public var similarArtists: (_ artistID: String) async -> [Artist]
+        public var randomSongs: (_ genre: String?) async -> [Song]
     }
 
-    static let batchSize = 20
+    public static let batchSize = 20
     /// Similar artists sampled per batch (each one costs a request).
-    static let similarArtistsSampled = 4
+    public static let similarArtistsSampled = 4
 
-    let source: Source
+    public let source: Source
 
     /// The order sources are tried in: the user's choice first, then the
     /// fallbacks. `.stop` tries nothing.
-    static func plan(for choice: QueueContinuation) -> [QueueContinuation] {
+    public static func plan(for choice: QueueContinuation) -> [QueueContinuation] {
         guard choice != .stop else { return [] }
         var plan = [choice]
         for fallback in [QueueContinuation.similarSongs, .sameArtist, .random] where !plan.contains(fallback) {
@@ -52,7 +52,7 @@ struct Autoplay {
 
     /// Up to `batchSize` songs not already played this session (and no
     /// repeats within the batch), shuffled.
-    static func pick(_ candidates: [Song], excluding played: Set<String>, limit: Int = batchSize) -> [Song] {
+    public static func pick(_ candidates: [Song], excluding played: Set<String>, limit: Int = batchSize) -> [Song] {
         var seen = played
         var picked: [Song] = []
         for song in candidates.shuffled() where !seen.contains(song.id) {
@@ -65,7 +65,7 @@ struct Autoplay {
 
     /// The next batch, trying each source in `plan(for:)` until one gives
     /// something new. Empty if nothing does (playback then stops).
-    func nextBatch(for choice: QueueContinuation, seed: Seed, excluding played: Set<String>) async -> [Song] {
+    public func nextBatch(for choice: QueueContinuation, seed: Seed, excluding played: Set<String>) async -> [Song] {
         for option in Self.plan(for: choice) {
             let batch = Self.pick(await candidates(from: option, seed: seed), excluding: played)
             if !batch.isEmpty { return batch }
@@ -102,7 +102,7 @@ struct Autoplay {
 extension Autoplay.Source {
     /// The real server. Failures count as "nothing found", so the next
     /// fallback gets a turn.
-    @MainActor static func server(_ srv: Server) -> Self {
+    @MainActor public static func server(_ srv: Server) -> Self {
         let client = SubsonicClient.shared
         return Self(
             similarSongs: { (try? await client.getSimilarSongs(id: $0, server: srv)) ?? [] },

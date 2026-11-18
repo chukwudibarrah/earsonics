@@ -1,3 +1,14 @@
+## 1.10: Code health, a shared core & rating
+
+- **Favourites stay in step everywhere.** Starring or unstarring a song, album or artist updates its heart on every screen at once (it used to update only where you pressed it, until that screen reloaded). Playlists are fetched once and shared, instead of separately by each screen that lists them.
+- **Failures are no longer silent.** If starring, deleting or renaming a playlist, removing a song from a playlist, searching, or loading Favourites, a playlist or an artist's albums fails, a short message says what couldn't be done. Cancelled requests (for example, typing on in Search) don't show one.
+- **Rate earsonics.** Settings → About has a "Rate earsonics" item with a QR code that opens the App Store review page on your phone (Apple TV apps can't show the usual rating prompt).
+- **Tidier Settings.** Explanations are now small notes under the setting they describe, instead of sitting in their own menu-style rows. The connection status sits next to the server name instead of in a row of its own. The selected row is no longer cut off at both ends.
+- **Server changes are no longer lost.** In the server editor, "Set as active server" only switched servers and dropped any changes you'd made to the details. It's now "Save and set as active": it saves your changes, switches to the server and goes back to the list. It's also offered when adding a server.
+- **Accessibility:** VoiceOver labels for the icon-only buttons (play/pause, previous, next, shuffle, repeat, hearts, close), the progress bar (adjustable with up/down swipes) and the steppers in Settings, and the mini player reads out the track and any playback error.
+- **Under the hood:** Swift 6 language mode with full data-race checking, `@Observable` state instead of `ObservableObject`/Combine, and everything that isn't UI (server client, player, queue, caches, sync, scrobbling, autoplay) moved into a shared Swift package, `EarsonicsCore`, which also builds for iOS ahead of the iPhone and iPad app.
+- **Tests:** more unit tests for server URL checks, decoding replies from Navidrome, gonic and Airsonic, the password migration to the Keychain, the shared library store and the queue's editing helpers (130 in total), and a UI test for "Rate earsonics". The UI tests now skip, rather than fail, when another user of the public Navidrome demo changes its saved queue mid-test.
+
 ## 1.09: Remote, Now Playing, synced queue & autoplay
 
 - **The remote's play/pause button works everywhere.** It used to work only while a song row in an album had focus; now it plays and pauses from any screen.

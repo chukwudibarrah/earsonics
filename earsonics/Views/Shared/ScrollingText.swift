@@ -1,5 +1,6 @@
 // Views/Shared/ScrollingText.swift
 import SwiftUI
+import EarsonicsCore
 
 /// A single-line text view that scrolls (marquee) when the content overflows
 /// its container. Resets and restarts whenever `trackID` changes.

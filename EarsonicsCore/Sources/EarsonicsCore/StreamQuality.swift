@@ -1,4 +1,4 @@
-// Shared/StreamQuality.swift
+// EarsonicsCore/StreamQuality.swift
 import Foundation
 
 /// The streaming/cache quality the user selects in Settings. One choice drives
@@ -6,15 +6,15 @@ import Foundation
 /// its first play. All transcoding is server-side via Subsonic `stream.view`
 /// params — the app never converts audio itself.
 /// `nonisolated`: also used by the cache and resource loader off the main actor.
-nonisolated enum StreamQuality: String, CaseIterable, Identifiable {
+public nonisolated enum StreamQuality: String, CaseIterable, Identifiable, Sendable {
     case original          // format=raw — the original lossless/library file
     case mp3_320           // server transcode to MP3 @ 320 kbps
     case mp3_192           // server transcode to MP3 @ 192 kbps
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
     /// `stream.view` query parameters for this quality.
-    var streamParams: [URLQueryItem] {
+    public var streamParams: [URLQueryItem] {
         switch self {
         case .original:
             return [URLQueryItem(name: "format", value: "raw")]
@@ -34,7 +34,7 @@ nonisolated enum StreamQuality: String, CaseIterable, Identifiable {
 
     /// Short tag used in the cache key so a track cached at one quality is never
     /// served for another.
-    var cacheTag: String {
+    public var cacheTag: String {
         switch self {
         case .original: return "raw"
         case .mp3_320:  return "mp3-320"
@@ -44,7 +44,7 @@ nonisolated enum StreamQuality: String, CaseIterable, Identifiable {
 
     /// File extension for the cached copy. `nil` means "use the song's own
     /// suffix" (only the original preserves the source container/codec).
-    var fileSuffix: String? {
+    public var fileSuffix: String? {
         switch self {
         case .original: return nil
         case .mp3_320, .mp3_192: return "mp3"
@@ -54,9 +54,9 @@ nonisolated enum StreamQuality: String, CaseIterable, Identifiable {
     /// True when the served bytes have a known length and support range
     /// requests (only the original file). Transcoded streams are produced
     /// on the fly with no `Content-Length` and no range support.
-    var knownLength: Bool { self == .original }
+    public var knownLength: Bool { self == .original }
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .original: return "Original (lossless)"
         case .mp3_320:  return "MP3 320 kbps"
@@ -68,10 +68,10 @@ nonisolated enum StreamQuality: String, CaseIterable, Identifiable {
 
     /// Shared UserDefaults key, read live by the player/cache and bound by the
     /// Settings picker.
-    static let defaultsKey = "streamQuality"
+    public static let defaultsKey = "streamQuality"
 
     /// Current selection from UserDefaults (defaults to `.original`).
-    static var current: StreamQuality {
+    public static var current: StreamQuality {
         let raw = UserDefaults.standard.string(forKey: defaultsKey)
         return raw.flatMap(StreamQuality.init(rawValue:)) ?? .original
     }

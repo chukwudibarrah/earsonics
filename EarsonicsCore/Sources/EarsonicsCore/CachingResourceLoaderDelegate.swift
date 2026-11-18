@@ -1,4 +1,4 @@
-// Services/CachingResourceLoaderDelegate.swift
+// EarsonicsCore/CachingResourceLoaderDelegate.swift
 import AVFoundation
 import UniformTypeIdentifiers
 
@@ -14,9 +14,12 @@ import UniformTypeIdentifiers
 ///
 /// All AVAssetResourceLoader and URLSession callbacks are serialised onto
 /// `loaderQueue`, so the mutable state below needs no additional locking. The
-/// class is `nonisolated` because those callbacks arrive off the main actor.
+/// class is `nonisolated` because those callbacks arrive off the main actor,
+/// and `@unchecked Sendable` because that serial queue — not the compiler —
+/// is what keeps its state safe: every access happens on `loaderQueue`
+/// (the initialiser runs before the object is shared).
 nonisolated final class CachingResourceLoaderDelegate: NSObject,
-    AVAssetResourceLoaderDelegate, URLSessionDataDelegate {
+    AVAssetResourceLoaderDelegate, URLSessionDataDelegate, @unchecked Sendable {
 
     /// Serial queue the resource loader is attached to (see `AudioPlayerService`).
     let loaderQueue = DispatchQueue(label: "earsonics.audioloader")
@@ -51,15 +54,9 @@ nonisolated final class CachingResourceLoaderDelegate: NSObject,
     private var farRequestByTask: [ObjectIdentifier: AVAssetResourceLoadingRequest] = [:]
     private var farTaskByRequest: [ObjectIdentifier: URLSessionDataTask] = [:]
 
-    private lazy var session: URLSession = {
-        let cfg = URLSessionConfiguration.default
-        cfg.urlCache = nil                                   // never double-cache large audio
-        cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
-        let opQueue = OperationQueue()
-        opQueue.underlyingQueue = loaderQueue
-        opQueue.maxConcurrentOperationCount = 1
-        return URLSession(configuration: cfg, delegate: self, delegateQueue: opQueue)
-    }()
+    /// Delivers its callbacks on `loaderQueue`. Created at the end of `init`
+    /// (it needs `self` as its delegate), before the object is shared.
+    private var session: URLSession!
 
     init(realURL: URL, songId: String, serverID: UUID, quality: StreamQuality,
          contentType: String?, suffix: String?, size: Int64?) {
@@ -79,6 +76,14 @@ nonisolated final class CachingResourceLoaderDelegate: NSObject,
         super.init()
         writeHandle = try? FileHandle(forWritingTo: tempURL)
         readHandle = try? FileHandle(forReadingFrom: tempURL)
+
+        let cfg = URLSessionConfiguration.default
+        cfg.urlCache = nil                                   // never double-cache large audio
+        cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
+        let opQueue = OperationQueue()
+        opQueue.underlyingQueue = loaderQueue
+        opQueue.maxConcurrentOperationCount = 1
+        session = URLSession(configuration: cfg, delegate: self, delegateQueue: opQueue)
     }
 
     /// Cancels all work and cleans up. Must be called by the owner when the

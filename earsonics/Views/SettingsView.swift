@@ -1,10 +1,12 @@
 // Views/SettingsView.swift
 import SwiftUI
+import EarsonicsCore
 
 struct SettingsView: View {
-    @EnvironmentObject var appState: AppState
-    @ObservedObject private var player = AudioPlayerService.shared
+    @Environment(AppState.self) var appState
+    private let player = AudioPlayerService.shared
     @State private var showDonationQR = false
+    @State private var showReviewQR = false
     @State private var cacheSize: Int64 = 0
     @State private var audioCacheSize: Int64 = 0
     @State private var isClearingCache = false
@@ -21,28 +23,37 @@ struct SettingsView: View {
     // `NavigationLink { destination }` left the server list/editor on screen
     // after switching tabs from the sidebar.
     var body: some View {
+        // Bindings into the shared app state (toggles below).
+        @Bindable var appState = appState
+        @Bindable var player = player
         NavigationStack(path: $navPath) {
             Form {
                 // Server management section
                 Section(header: Text("Servers").font(.headline)) {
+                    // The active server and its connection status share this
+                    // row: a status row of its own looked selectable.
                     NavigationLink(value: SettingsRoute.servers) {
                         HStack {
                             Label("Manage servers", systemImage: "server.rack")
                             Spacer()
                             if let server = appState.serverStore.activeServer {
                                 Text(server.name).foregroundColor(.secondary).font(.callout)
+                                // Colour on the icon only: green text was
+                                // unreadable on the white focused row.
+                                Label {
+                                    Text(appState.isConnected ? "Connected" : "Disconnected")
+                                        .foregroundStyle(.secondary)
+                                } icon: {
+                                    Image(systemName: appState.isConnected ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                        .foregroundStyle(appState.isConnected ? .green : .red)
+                                }
+                                .font(.callout)
+                                .padding(.leading, 16)
                             }
                         }
                     }
 
                     if let server = appState.serverStore.activeServer {
-                        HStack {
-                            Label("Status", systemImage: appState.isConnected ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundColor(appState.isConnected ? .green : .red)
-                            Spacer()
-                            Text(appState.isConnected ? "Connected" : "Disconnected")
-                                .foregroundColor(appState.isConnected ? .green : .red)
-                        }
                         Button {
                             Task { await appState.testConnection(server: server) }
                         } label: {
@@ -55,45 +66,38 @@ struct SettingsView: View {
                 // Playback section
                 Section(header: Text("Playback").font(.headline)) {
                     SettingsChoiceRow(choice: .quality)
-                    Text("Controls both live streaming and cached copies, so a replayed track matches its first play. Lower qualities are transcoded by the server and use less space.")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Crossfade duration: \(Int(appState.crossfadeDuration))s")
-                            Spacer()
-                            Button("-") {
-                                if appState.crossfadeDuration > 0 { appState.crossfadeDuration -= 1 }
-                            }
-                            .buttonStyle(.bordered)
-                            Button("+") {
-                                if appState.crossfadeDuration < 12 { appState.crossfadeDuration += 1 }
-                            }
-                            .buttonStyle(.bordered)
+                    SettingsNote("Controls both live streaming and cached copies, so a replayed track matches its first play. Lower qualities are transcoded by the server and use less space.")
+                    HStack {
+                        Text("Crossfade duration: \(Int(appState.crossfadeDuration))s")
+                        Spacer()
+                        Button("-") {
+                            if appState.crossfadeDuration > 0 { appState.crossfadeDuration -= 1 }
                         }
-                        if appState.crossfadeDuration > 0 {
-                            Text("Note: Overlapping streams may occasionally cause lag on wireless outputs (AirPlay/Bluetooth).")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("Shorter crossfade")
+                        Button("+") {
+                            if appState.crossfadeDuration < 12 { appState.crossfadeDuration += 1 }
                         }
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("Longer crossfade")
+                    }
+                    if appState.crossfadeDuration > 0 {
+                        SettingsNote("Overlapping streams may occasionally cause lag on wireless outputs (AirPlay/Bluetooth).")
                     }
 
-                    Toggle(isOn: $appState.player.normalizeVolume) {
+                    Toggle(isOn: $player.normalizeVolume) {
                         Text("Normalise volume")
                     }
                     if appState.player.normalizeVolume {
-                        Text("Uses Replay Gain metadata to equalise volume between tracks and prevent loud peaks.")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                        SettingsNote("Uses Replay Gain metadata to equalise volume between tracks and prevent loud peaks.")
                     }
 
                     Toggle(isOn: $appState.preventScreenSaver) {
                         Text("Disable screen saver while playing")
                     }
                     if appState.preventScreenSaver {
-                        Text("Warning: Keeping the screen active for long periods may cause burn-in on some TVs.")
-                            .font(.caption2)
-                            .foregroundColor(.red)
+                        SettingsNote("Warning: Keeping the screen active for long periods may cause burn-in on some TVs.",
+                                     isWarning: true)
                     }
                 }
                 .padding()
@@ -115,10 +119,8 @@ struct SettingsView: View {
                                 }
                             }
                         }
-                        Text("Used for the focus outline, now-playing glow and play indicators.")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
                     }
+                    SettingsNote("Used for the focus outline, now-playing glow and play indicators.")
                 }
                 .padding()
 
@@ -128,9 +130,7 @@ struct SettingsView: View {
                         Text("Cache played songs")
                     }
                     if audioCacheEnabled {
-                        Text("Stores tracks you play so replaying them doesn't stream again.")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
+                        SettingsNote("Stores tracks you play so replaying them doesn't stream again.")
                         HStack {
                             Text("Music cache limit: \(audioCacheLimitGB) GB")
                             Spacer()
@@ -138,10 +138,12 @@ struct SettingsView: View {
                                 if audioCacheLimitGB > 1 { audioCacheLimitGB -= 1 }
                             }
                             .buttonStyle(.bordered)
+                            .accessibilityLabel("Smaller music cache")
                             Button("+") {
                                 if audioCacheLimitGB < 10 { audioCacheLimitGB += 1 }
                             }
                             .buttonStyle(.bordered)
+                            .accessibilityLabel("Larger music cache")
                         }
                     }
 
@@ -175,14 +177,38 @@ struct SettingsView: View {
                         }
                     }
                     .disabled(isClearingCache || (cacheSize == 0 && audioCacheSize == 0))
-                    Text("Removes cached music and cover art. Both are re-fetched as needed.")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                    SettingsNote("Removes cached music and cover art. Both are re-fetched as needed.")
                 }
                 .padding()
 
                 // About section
                 Section(header: Text("About").font(.headline)) {
+                    // tvOS has no in-app review prompt (StoreKit's
+                    // requestReview isn't available), and App Store rules
+                    // don't allow custom review pop-ups, so this is a QR
+                    // code for the review page, opened on a phone.
+                    Button {
+                        showReviewQR = true
+                    } label: {
+                        HStack {
+                            Text("Rate earsonics")
+                            Spacer()
+                            Text("Show QR").foregroundColor(.secondary)
+                        }
+                    }
+                    .sheet(isPresented: $showReviewQR) {
+                        VStack(spacing: 40) {
+                            Text("Enjoying earsonics? Scan to rate or review it on the App Store.")
+                                .font(.subheadline)
+                                .multilineTextAlignment(.center)
+                            QRCodeImage(text: AppLinks.writeReview.absoluteString)
+                                .frame(width: 500, height: 500)
+                                .accessibilityLabel("QR code for the earsonics App Store review page")
+                            Button("Close") { showReviewQR = false }
+                        }
+                        .padding()
+                    }
+
                     Button {
                         showDonationQR = true
                     } label: {
@@ -216,6 +242,14 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 20)
             }
+            // The form clips to its bounds, which cut off both ends of the
+            // enlarged focused row. Clip only at the top (so scrolled rows
+            // don't show over the title), leaving the row room at the sides;
+            // rows still run to the bottom of the screen, as before.
+            .scrollClipDisabled()
+            .mask(Rectangle()
+                .padding(.horizontal, -AppLayout.horizontalPadding)
+                .padding(.bottom, -200))
             .padding(.horizontal, AppLayout.horizontalPadding)
             .padding(.top, AppLayout.contentTopPadding)
             .navigationDestination(for: SettingsRoute.self) { route in
@@ -244,6 +278,27 @@ enum SettingsRoute: Hashable {
     case editServer(Server)
     case choice(SettingsChoice)
 }
+// MARK: - Notes
+/// An explanation under the setting it describes: smaller text with no row
+/// background, so it doesn't look like (or sit in the way of) a menu item.
+/// Plain text, so focus skips it.
+struct SettingsNote: View {
+    let text: String
+    var isWarning = false
+
+    init(_ text: String, isWarning: Bool = false) {
+        self.text = text
+        self.isWarning = isWarning
+    }
+
+    var body: some View {
+        Text(text)
+            .font(.caption2)
+            .foregroundStyle(isWarning ? AnyShapeStyle(.red) : AnyShapeStyle(.secondary))
+            .listRowBackground(Color.clear)
+    }
+}
+
 // MARK: - Accent colour swatch
 private struct AccentSwatchButton: View {
     let choice: AccentColorChoice

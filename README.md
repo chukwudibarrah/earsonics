@@ -61,14 +61,25 @@ No API keys, secrets, or backend configuration are required — the app talks di
 
 ## Architecture at a glance
 
-- **`Services/SubsonicClient.swift`** — the Subsonic REST API client. Requests are hedged: a slow/dead connection triggers a duplicate attempt on a fresh connection rather than a blind retry, so a stale pooled socket (e.g. after the app has been idle) can't silently stall a screen.
-- **`Services/PlayQueue.swift`** — the queue's rules (order, shuffle, repeat, autoplay songs) as a plain value type with unit tests; `AudioPlayerService` turns its changes into playback.
-- **`Services/QueuePersistence.swift`** — saving and restoring the queue, on the device and (optionally) on the server.
-- **`Services/AudioCache.swift`** / **`CachingResourceLoaderDelegate.swift`** — an LRU on-disk cache that fills in the background as a track streams, so replays don't re-download.
-- **`Services/ImageCache.swift`** — memory + disk cover-art cache, keyed by cover-art id (not URL, since every request carries a fresh auth salt).
-- **`Shared/KeychainHelper.swift`** — Keychain-backed storage for server passwords.
-- **`ViewModels/`** — `@MainActor` view models that own network state per screen.
+The app is in two parts: **`EarsonicsCore/`**, a local Swift package with everything that isn't UI (it builds for tvOS and iOS, so future iPhone/iPad and Mac apps can share it), and **`earsonics/`**, the Apple TV app's screens and app state. Swift 6 language mode throughout; state uses `@Observable`.
+
+In `EarsonicsCore/Sources/EarsonicsCore/`:
+
+- **`SubsonicClient.swift`** — the Subsonic REST API client. Requests are hedged: a slow/dead connection triggers a duplicate attempt on a fresh connection rather than a blind retry, so a stale pooled socket (e.g. after the app has been idle) can't silently stall a screen.
+- **`PlayQueue.swift`** — the queue's rules (order, shuffle, repeat, autoplay songs) as a plain value type with unit tests; `AudioPlayerService.swift` turns its changes into playback (two-deck crossfade, Now Playing, interruptions).
+- **`QueuePersistence.swift`** — saving and restoring the queue, on the device and (optionally) on the server.
+- **`Autoplay.swift`** / **`ScrobbleTracker.swift`** — what plays when a queue ends, and when a play counts as a scrobble.
+- **`AudioCache.swift`** / **`CachingResourceLoaderDelegate.swift`** — an LRU on-disk cache that fills in the background as a track streams, so replays don't re-download.
+- **`ImageCache.swift`** — memory + disk cover-art cache, keyed by cover-art id (not URL, since every request carries a fresh auth salt).
+- **`LibraryStore.swift`** / **`Messages.swift`** — playlists and favourites shared by every screen, and the app-wide message banner.
+- **`Server.swift`** / **`KeychainHelper.swift`** — saved servers, with passwords in the Keychain.
+
+In `earsonics/`:
+
+- **`ViewModels/`** — `AppState` (settings and wiring) and `@MainActor` view models that own network state per screen.
 - **`Views/`** — SwiftUI views, tvOS-focus-first.
+
+Tests: `earsonicsTests` (Swift Testing; offline, plus a few read-only requests to the public Navidrome demo) and `earsonicsUITests` (drive the Siri Remote against the demo).
 
 ## Roadmap
 

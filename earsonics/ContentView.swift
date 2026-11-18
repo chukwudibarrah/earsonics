@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import EarsonicsCore
 
 struct ContentView: View {
-    @StateObject private var appState = AppState.shared
-    @ObservedObject private var player = AudioPlayerService.shared
-    @ObservedObject private var playlistAdder = PlaylistAdder.shared
+    private let appState = AppState.shared
+    private let player = AudioPlayerService.shared
+    private let playlistAdder = PlaylistAdder.shared
+    private let messages = Messages.shared
     @State private var selectedTab: AppTab = .home
     @State private var showNowPlaying = false
     @Namespace private var contentFocus
@@ -64,7 +66,7 @@ struct ContentView: View {
                 }
             }
             .tabViewStyle(.sidebarAdaptable)
-            .environmentObject(appState)
+            .environment(appState)
             .environment(\.openSettings, OpenSettingsAction { selectedTab = .settings })
             // The now-playing pill below lives outside the tabs. Making the
             // tab area a focus section lets focus move from the pill into it
@@ -83,7 +85,7 @@ struct ContentView: View {
                                 showNowPlaying = true
                             }
                         })
-                        .environmentObject(appState)
+                        .environment(appState)
                         // Menu on the pill would otherwise reach the system
                         // and exit the app (the pill isn't inside a tab, so
                         // the sidebar never sees it). Return to the page
@@ -105,14 +107,14 @@ struct ContentView: View {
                         showNowPlaying = false
                     }
                 })
-                    .environmentObject(appState)
+                    .environment(appState)
                     .zIndex(20)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
-            // Outcome of "Add to playlist" (see PlaylistAdder). Not focusable
+            // Outcome of an action, or why it failed (see Messages). Not focusable
             // and ignores input, so it never takes focus from the screen below.
-            if let banner = playlistAdder.banner {
+            if let banner = messages.banner {
                 VStack {
                     Spacer()
                     Text(banner)
@@ -134,7 +136,7 @@ struct ContentView: View {
         .onPlayPauseCommand { player.togglePlayPause() }
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: showNowPlaying)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: player.currentSong != nil)
-        .animation(.easeInOut(duration: 0.25), value: playlistAdder.banner)
+        .animation(.easeInOut(duration: 0.25), value: messages.banner)
         // No global .tint(): buttons stay neutral while idle and only take
         // the accent when focused (AccentPillButtonStyle / accentFocusRing)
         .environment(\.appAccent, appState.accentColor)

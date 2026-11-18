@@ -1,18 +1,28 @@
 // Views/Shared/StarButton.swift
 import SwiftUI
+import EarsonicsCore
 
+/// A heart that stars or un-stars a song, album or artist. Its state comes
+/// from `LibraryStore`, so it stays in step with every other screen.
 struct StarButton: View {
-    let isStarred: Bool
-    var songId: String? = nil
-    var albumId: String? = nil
-    var artistId: String? = nil
-    var onToggle: ((Bool) -> Void)? = nil
+    let kind: LibraryStore.StarKind
+    let id: String
+    /// The item's starred date as fetched from the server.
+    let fetched: Date?
 
     @State private var working = false
 
+    private var isStarred: Bool {
+        LibraryStore.shared.isStarred(kind, id: id, fetched: fetched)
+    }
+
     var body: some View {
         Button {
-            Task { await toggle() }
+            Task {
+                working = true
+                await LibraryStore.shared.toggleStar(kind, id: id, isStarred: isStarred)
+                working = false
+            }
         } label: {
             Image(systemName: isStarred ? "heart.fill" : "heart")
                 .foregroundColor(isStarred ? .red : .white)
@@ -20,20 +30,7 @@ struct StarButton: View {
         }
         .disabled(working)
         .buttonStyle(AccentPillButtonStyle())
-    }
-
-    private func toggle() async {
-        working = true
-        do {
-            if isStarred {
-                try await SubsonicClient.shared.unstar(songId: songId, albumId: albumId, artistId: artistId)
-                onToggle?(false)
-            } else {
-                try await SubsonicClient.shared.star(songId: songId, albumId: albumId, artistId: artistId)
-                onToggle?(true)
-            }
-        } catch { }
-        working = false
+        .accessibilityLabel(isStarred ? "Remove from Favourites" : "Add to Favourites")
     }
 }
 

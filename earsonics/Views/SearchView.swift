@@ -1,15 +1,16 @@
 // Views/SearchView.swift
 import SwiftUI
+import EarsonicsCore
 
 struct SearchView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState
     @State private var query: String = ""
     @State private var results: SearchResult = SearchResult(artists: [], albums: [], songs: [])
     @State private var isSearching = false
     @State private var searchTask: Task<Void, Never>? = nil
-    @State private var playlists: [Playlist] = []
+    private var playlists: [Playlist] { LibraryStore.shared.playlists }
     @State private var navPath = NavigationPath()
-    @ObservedObject private var player = AudioPlayerService.shared
+    private let player = AudioPlayerService.shared
 
     var goHome: () -> Void = {}
 
@@ -121,14 +122,18 @@ struct SearchView: View {
                     goHome()
                 }
             }
-            .task { playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? [] }
+            .task { await LibraryStore.shared.loadPlaylists() }
         }
     }
 
     private func performSearch(query: String) async {
         isSearching = true
-        results = (try? await SubsonicClient.shared.search(query: query))
-            ?? SearchResult(artists: [], albums: [], songs: [])
+        do {
+            results = try await SubsonicClient.shared.search(query: query)
+        } catch {
+            results = SearchResult(artists: [], albums: [], songs: [])
+            Messages.shared.showFailure("search", error)
+        }
         isSearching = false
     }
 }

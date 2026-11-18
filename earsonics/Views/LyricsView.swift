@@ -1,4 +1,5 @@
 import SwiftUI
+import EarsonicsCore
 
 /// Lyrics for the current track.
 ///

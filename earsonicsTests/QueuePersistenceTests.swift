@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import earsonics
+@testable import EarsonicsCore
 
 @MainActor
 @Suite("Test isolation")
@@ -112,6 +113,13 @@ struct TimestampTests {
         let offset = try #require(SubsonicClient.parseTimestamp("2026-11-01T13:52:06.5+01:00"))
         #expect(abs(millis.timeIntervalSince(plain) - 0.123) < 0.001)
         #expect(abs(offset.timeIntervalSince(plain) - 0.5) < 0.001)
+    }
+
+    /// Older Subsonic servers send offsets without a colon.
+    @Test func offsetWithoutAColon() throws {
+        let plain = try #require(SubsonicClient.parseTimestamp("2026-11-01T12:52:06Z"))
+        let legacy = try #require(SubsonicClient.parseTimestamp("2026-11-01T13:52:06.000+0100"))
+        #expect(abs(legacy.timeIntervalSince(plain)) < 0.001)
     }
 
     @Test func garbageIsRejected() {

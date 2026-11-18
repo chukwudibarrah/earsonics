@@ -1,17 +1,22 @@
 // Views/NowPlayingView.swift
 import SwiftUI
+import EarsonicsCore
 
 struct NowPlayingView: View {
-    @EnvironmentObject var appState: AppState
-    @ObservedObject private var player = AudioPlayerService.shared
+    @Environment(AppState.self) var appState
+    private let player = AudioPlayerService.shared
     var dismiss: () -> Void = {}
     @State private var showQueue = false
     @State private var showLyrics = false
     @State private var lyrics: [StructuredLyrics] = []
     @State private var plainLyrics: Lyrics? = nil
     @State private var lyricsLoading = false
-    @State private var isStarred: Bool = false
-    @State private var playlists: [Playlist] = []
+    private var playlists: [Playlist] { LibraryStore.shared.playlists }
+
+    private var isStarred: Bool {
+        guard let song = player.currentSong else { return false }
+        return LibraryStore.shared.isStarred(.song, id: song.id, fetched: song.starred)
+    }
     @State private var showNewPlaylistAlert = false
     @State private var newPlaylistName = ""
 
@@ -81,22 +86,20 @@ struct NowPlayingView: View {
             }
             // Lyrics and queue stay open across track changes; lyrics follow
             // the new track.
-            isStarred = player.currentSong?.starred != nil
             Task { await loadLyrics() }
         }
         .task {
-            isStarred = player.currentSong?.starred != nil
-            playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []
+            async let playlistsLoaded: Void = LibraryStore.shared.loadPlaylists()
             await loadLyrics()
+            await playlistsLoaded
         }
         .alert("New playlist", isPresented: $showNewPlaylistAlert) {
             TextField("Playlist name", text: $newPlaylistName)
             Button("Create") {
                 if !newPlaylistName.isEmpty {
                     Task {
-                        if let song = player.currentSong,
-                           let newPl = await PlaylistAdder.shared.create(name: newPlaylistName, songIDs: [song.id]) {
-                            playlists.append(newPl)
+                        if let song = player.currentSong {
+                            _ = await PlaylistAdder.shared.create(name: newPlaylistName, songIDs: [song.id])
                         }
                         newPlaylistName = ""
                     }
@@ -140,21 +143,14 @@ struct NowPlayingView: View {
                                 .font(.title).foregroundColor(.white.opacity(0.7))
                         }
                         .buttonStyle(AccentIconButtonStyle())
+                        .accessibilityLabel("Close player")
 
 //                        if let song = player.currentSong { FormatBadge(song: song) }
 
                         // Star button — tappable
                         Button {
-                            Task {
-                                if let song = player.currentSong {
-                                    if isStarred {
-                                        try? await SubsonicClient.shared.unstar(songId: song.id)
-                                        isStarred = false
-                                    } else {
-                                        try? await SubsonicClient.shared.star(songId: song.id)
-                                        isStarred = true
-                                    }
-                                }
+                            if let song = player.currentSong {
+                                Task { await LibraryStore.shared.toggleStar(.song, id: song.id, isStarred: isStarred) }
                             }
                         } label: {
                             Image(systemName: isStarred ? "heart.fill" : "heart")
@@ -162,6 +158,7 @@ struct NowPlayingView: View {
                                 .font(.title2)
                         }
                         .buttonStyle(AccentIconButtonStyle())
+                        .accessibilityLabel(isStarred ? "Remove from Favourites" : "Add to Favourites")
                     }
                 }
 
@@ -193,10 +190,10 @@ struct NowPlayingView: View {
                 // They live inside a full-screen view with TabView disabled,
                 // so the focus engine will find ONLY these buttons
                 HStack(spacing: 60) {
-                    TransportButton(icon: "shuffle", isToggled: player.isShuffled) { player.toggleShuffle() }
-                    TransportButton(icon: "backward.fill") { player.skipPrevious() }
+                    TransportButton(icon: "shuffle", label: "Shuffle", isToggled: player.isShuffled) { player.toggleShuffle() }
+                    TransportButton(icon: "backward.fill", label: "Previous") { player.skipPrevious() }
                     PlayPauseButton(isPlaying: player.isPlaying) { player.togglePlayPause() }
-                    TransportButton(icon: "forward.fill") { player.skipNext() }
+                    TransportButton(icon: "forward.fill", label: "Next") { player.skipNext() }
                     RepeatTransportButton(mode: player.repeatMode) { player.cycleRepeat() }
                 }
 
@@ -286,6 +283,8 @@ struct SecondaryActionButton: View {
 // MARK: - Transport Button
 struct TransportButton: View {
     let icon: String
+    /// Spoken by VoiceOver (the button shows only an icon).
+    let label: String
     var isToggled: Bool = false
     let action: () -> Void
     @FocusState private var isFocused: Bool
@@ -309,6 +308,8 @@ struct TransportButton: View {
         }
         .buttonStyle(CardlessButtonStyle())
         .focused($isFocused)
+        .accessibilityLabel(label)
+        .accessibilityValue(isToggled ? "On" : "")
     }
 }
 
@@ -333,6 +334,7 @@ struct PlayPauseButton: View {
         }
         .buttonStyle(CardlessButtonStyle())
         .focused($isFocused)
+        .accessibilityLabel(isPlaying ? "Pause" : "Play")
     }
 }
 
@@ -372,6 +374,8 @@ struct RepeatTransportButton: View {
         }
         .buttonStyle(CardlessButtonStyle())
         .focused($isFocused)
+        .accessibilityLabel("Repeat")
+        .accessibilityValue(mode == .off ? "Off" : mode == .all ? "All" : "One")
     }
 }
 
@@ -412,5 +416,21 @@ struct ProgressSlider: View {
             default: break
             }
         }
+        .accessibilityElement()
+        .accessibilityLabel("Playback position")
+        .accessibilityValue("\(Self.spoken(value)) of \(Self.spoken(total))")
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: onSeek(min(total, value + 10))
+            case .decrement: onSeek(max(0, value - 10))
+            @unknown default: break
+            }
+        }
+    }
+
+    /// "2 minutes 5 seconds", for VoiceOver.
+    private static func spoken(_ seconds: Double) -> String {
+        guard seconds.isFinite, seconds >= 0 else { return "unknown" }
+        return Duration.seconds(Int(seconds)).formatted(.units(allowed: [.minutes, .seconds], width: .wide))
     }
 }

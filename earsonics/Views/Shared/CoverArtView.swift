@@ -1,5 +1,6 @@
 // Views/Shared/CoverArtView.swift
 import SwiftUI
+import EarsonicsCore
 
 struct CoverArtView: View {
     let id: String?

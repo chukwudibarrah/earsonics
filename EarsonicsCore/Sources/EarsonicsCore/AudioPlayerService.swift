@@ -1,12 +1,12 @@
-// Services/AudioPlayerService.swift
+// EarsonicsCore/AudioPlayerService.swift
 import AVFoundation
 import MediaPlayer
 import Combine
-import SwiftUI
+import UIKit
 import os
 
 // MARK: - Playback Transition State
-enum PlaybackTransitionState {
+public enum PlaybackTransitionState: Sendable {
     case idle
     case prewarming
     case crossfading
@@ -14,79 +14,83 @@ enum PlaybackTransitionState {
 
 // MARK: - Audio Player Service
 @MainActor
-class AudioPlayerService: NSObject, ObservableObject {
-    static let shared = AudioPlayerService()
+@Observable
+public final class AudioPlayerService: NSObject {
+    public static let shared = AudioPlayerService()
 
     private static let log = Logger(subsystem: "com.wonderworks.earsonics", category: "player")
 
-    private var deckA: AVPlayer
-    private var deckB: AVPlayer
-    private var activeDeck: AVPlayer
+    @ObservationIgnored private var deckA: AVPlayer
+    @ObservationIgnored private var deckB: AVPlayer
+    @ObservationIgnored private var activeDeck: AVPlayer
 
     /// The deck that isn't playing the current track — where the next track is
     /// prewarmed and faded in from.
     private var standbyDeck: AVPlayer { activeDeck === deckA ? deckB : deckA }
 
     // Observers and Timers
-    private var timeObserverA: Any?
-    private var timeObserverB: Any?
-    private var fadeDisplayLink: CADisplayLink?
-    private var notificationTokens: [NSObjectProtocol] = []
+    @ObservationIgnored private var timeObserverA: Any?
+    @ObservationIgnored private var timeObserverB: Any?
+    @ObservationIgnored private var fadeDisplayLink: CADisplayLink?
+    @ObservationIgnored private var notificationTokens: [NSObjectProtocol] = []
 
     /// One status observer per deck, replaced whenever that deck's item changes,
     /// so observers never outlive (or retain) the items they watch.
-    private var itemStatusObservers: [ObjectIdentifier: AnyCancellable] = [:]
+    @ObservationIgnored private var itemStatusObservers: [ObjectIdentifier: AnyCancellable] = [:]
 
     // Transition State
-    private var transitionState: PlaybackTransitionState = .idle
-    private var fadeStartTime: CFTimeInterval = 0
-    private var fadeStartDuration: Double = 0
-    private var hasUpdatedMetadataDuringFade = false
+    @ObservationIgnored private var transitionState: PlaybackTransitionState = .idle
+    @ObservationIgnored private var fadeStartTime: CFTimeInterval = 0
+    @ObservationIgnored private var fadeStartDuration: Double = 0
+    @ObservationIgnored private var hasUpdatedMetadataDuringFade = false
 
     /// Queue entry loaded on the standby deck while prewarming. A queue edit
     /// that changes which entry comes next invalidates the prewarm.
-    private var prewarmedEntryID: UUID?
+    @ObservationIgnored private var prewarmedEntryID: UUID?
 
     // Telemetry for startup latency
-    private var lastStreamRequestTime: CFTimeInterval = 0
-    private var recentStartupLatencies: [Double] = []
+    @ObservationIgnored private var lastStreamRequestTime: CFTimeInterval = 0
+    @ObservationIgnored private var recentStartupLatencies: [Double] = []
 
     /// Tracks in a row that failed to play. Auto-skipping stops at
     /// `maxConsecutiveFailures` so an unreachable server can't race through
     /// the whole queue.
-    private var consecutiveFailures = 0
+    @ObservationIgnored private var consecutiveFailures = 0
     private static let maxConsecutiveFailures = 3
 
     // Settings mapping
-    @AppStorage("crossfadeDuration") private var appCrossfadeDuration: Double = 0.0
-    @AppStorage("normalizeVolume") var normalizeVolume: Bool = true
+    /// Set in Settings; read live.
+    private var appCrossfadeDuration: Double { UserDefaults.standard.double(forKey: PlaybackPreferences.crossfadeKey) }
+    public var normalizeVolume: Bool = UserDefaults.standard.object(forKey: "normalizeVolume") as? Bool ?? true {
+        didSet { UserDefaults.standard.set(normalizeVolume, forKey: "normalizeVolume") }
+    }
 
     // Transition State additions
-    private var fadeOutVolume: Float = 1.0
-    private var fadeInVolume: Float = 1.0
+    @ObservationIgnored private var fadeOutVolume: Float = 1.0
+    @ObservationIgnored private var fadeInVolume: Float = 1.0
 
-    private var cancellables = Set<AnyCancellable>()
+    @ObservationIgnored private var cancellables = Set<AnyCancellable>()
 
     /// Play order, position, shuffle and repeat. All queue rules live in
     /// `PlayQueue`; this class turns its changes into player actions.
-    @Published private(set) var playQueue = PlayQueue() {
+    public private(set) var playQueue = PlayQueue() {
         didSet { scheduleQueueSave() }
     }
-    @Published var isPlaying: Bool = false
-    @Published var currentTime: Double = 0
-    @Published var duration: Double = 0
-    @Published var isBuffering: Bool = false
+    public var isPlaying: Bool = false
+    public var currentTime: Double = 0
+    public var duration: Double = 0
+    public var isBuffering: Bool = false
 
-    var queue: [Song] { playQueue.songs }
-    var currentIndex: Int { playQueue.currentIndex }
-    var isShuffled: Bool { playQueue.isShuffled }
-    var repeatMode: RepeatMode { playQueue.repeatMode }
+    public var queue: [Song] { playQueue.songs }
+    public var currentIndex: Int { playQueue.currentIndex }
+    public var isShuffled: Bool { playQueue.isShuffled }
+    public var repeatMode: RepeatMode { playQueue.repeatMode }
 
     /// User-facing message when a track couldn't be played; cleared when the
     /// next track starts.
-    @Published var playbackError: String?
+    public var playbackError: String?
 
-    var server: Server? {
+    public var server: Server? {
         didSet {
             // Queue entries are song ids from the previous server's library —
             // meaningless (or a different song) on another server. Edits to the
@@ -105,16 +109,16 @@ class AudioPlayerService: NSObject, ObservableObject {
         }
     }
 
-    var currentSong: Song? { playQueue.currentSong }
+    public var currentSong: Song? { playQueue.currentSong }
 
     // Caching: one resource-loader delegate per streaming player item. The
     // resource loader holds its delegate weakly, so we keep a strong reference
     // here keyed by item and release it (cancelling its download) when the item
     // is replaced. Items played straight from the cache file have no delegate.
-    private var loaderDelegates: [ObjectIdentifier: CachingResourceLoaderDelegate] = [:]
+    @ObservationIgnored private var loaderDelegates: [ObjectIdentifier: CachingResourceLoaderDelegate] = [:]
     private static let cacheScheme = "earsonicscache"
 
-    override init() {
+    public override init() {
         self.deckA = AVPlayer()
         self.deckB = AVPlayer()
         self.activeDeck = self.deckA
@@ -134,7 +138,8 @@ class AudioPlayerService: NSObject, ObservableObject {
         setupRemoteCommandCenter()
     }
 
-    deinit {
+    // Runs on the main actor, where the display link lives.
+    isolated deinit {
         fadeDisplayLink?.invalidate()
     }
 
@@ -213,26 +218,26 @@ class AudioPlayerService: NSObject, ObservableObject {
 
     // MARK: - Audio session interruptions and route changes
     /// What an audio-session notification means for playback.
-    enum InterruptionEvent: Equatable {
+    public nonisolated enum InterruptionEvent: Equatable, Sendable {
         case began
         case ended(shouldResume: Bool)
     }
 
     /// True between an interruption starting while music was playing and the
     /// system saying whether to resume.
-    private(set) var resumesAfterInterruption = false
+    public private(set) var resumesAfterInterruption = false
 
     /// Whether the user wants music playing — set by play/pause and track
     /// loads, and unaffected by the system pausing the player during an
     /// interruption (which `isPlaying` would reflect).
-    private(set) var intendsToPlay = false
+    public private(set) var intendsToPlay = false
 
     private func setupAudioSessionObservers() {
         let center = NotificationCenter.default
         let session = AVAudioSession.sharedInstance()
 
-        if #available(tvOS 27.0, *) {
-            // tvOS 27 models interruptions as deactivation + a resumption
+        if #available(iOS 27.0, tvOS 27.0, *) {
+            // iOS/tvOS 27 model interruptions as deactivation + a resumption
             // recommendation, which can't get stuck if an "ended" signal never
             // arrives. Both are posted on the main queue.
             notificationTokens.append(center.addObserver(
@@ -273,7 +278,7 @@ class AudioPlayerService: NSObject, ObservableObject {
 
     /// Reads the pre-tvOS 27 interruption notification. Returns nil for
     /// anything it doesn't recognise.
-    nonisolated static func interruptionEvent(fromLegacy userInfo: [AnyHashable: Any]?) -> InterruptionEvent? {
+    public nonisolated static func interruptionEvent(fromLegacy userInfo: [AnyHashable: Any]?) -> InterruptionEvent? {
         guard let raw = userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
               let type = AVAudioSession.InterruptionType(rawValue: raw) else { return nil }
         switch type {
@@ -291,7 +296,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     /// AVPlayer pauses itself when an interruption begins; this decides
     /// whether to resume when it ends: only if music was playing beforehand
     /// and the system recommends it.
-    func handleInterruption(_ event: InterruptionEvent) {
+    public func handleInterruption(_ event: InterruptionEvent) {
         switch event {
         case .began:
             resumesAfterInterruption = intendsToPlay
@@ -337,7 +342,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     /// Replaces the queue and starts playing. `shuffle: nil` keeps the current
     /// shuffle setting. An empty list is ignored, so whatever is playing keeps
     /// playing.
-    func load(songs: [Song], startIndex: Int = 0, shuffle: Bool? = nil, context: PlayContext = .mix) {
+    public func load(songs: [Song], startIndex: Int = 0, shuffle: Bool? = nil, context: PlayContext = .mix) {
         guard playQueue.load(songs, startIndex: startIndex, shuffle: shuffle, context: context) else { return }
         cancelAutoplay()
         consecutiveFailures = 0
@@ -430,7 +435,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
 
     // MARK: - Rebuild: sets up current track on active deck
-    func rebuildPlayerItems() {
+    public func rebuildPlayerItems() {
         guard let srv = server else { return }
 
         resetTransition()
@@ -473,7 +478,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
 
     /// Stops playback and empties the queue.
-    func clearQueue() {
+    public func clearQueue() {
         resetTransition()
         deckA.pause()
         setItem(nil, on: deckA)
@@ -701,7 +706,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
 
     // MARK: - Playback controls
-    func play() {
+    public func play() {
         // A track that failed to load can't simply resume — retry it.
         if currentSong != nil,
            activeDeck.currentItem == nil || activeDeck.currentItem?.status == .failed {
@@ -715,7 +720,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         activeDeck.play()
         updateNowPlaying()
     }
-    func pause() {
+    public func pause() {
         intendsToPlay = false
         activeDeck.pause()
         updateNowPlaying()
@@ -723,9 +728,9 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
     /// Goes by intent, not just `isPlaying`: while a track is buffering the
     /// player isn't "playing" yet, and a press should still pause it.
-    func togglePlayPause() { (intendsToPlay || isPlaying) ? pause() : play() }
+    public func togglePlayPause() { (intendsToPlay || isPlaying) ? pause() : play() }
 
-    func skipNext() {
+    public func skipNext() {
         guard !playQueue.isEmpty else { return }
         // Mid-crossfade, act on what the screen shows. Before the midpoint
         // that's still the outgoing track, so "next" is the one fading in:
@@ -749,7 +754,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         }
     }
 
-    func skipPrevious() {
+    public func skipPrevious() {
         guard !playQueue.isEmpty else { return }
         if transitionState == .crossfading { settleTransition() }
 
@@ -762,7 +767,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         }
     }
 
-    func seek(to seconds: Double) {
+    public func seek(to seconds: Double) {
         guard transitionState != .crossfading else { return }
         // Before a restored track is ready, just change where it will start.
         if pendingSeek != nil {
@@ -781,26 +786,26 @@ class AudioPlayerService: NSObject, ObservableObject {
         scheduleQueueSave()
     }
 
-    func playFromQueue(index: Int) {
+    public func playFromQueue(index: Int) {
         guard playQueue.jump(to: index) else { return }
         consecutiveFailures = 0
         rebuildPlayerItems()
     }
 
-    func addToQueue(_ song: Song) {
+    public func addToQueue(_ song: Song) {
         addToQueue([song])
     }
 
-    func addToQueue(_ songs: [Song]) {
+    public func addToQueue(_ songs: [Song]) {
         playQueue.append(songs)
         revalidatePrewarm()
     }
 
-    func addToQueueNext(_ song: Song) {
+    public func addToQueueNext(_ song: Song) {
         addToQueueNext([song])
     }
 
-    func addToQueueNext(_ songs: [Song]) {
+    public func addToQueueNext(_ songs: [Song]) {
         // Mid-crossfade (before the midpoint) the incoming track is already
         // committed as "next", so the new song goes after it. If that incoming
         // track is a Repeat All wrap to the start, finish the fade first so
@@ -814,7 +819,7 @@ class AudioPlayerService: NSObject, ObservableObject {
         revalidatePrewarm()
     }
 
-    func removeFromQueue(at offsets: IndexSet) {
+    public func removeFromQueue(at offsets: IndexSet) {
         if transitionState == .crossfading { settleTransition() }
         switch playQueue.remove(at: offsets) {
         case .emptied:
@@ -827,21 +832,21 @@ class AudioPlayerService: NSObject, ObservableObject {
         }
     }
 
-    func moveQueueItem(from source: IndexSet, to destination: Int) {
+    public func moveQueueItem(from source: IndexSet, to destination: Int) {
         if transitionState == .crossfading { settleTransition() }
         playQueue.move(fromOffsets: source, toOffset: destination)
         revalidatePrewarm()
     }
 
     // MARK: - Shuffle
-    func toggleShuffle() {
+    public func toggleShuffle() {
         if transitionState == .crossfading { settleTransition() }
         playQueue.toggleShuffle()
         revalidatePrewarm()
     }
 
     // MARK: - Repeat
-    func cycleRepeat() {
+    public func cycleRepeat() {
         playQueue.cycleRepeat()
         // Repeat One never transitions to another track; otherwise the mode
         // can change what comes after the last track.
@@ -851,23 +856,23 @@ class AudioPlayerService: NSObject, ObservableObject {
     // MARK: - Saving and restoring the queue
     /// While set, queue changes aren't saved (restoring, or emptying the
     /// queue during a server switch).
-    private var suppressQueueSaves = false
-    private var queueSaveTask: Task<Void, Never>?
-    private var lastPositionSave: CFTimeInterval = 0
+    @ObservationIgnored private var suppressQueueSaves = false
+    @ObservationIgnored private var queueSaveTask: Task<Void, Never>?
+    @ObservationIgnored private var lastPositionSave: CFTimeInterval = 0
     private static let positionSaveInterval: CFTimeInterval = 60
     /// Where a restored queue left off: used the first time that slot is played.
-    private var pendingStart: (entryID: UUID, position: Double)?
+    @ObservationIgnored private var pendingStart: (entryID: UUID, position: Double)?
     /// A seek to apply once the given item is ready, before it starts playing.
-    private var pendingSeek: (item: ObjectIdentifier, position: Double)?
+    @ObservationIgnored private var pendingSeek: (item: ObjectIdentifier, position: Double)?
 
     /// Seconds into the current song, from the deck when a track is loaded.
-    var currentPosition: Double {
+    public var currentPosition: Double {
         let deckTime = activeDeck.currentItem != nil ? activeDeck.currentTime().seconds : .nan
         return deckTime.isFinite && pendingSeek == nil ? deckTime : currentTime
     }
 
     /// Saves after a short pause, so a burst of edits makes one save.
-    func scheduleQueueSave(after delay: Duration = .seconds(3)) {
+    public func scheduleQueueSave(after delay: Duration = .seconds(3)) {
         guard !suppressQueueSaves, let srv = server else { return }
         queueSaveTask?.cancel()
         queueSaveTask = Task { [weak self] in
@@ -878,7 +883,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     }
 
     /// Saves straight away — e.g. when the app goes to the background.
-    func saveQueueNow() {
+    public func saveQueueNow() {
         guard let srv = server else { return }
         queueSaveTask?.cancel()
         saveQueue(to: srv)
@@ -906,7 +911,7 @@ class AudioPlayerService: NSObject, ObservableObject {
 
     /// Restores the active server's saved queue, if the user wants that and
     /// hasn't started something else meanwhile.
-    func restoreSavedQueue() async {
+    public func restoreSavedQueue() async {
         guard let srv = server, playQueue.isEmpty else { return }
         let behaviour = PlaybackPreferences.launchBehaviour
         guard behaviour != .startFresh else { return }
@@ -928,7 +933,7 @@ class AudioPlayerService: NSObject, ObservableObject {
 
     /// Loads a saved queue without starting a stream; the first play picks
     /// up at the saved position (see `rebuildPlayerItems`).
-    func restore(_ snapshot: QueueSnapshot, startPlaying: Bool) {
+    public func restore(_ snapshot: QueueSnapshot, startPlaying: Bool) {
         suppressQueueSaves = true
         playQueue = snapshot.queue
         suppressQueueSaves = false
@@ -964,12 +969,12 @@ class AudioPlayerService: NSObject, ObservableObject {
 
     // MARK: - Autoplay
     /// Songs played this session, so autoplay doesn't bring them back.
-    private var playedSongIDs: Set<String> = []
-    private var autoplayTask: Task<Void, Never>?
+    @ObservationIgnored private var playedSongIDs: Set<String> = []
+    @ObservationIgnored private var autoplayTask: Task<Void, Never>?
     /// The slot autoplay last fetched for, so each ending fetches once.
-    private var autoplayFetchedFor: UUID?
+    @ObservationIgnored private var autoplayFetchedFor: UUID?
     /// The last song ended (or was skipped) before the batch arrived.
-    private var waitingForAutoplay = false
+    @ObservationIgnored private var waitingForAutoplay = false
     /// How long before the end of the last song the next batch is fetched.
     private static let autoplayLeadTime: Double = 30
 
@@ -1024,7 +1029,7 @@ class AudioPlayerService: NSObject, ObservableObject {
 
     // MARK: - Scrobbling
     /// Tracks the current play towards the "played" threshold.
-    private var scrobbleTracker: ScrobbleTracker?
+    @ObservationIgnored private var scrobbleTracker: ScrobbleTracker?
 
     /// A new play of the current slot started: tell the server it's playing
     /// now, and start counting listening time.
@@ -1143,13 +1148,13 @@ class AudioPlayerService: NSObject, ObservableObject {
     // MARK: - Now Playing Info
     /// Artwork for the system's Now Playing display, keyed by cover-art id so
     /// it's loaded once per album rather than once per update.
-    private var nowPlayingArtwork: (coverArt: String, artwork: MPMediaItemArtwork)?
-    private var artworkLoadingID: String?
-    private var artworkTask: Task<Void, Never>?
+    @ObservationIgnored private var nowPlayingArtwork: (coverArt: String, artwork: MPMediaItemArtwork)?
+    @ObservationIgnored private var artworkLoadingID: String?
+    @ObservationIgnored private var artworkTask: Task<Void, Never>?
     /// Same size Now Playing's own cover uses, so both share one cached image.
     private static let nowPlayingArtworkSize = 600
 
-    func updateNowPlaying() {
+    public func updateNowPlaying() {
         guard let song = currentSong else {
             artworkTask?.cancel()
             artworkLoadingID = nil
@@ -1206,7 +1211,7 @@ class AudioPlayerService: NSObject, ObservableObject {
     /// Built outside the main actor on purpose: the system calls the request
     /// handler on its own queue, and a handler inheriting main-actor isolation
     /// would trap there.
-    nonisolated static func makeArtwork(_ image: UIImage) -> MPMediaItemArtwork {
+    public nonisolated static func makeArtwork(_ image: UIImage) -> MPMediaItemArtwork {
         MPMediaItemArtwork(boundsSize: image.size) { _ in image }
     }
 }

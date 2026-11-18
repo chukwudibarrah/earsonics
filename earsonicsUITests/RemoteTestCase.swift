@@ -1,9 +1,9 @@
 import XCTest
 
 /// Shared setup and Siri Remote helpers for the UI tests. Tests run against
-/// the public Navidrome demo (https://demo.navidrome.org, demo/demo) through
-/// the debug-only launch hook in `ServerStore`, so the simulator's saved
-/// servers are never touched.
+/// the test server (`TestServer`: your own, or the public Navidrome demo)
+/// through the debug-only launch hook in `ServerStore`, so the simulator's
+/// saved servers are never touched.
 @MainActor
 class RemoteTestCase: XCTestCase {
 
@@ -12,12 +12,16 @@ class RemoteTestCase: XCTestCase {
     let tabOrder = ["Search", "Home", "Artists", "Tracks", "Playlists", "Favourites", "Settings"]
 
     static let demoEnvironment = [
-        "EARSONICS_UITEST_SERVER_URL": "https://demo.navidrome.org",
-        "EARSONICS_UITEST_USERNAME": "demo",
-        "EARSONICS_UITEST_PASSWORD": "demo",
+        "EARSONICS_UITEST_SERVER_URL": TestServer.details.url,
+        "EARSONICS_UITEST_USERNAME": TestServer.details.username,
+        "EARSONICS_UITEST_PASSWORD": TestServer.details.password,
     ]
 
     override func setUpWithError() throws {
+        // Stop a test at its first failure. Not in `async` tests: there a
+        // failure can't stop the test and it hangs until the time limit (seen
+        // on 2026-11-18), so those set this back to true and use `try
+        // XCTUnwrap` wherever later steps depend on an earlier check.
         continueAfterFailure = false
         app = XCUIApplication()
     }
@@ -132,12 +136,20 @@ class RemoteTestCase: XCTestCase {
         app.descendants(matching: .any).element(matching: NSPredicate(format: "hasFocus == true"))
     }
 
-    /// The tab name if a sidebar item has focus. The focused item is a cell
-    /// whose button carries the tab's label.
+    /// The tab name if a sidebar item has focus. Depending on the tvOS
+    /// version the focused item is a cell whose button carries the tab's
+    /// label (seen before 1.10) or that button itself (tvOS 26.5 simulator);
+    /// either way it sits in the sidebar at the left edge, which keeps
+    /// content buttons such as "Open Settings" from counting.
     var focusedSidebarTab: String? {
         let element = focused
-        guard element.exists, element.elementType == .cell else { return nil }
-        let label = element.buttons.firstMatch.label
+        guard element.exists else { return nil }
+        let label: String
+        switch element.elementType {
+        case .cell: label = element.buttons.firstMatch.label
+        case .button where element.frame.minX < 200: label = element.label
+        default: return nil
+        }
         return tabOrder.contains(label) ? label : nil
     }
 

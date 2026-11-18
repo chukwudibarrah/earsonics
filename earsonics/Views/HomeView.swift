@@ -1,13 +1,14 @@
 // Views/HomeView.swift
 import SwiftUI
+import EarsonicsCore
 
 // CardlessButtonStyle is defined in Views/Shared/FocusStyle.swift
 
 struct HomeView: View {
-    @EnvironmentObject var appState: AppState
-    @StateObject private var vm = LibraryViewModel()
+    @Environment(AppState.self) var appState
+    @State private var vm = LibraryViewModel()
     @State private var navPath = NavigationPath()
-    @ObservedObject private var player = AudioPlayerService.shared
+    private let player = AudioPlayerService.shared
 
     /// Whether Home is the selected tab (set by ContentView).
     var isSelectedTab = true
@@ -173,9 +174,13 @@ struct AlbumShelf: View {
                                 // Album-list results don't include tracks, so
                                 // fetch the album before playing it.
                                 Task {
-                                    guard let detailed = try? await SubsonicClient.shared.getAlbum(id: album.id),
-                                          let songs = detailed.songs, !songs.isEmpty else { return }
-                                    AudioPlayerService.shared.load(songs: songs, startIndex: 0, context: .album(id: album.id))
+                                    do {
+                                        let songs = try await SubsonicClient.shared.getAlbum(id: album.id).songs ?? []
+                                        guard !songs.isEmpty else { return }
+                                        AudioPlayerService.shared.load(songs: songs, startIndex: 0, context: .album(id: album.id))
+                                    } catch {
+                                        Messages.shared.showFailure("play “\(album.name)”", error)
+                                    }
                                 }
                             } label: {
                                 Label("Play", systemImage: "play.fill")
@@ -280,7 +285,7 @@ struct TrackCard: View {
     let song: Song
     let contextSongs: [Song]
     let index: Int
-    @ObservedObject private var player = AudioPlayerService.shared
+    private let player = AudioPlayerService.shared
     @Environment(\.appAccent) private var appAccent
     @Environment(\.isFocused) private var isFocused
 

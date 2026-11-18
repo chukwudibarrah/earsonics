@@ -1,9 +1,10 @@
 // Views/ArtistsView.swift
 import SwiftUI
+import EarsonicsCore
 
 struct ArtistsView: View {
-    @EnvironmentObject var appState: AppState
-    @StateObject private var vm = LibraryViewModel()
+    @Environment(AppState.self) var appState
+    @State private var vm = LibraryViewModel()
     @State private var searchText: String = ""
     @State private var navPath = NavigationPath()
 
@@ -98,18 +99,16 @@ struct ArtistRow: View {
 // MARK: - Artist Detail
 struct ArtistDetailView: View {
     let artist: Artist
-    @EnvironmentObject var appState: AppState
-    @ObservedObject private var player = AudioPlayerService.shared
+    @Environment(AppState.self) var appState
+    private let player = AudioPlayerService.shared
     @Environment(\.appAccent) private var appAccent
     @State private var albums: [Album] = []
     @State private var isLoading = true
-    @State private var isStarred: Bool
     @State private var isFetchingTracks = false
     @State private var fetchErrorOccurred = false
     
     init(artist: Artist) {
         self.artist = artist
-        _isStarred = State(initialValue: artist.starred != nil)
     }
     
     var isThisArtistPlaying: Bool {
@@ -162,9 +161,7 @@ struct ArtistDetailView: View {
                                 }
                                 .disabled(isFetchingTracks)
                                 
-                                StarButton(isStarred: isStarred, artistId: artist.id) { newVal in
-                                    isStarred = newVal
-                                }
+                                StarButton(kind: .artist, id: artist.id, fetched: artist.starred)
                             }
                             .buttonStyle(AccentPillButtonStyle())
                         }
@@ -194,7 +191,12 @@ struct ArtistDetailView: View {
             }
             .task {
                 isLoading = true
-                albums = (try? await SubsonicClient.shared.getArtistAlbums(artistId: artist.id)) ?? []
+                do {
+                    albums = try await SubsonicClient.shared.getArtistAlbums(artistId: artist.id)
+                } catch {
+                    albums = []
+                    Messages.shared.showFailure("load \(artist.name)’s albums", error)
+                }
                 isLoading = false
             }
         }

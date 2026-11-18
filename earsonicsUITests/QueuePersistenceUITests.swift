@@ -13,6 +13,8 @@ final class QueuePersistenceUITests: RemoteTestCase {
     }
 
     override func tearDown() async throws {
+        // Close the app first, so it can't save over the restored queue.
+        app?.terminate()
         if let savedDemoQueue { try await DemoServerAPI.restoreQueue(savedDemoQueue) }
         try await super.tearDown()
     }
@@ -51,21 +53,24 @@ final class QueuePersistenceUITests: RemoteTestCase {
     /// Sync on: what's playing here is saved on the server, as earsonics, at
     /// the right song and position — what another app would pick up.
     func testQueueIsSavedToTheServer() async throws {
+        continueAfterFailure = true   // see RemoteTestCase.continueAfterFailure
         app.launchArguments = ["-syncQueueWithServer", "YES"]
         launchToHome(extraEnvironment: ["EARSONICS_UITEST_CLEAR_LOCAL_QUEUE": "1"])
         startPlayingFirstHomeAlbum()
-        Thread.sleep(forTimeInterval: 8)
+        try await Task.sleep(for: .seconds(8))
         pressPlayPause(expecting: "paused")
         let title = currentTitle
         try await Task.sleep(for: .seconds(4))
 
         let serverQueue = try await DemoServerAPI.playQueue()
         let queue = try XCTUnwrap(serverQueue, "no queue on the server")
+        try skipIfAnotherUserChanged(queue)
         XCTAssertEqual(queue["changedBy"] as? String, "earsonics")
         let entries = queue["entry"] as? [[String: Any]] ?? []
         let index = try XCTUnwrap(queue["currentIndex"] as? Int)
-        XCTAssertTrue(entries.indices.contains(index))
-        XCTAssertEqual(entries[index]["title"] as? String, title)
+        let entry = try XCTUnwrap(entries.indices.contains(index) ? entries[index] : nil,
+                                  "current index \(index) is outside the saved queue")
+        XCTAssertEqual(entry["title"] as? String, title)
         XCTAssertGreaterThan(entries.count, 1, "only the current song was saved, not the whole album")
         let position = queue["position"] as? Int ?? 0
         XCTAssertGreaterThanOrEqual(position, 6_000, "saved position \(position) ms is behind where playback paused")
@@ -73,6 +78,7 @@ final class QueuePersistenceUITests: RemoteTestCase {
 
     /// A queue another app saved more recently is picked up on launch.
     func testQueueFromAnotherAppIsPickedUp() async throws {
+        continueAfterFailure = true   // see RemoteTestCase.continueAfterFailure
         let songs = try await DemoServerAPI.randomSongs(3)
         XCTAssertEqual(songs.count, 3)
         let ids = songs.compactMap { $0["id"] as? String }
@@ -83,6 +89,7 @@ final class QueuePersistenceUITests: RemoteTestCase {
         launchToHome(extraEnvironment: ["EARSONICS_UITEST_CLEAR_LOCAL_QUEUE": "1"])
         XCTAssertTrue(waitForMiniPlayer(containing: "paused", timeout: 15),
                       "the other app's queue wasn't restored; mini player: \(miniPlayerValue)")
+        if currentTitle != expectedTitle { try await skipIfAnotherUserChangedTheQueue() }
         XCTAssertEqual(currentTitle, expectedTitle)
     }
 
@@ -90,6 +97,7 @@ final class QueuePersistenceUITests: RemoteTestCase {
     /// Play pressed on that same album's page (which resumes the restored
     /// queue rather than reloading the album).
     func testPlayOnTheRestoredAlbumResumesIt() async throws {
+        continueAfterFailure = true   // see RemoteTestCase.continueAfterFailure
         // Find the first "Just arrived" album and save its tracks as "another
         // app", currently on track 3, 30 s in.
         let newest = try await DemoServerAPI.call("getAlbumList2.view", [("type", "newest"), ("size", "1")])
@@ -104,12 +112,27 @@ final class QueuePersistenceUITests: RemoteTestCase {
         launchToHome(extraEnvironment: ["EARSONICS_UITEST_CLEAR_LOCAL_QUEUE": "1"])
         XCTAssertTrue(waitForMiniPlayer(containing: "paused", timeout: 15),
                       "the queue wasn't restored; mini player: \(miniPlayerValue)")
+        if currentTitle != expectedTitle { try await skipIfAnotherUserChangedTheQueue() }
         XCTAssertEqual(currentTitle, expectedTitle)
         startPlayingFirstHomeAlbum()
         XCTAssertEqual(currentTitle, expectedTitle, "Play reloaded the album instead of resuming the restored queue")
     }
 
     // MARK: - Helpers
+
+    /// The demo account is public, and other people's apps save their queues
+    /// to it too. If one did so mid-test, the result says nothing about
+    /// earsonics: skip, naming the client, rather than fail.
+    private func skipIfAnotherUserChangedTheQueue() async throws {
+        if let queue = try await DemoServerAPI.playQueue() { try skipIfAnotherUserChanged(queue) }
+    }
+
+    private func skipIfAnotherUserChanged(_ queue: [String: Any]) throws {
+        let client = queue["changedBy"] as? String ?? "?"
+        if !["earsonics", "earsonicsUITests"].contains(client) {
+            throw XCTSkip("another user of the public demo (client “\(client)”) replaced its queue mid-test")
+        }
+    }
 
     private var currentTitle: String {
         miniPlayerValue.components(separatedBy: ", ").first ?? ""

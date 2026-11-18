@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import earsonics
+@testable import EarsonicsCore
 
 @MainActor
 @Suite("PlayQueue")

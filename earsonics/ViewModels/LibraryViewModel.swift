@@ -1,17 +1,20 @@
 // ViewModels/LibraryViewModel.swift
 import SwiftUI
-import Combine
+import Observation
+import EarsonicsCore
 
 @MainActor
-class LibraryViewModel: ObservableObject {
-    @Published var recentAlbums: [Album] = []
-    @Published var newestAlbums: [Album] = []
-    @Published var randomAlbums: [Album] = []
-    @Published var keepSpinningSongs: [Song] = []
-    @Published var artists: [Artist] = []
-    @Published var playlists: [Playlist] = []
-    @Published var isLoading: Bool = false
-    @Published var error: String? = nil
+@Observable
+final class LibraryViewModel {
+    var recentAlbums: [Album] = []
+    var newestAlbums: [Album] = []
+    var randomAlbums: [Album] = []
+    var keepSpinningSongs: [Song] = []
+    var artists: [Artist] = []
+    /// Shared with every other screen (see `LibraryStore`).
+    var playlists: [Playlist] { LibraryStore.shared.playlists }
+    var isLoading: Bool = false
+    var error: String? = nil
 
     /// Loads the Home screen: the album shelves, plus (in the background) the
     /// playlists used by card context menus and the "Keep spinning" shelf.
@@ -26,7 +29,7 @@ class LibraryViewModel: ObservableObject {
         async let newest = SubsonicClient.shared.getAlbumList(type: "newest", size: 20)
         async let recent = SubsonicClient.shared.getAlbumList(type: "recent", size: 20)
         async let random = SubsonicClient.shared.getAlbumList(type: "random", size: 20)
-        async let pls    = SubsonicClient.shared.getPlaylists()
+        async let playlistsLoaded: Void = LibraryStore.shared.loadPlaylists()
 
         // Show the screen as soon as the first two shelves are ready.
         //
@@ -59,13 +62,7 @@ class LibraryViewModel: ObservableObject {
             randomAlbums = []
             failures.append(error)
         }
-        do {
-            playlists = try await pls
-        } catch {
-            if Task.isCancelled { return }
-            playlists = []
-            failures.append(error)
-        }
+        await playlistsLoaded
 
         if newestAlbums.isEmpty && recentAlbums.isEmpty && randomAlbums.isEmpty,
            let failure = failures.first {
@@ -97,10 +94,11 @@ class LibraryViewModel: ObservableObject {
             return
         }
         var songsByAlbum: [String: [Song]] = [:]
+        let client = SubsonicClient.shared
         await withTaskGroup(of: (String, [Song]).self) { group in
             for album in sourceAlbums {
                 group.addTask {
-                    let detailed = try? await SubsonicClient.shared.getAlbum(id: album.id)
+                    let detailed = try? await client.getAlbum(id: album.id)
                     return (album.id, Array((detailed?.songs ?? []).prefix(2)))
                 }
             }

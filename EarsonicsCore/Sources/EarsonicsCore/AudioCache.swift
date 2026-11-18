@@ -1,4 +1,4 @@
-// Services/AudioCache.swift
+// EarsonicsCore/AudioCache.swift
 import Foundation
 import CryptoKit
 import UniformTypeIdentifiers
@@ -10,23 +10,23 @@ import UniformTypeIdentifiers
 /// modification dates — no separate index needed).
 ///
 /// An `actor` so disk I/O and eviction happen off the main thread.
-actor AudioCache {
-    static let shared = AudioCache()
+public actor AudioCache {
+    public static let shared = AudioCache()
 
     /// UserDefaults key for the cap, in gigabytes (default 2 GB).
-    static let limitKey = "audioCacheLimitGB"
+    public static let limitKey = "audioCacheLimitGB"
     private static let defaultLimitGB = 2
 
     private let directory: URL
 
-    init() {
+    public init() {
         directory = Self.directoryURL()
     }
 
     /// The cache directory, creating it if needed. `nonisolated` so the resource
     /// loader can place its temp file on the same volume synchronously (keeping
     /// the final move atomic) without hopping onto the actor.
-    nonisolated static func directoryURL() -> URL {
+    public nonisolated static func directoryURL() -> URL {
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         let dir = caches.appendingPathComponent("AudioCache", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -38,7 +38,7 @@ actor AudioCache {
     /// played tracks survive eviction (LRU). `nonisolated` so the player can
     /// check for a cache hit synchronously when building a player item — it only
     /// touches the (thread-safe) file system, no actor state.
-    nonisolated static func cachedFileURL(for songId: String, serverID: UUID, quality: StreamQuality,
+    public nonisolated static func cachedFileURL(for songId: String, serverID: UUID, quality: StreamQuality,
                                           fileExtension ext: String?) -> URL? {
         guard let ext, let url = fileURL(songId: songId, serverID: serverID, quality: quality, fileExtension: ext),
               FileManager.default.fileExists(atPath: url.path) else { return nil }
@@ -47,7 +47,7 @@ actor AudioCache {
     }
 
     /// Moves a completed download into the cache, then enforces the size cap.
-    func store(tempFile: URL, songId: String, serverID: UUID, quality: StreamQuality, fileExtension ext: String?) {
+    public func store(tempFile: URL, songId: String, serverID: UUID, quality: StreamQuality, fileExtension ext: String?) {
         // Without an extension the file couldn't be played back (see
         // `fileExtension`), so don't keep it.
         guard let ext, let destination = Self.fileURL(songId: songId, serverID: serverID, quality: quality,
@@ -66,12 +66,12 @@ actor AudioCache {
     }
 
     /// Total size of the cache, in bytes.
-    func diskUsage() -> Int64 {
+    public func diskUsage() -> Int64 {
         contents().reduce(0) { $0 + $1.size }
     }
 
     /// Empties the cache.
-    func clear() {
+    public func clear() {
         for file in contents() {
             try? FileManager.default.removeItem(at: file.url)
         }
@@ -125,7 +125,7 @@ actor AudioCache {
     /// replay from 1.06 to 1.08. Transcodes are MP3; originals keep the song's
     /// own format, from its suffix or else its MIME type. Nil (unknown format)
     /// means "don't cache".
-    nonisolated static func fileExtension(quality: StreamQuality, songSuffix: String?, contentType: String?) -> String? {
+    public nonisolated static func fileExtension(quality: StreamQuality, songSuffix: String?, contentType: String?) -> String? {
         if let transcoded = quality.fileSuffix { return transcoded }
         let fromSuffix = songSuffix.map { $0.lowercased().filter { $0.isLetter || $0.isNumber } }
         if let fromSuffix, !fromSuffix.isEmpty, fromSuffix.count <= 5 { return fromSuffix }
@@ -136,7 +136,7 @@ actor AudioCache {
     /// Deletes files cached before 1.09 without an extension: they can't be
     /// played (see `fileExtension`) and would only take up space until
     /// evicted. Leaves in-progress downloads (`.tmp`) alone.
-    func removeUnplayableFiles() {
+    public func removeUnplayableFiles() {
         for file in contents() where file.url.pathExtension.isEmpty {
             try? FileManager.default.removeItem(at: file.url)
         }

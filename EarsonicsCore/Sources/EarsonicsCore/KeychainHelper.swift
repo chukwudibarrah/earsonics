@@ -1,4 +1,4 @@
-// Shared/KeychainHelper.swift
+// EarsonicsCore/KeychainHelper.swift
 import Foundation
 import Security
 
@@ -9,7 +9,10 @@ import Security
 /// Stored with `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`: available
 /// after the first unlock following a reboot, and never included in encrypted
 /// backups or synced to other devices.
-enum KeychainHelper {
+///
+/// `nonisolated`: Keychain calls are thread-safe and can block, so they
+/// shouldn't be tied to the main actor.
+public nonisolated enum KeychainHelper: Sendable {
     private static let service = "com.wonderworks.earsonics.servers"
 
     /// Stores `value` for `account`, replacing any existing entry.
@@ -17,7 +20,7 @@ enum KeychainHelper {
     /// Updates in place, and only adds when there's nothing to update — never
     /// delete-then-add, which would lose the password if the add failed.
     @discardableResult
-    static func save(_ value: String, account: String) -> Bool {
+    public static func save(_ value: String, account: String) -> Bool {
         guard let data = value.data(using: .utf8) else { return false }
 
         let match: [String: Any] = [
@@ -37,7 +40,7 @@ enum KeychainHelper {
     }
 
     /// Reads the stored value for `account`, or `nil` if none exists.
-    static func read(account: String) -> String? {
+    public static func read(account: String) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
@@ -53,7 +56,7 @@ enum KeychainHelper {
     }
 
     /// Removes the stored value for `account` (no-op if absent).
-    static func delete(account: String) {
+    public static func delete(account: String) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

@@ -1,4 +1,4 @@
-// Services/ImageCache.swift
+// EarsonicsCore/ImageCache.swift
 import UIKit
 import CryptoKit
 
@@ -11,8 +11,8 @@ import CryptoKit
 ///
 /// An `actor` so decoding and disk I/O happen off the main thread, and so
 /// concurrent requests for the same image are coalesced into one download.
-actor ImageCache {
-    static let shared = ImageCache()
+public actor ImageCache {
+    public static let shared = ImageCache()
 
     private let memory = NSCache<NSString, UIImage>()
     private let directory: URL
@@ -51,7 +51,7 @@ actor ImageCache {
     private static let diskLimitBytes: Int64 = 500 * 1_048_576
     private var didTrimDisk = false
 
-    init() {
+    public init() {
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         directory = caches.appendingPathComponent("CoverArt", isDirectory: true)
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -62,7 +62,7 @@ actor ImageCache {
     /// server, so the cache is scoped by `serverID`. The caller builds `url`
     /// (on the main actor, where the API client lives); it's only used on a
     /// cache miss. Returns `nil` if the download fails.
-    func image(for id: String, size: Int, serverID: UUID, url: URL) async -> UIImage? {
+    public func image(for id: String, size: Int, serverID: UUID, url: URL) async -> UIImage? {
         let key = "\(serverID.uuidString)-\(id)-\(size)"
 
         if !didTrimDisk {
@@ -140,7 +140,7 @@ actor ImageCache {
     }
 
     /// Total size of the on-disk artwork cache, in bytes.
-    func diskUsage() -> Int64 {
+    public func diskUsage() -> Int64 {
         guard let files = try? FileManager.default.contentsOfDirectory(
             at: directory, includingPropertiesForKeys: [.fileSizeKey]) else { return 0 }
         return files.reduce(0) { total, url in
@@ -150,7 +150,7 @@ actor ImageCache {
     }
 
     /// Empties both the in-memory and on-disk artwork caches.
-    func clear() {
+    public func clear() {
         memory.removeAllObjects()
         if let files = try? FileManager.default.contentsOfDirectory(
             at: directory, includingPropertiesForKeys: nil) {

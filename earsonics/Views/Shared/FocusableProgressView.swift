@@ -1,5 +1,6 @@
 // Views/Shared/FocusableProgressView.swift
 import SwiftUI
+import EarsonicsCore
 
 /// A full-screen loading indicator that can hold focus.
 ///

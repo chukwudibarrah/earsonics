@@ -1,31 +1,48 @@
 // ViewModels/AppState.swift
 import SwiftUI
-import Combine
 import AVFoundation
+import Observation
+import EarsonicsCore
 
 @MainActor
-class AppState: ObservableObject {
+@Observable
+final class AppState {
     static let shared = AppState()
 
-    @Published var serverStore = ServerStore.shared
-    @Published var player = AudioPlayerService.shared
-    @Published var api = SubsonicClient.shared
+    let serverStore = ServerStore.shared
+    let player = AudioPlayerService.shared
+    let api = SubsonicClient.shared
 
-    @Published var showNowPlaying: Bool = false
-    @Published var isConnected: Bool = false
-    @Published var connectionError: String? = nil
+    var showNowPlaying: Bool = false
+    var isConnected: Bool = false
+    var connectionError: String? = nil
 
-    /// Id of the server the API client is currently pointed at. Published here
-    /// (`serverStore` is a nested object whose changes don't propagate through
-    /// AppState) so views can reset their library data when it changes.
-    @Published private(set) var activeServerID: UUID? = nil
+    /// Id of the server the API client is currently pointed at, so views can
+    /// reset their library data when it changes.
+    private(set) var activeServerID: UUID? = nil
 
-    @AppStorage("crossfadeDuration") var crossfadeDuration: Double = 0.0
-    @AppStorage("preventScreenSaver") var preventScreenSaver: Bool = false {
-        // Apply straight away, not only at the next play/pause.
-        didSet { updateIdleTimer(isPlaying: player.isPlaying) }
+    // Settings. Stored properties (not `@AppStorage`, which only works in
+    // views) saved under the same keys as before, so existing choices carry
+    // over; the player reads `crossfadeDuration` from the same key.
+    var crossfadeDuration: Double = UserDefaults.standard.double(forKey: Keys.crossfade) {
+        didSet { UserDefaults.standard.set(crossfadeDuration, forKey: Keys.crossfade) }
     }
-    @AppStorage("accentColourChoice") var accentColourRaw: String = AccentColorChoice.orange.rawValue
+    var preventScreenSaver: Bool = UserDefaults.standard.bool(forKey: Keys.preventScreenSaver) {
+        didSet {
+            UserDefaults.standard.set(preventScreenSaver, forKey: Keys.preventScreenSaver)
+            // Apply straight away, not only at the next play/pause.
+            updateIdleTimer(isPlaying: player.isPlaying)
+        }
+    }
+    var accentColourRaw: String = UserDefaults.standard.string(forKey: Keys.accent) ?? AccentColorChoice.orange.rawValue {
+        didSet { UserDefaults.standard.set(accentColourRaw, forKey: Keys.accent) }
+    }
+
+    enum Keys {
+        static let crossfade = PlaybackPreferences.crossfadeKey
+        static let preventScreenSaver = "preventScreenSaver"
+        static let accent = "accentColourChoice"
+    }
 
     /// The user-selected highlight colour (see `AccentColorChoice`).
     var accentChoice: AccentColorChoice {
@@ -35,54 +52,62 @@ class AppState: ObservableObject {
 
     var accentColor: Color { accentChoice.color }
 
-    init() {
-        // Wire up active server to API and player
-        syncActiveServer()
-        serverStore.$activeServerID
-            .receive(on: RunLoop.main)
-            .sink { [weak self] _ in self?.syncActiveServer() }
-            .store(in: &cancellables)
+    @ObservationIgnored private var notificationTokens: [NSObjectProtocol] = []
 
-        setupObservers()
+    init() {
+        syncActiveServer()
+        observeActiveServer()
+        observePlayback()
+        observeAppLifecycle()
     }
 
-    private var cancellables = Set<AnyCancellable>()
+    /// Follows the active server when it changes outside the server editor
+    /// (which syncs itself after saving), e.g. when the active server is
+    /// deleted.
+    private func observeActiveServer() {
+        Task { [weak self] in
+            guard let store = self?.serverStore else { return }
+            for await id in Observations({ store.activeServer?.id }) {
+                guard let self else { return }
+                if id != self.activeServerID { self.syncActiveServer() }
+            }
+        }
+    }
 
-    private func setupObservers() {
-        // Observe playback state to manage idle timer
-        player.$isPlaying
-            .receive(on: RunLoop.main)
-            .sink { [weak self] isPlaying in
-                guard let self = self else { return }
+    /// Keeps the screen saver off while music plays, if the user asked for that.
+    private func observePlayback() {
+        Task { [weak self] in
+            guard let player = self?.player else { return }
+            for await isPlaying in Observations({ player.isPlaying }) {
+                guard let self else { return }
                 self.updateIdleTimer(isPlaying: isPlaying)
             }
-            .store(in: &cancellables)
-            
-        // Observe app state for safe idle timer resetting
-        NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)
-            .sink { [weak self] _ in
-                // Always allow screen saver when app is in background
+        }
+    }
+
+    private func observeAppLifecycle() {
+        let center = NotificationCenter.default
+        notificationTokens.append(center.addObserver(
+            forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                // Always allow the screen saver when the app is in the background.
                 UIApplication.shared.isIdleTimerDisabled = false
                 // The app may not come back (the system can end it while
                 // it's in the background), so save the queue and position now.
                 self?.player.saveQueueNow()
             }
-            .store(in: &cancellables)
-            
-        NotificationCenter.default.publisher(for: AVAudioSession.interruptionNotification)
-            .sink { _ in
-                // Allow screen saver if audio is interrupted
-                UIApplication.shared.isIdleTimerDisabled = false
-            }
-            .store(in: &cancellables)
+        })
+        notificationTokens.append(center.addObserver(
+            forName: AVAudioSession.interruptionNotification, object: nil, queue: .main
+        ) { _ in
+            // Allow the screen saver if audio is interrupted.
+            MainActor.assumeIsolated { UIApplication.shared.isIdleTimerDisabled = false }
+        })
     }
 
     private func updateIdleTimer(isPlaying: Bool) {
-        if preventScreenSaver && isPlaying {
-            UIApplication.shared.isIdleTimerDisabled = true
-        } else {
-            UIApplication.shared.isIdleTimerDisabled = false
-        }
+        UIApplication.shared.isIdleTimerDisabled = preventScreenSaver && isPlaying
     }
 
     func syncActiveServer() {
@@ -90,13 +115,20 @@ class AppState: ObservableObject {
             // Last server deleted: detach so nothing keeps talking to it.
             api.server = nil
             player.server = nil
-            if activeServerID != nil { activeServerID = nil }
+            if activeServerID != nil {
+                activeServerID = nil
+                LibraryStore.shared.reset()
+            }
             isConnected = false
             return
         }
         api.server = server
         player.server = server
-        if activeServerID != server.id { activeServerID = server.id }
+        if activeServerID != server.id {
+            activeServerID = server.id
+            // Another server's playlists and stars don't apply here.
+            LibraryStore.shared.reset()
+        }
         Task { await testConnection(server: server) }
         // At launch, and when switching to another server: bring back its
         // saved queue (as the user's "On launch" setting says).

@@ -1,14 +1,15 @@
 // Views/PlaylistsView.swift
 import SwiftUI
+import EarsonicsCore
 
 struct PlaylistsView: View {
-    @EnvironmentObject var appState: AppState
-    @State private var playlists: [Playlist] = []
+    @Environment(AppState.self) var appState
+    private var playlists: [Playlist] { LibraryStore.shared.playlists }
     @State private var isLoading = true
     @State private var showCreate = false
     @State private var newPlaylistName = ""
     @State private var navPath = NavigationPath()
-    @ObservedObject private var player = AudioPlayerService.shared
+    private let player = AudioPlayerService.shared
 
     // Same structure as HomeView: a path-based stack whose root is one stable
     // container, destinations registered with navigationDestination, and the
@@ -46,7 +47,12 @@ struct PlaylistsView: View {
                                 .contextMenu {
                                     Button(role: .destructive) {
                                         Task {
-                                            try? await SubsonicClient.shared.deletePlaylist(id: playlist.id)
+                                            do {
+                                                try await SubsonicClient.shared.deletePlaylist(id: playlist.id)
+                                                Messages.shared.show("Deleted “\(playlist.name)”")
+                                            } catch {
+                                                Messages.shared.showFailure("delete “\(playlist.name)”", error)
+                                            }
                                             await loadPlaylists()
                                         }
                                     } label: { Label("Delete Playlist", systemImage: "trash") }
@@ -91,9 +97,11 @@ struct PlaylistsView: View {
         .buttonStyle(AccentPillButtonStyle())
     }
 
+    /// Always fresh here: this screen shows names and track counts that
+    /// other screens may have changed.
     private func loadPlaylists() async {
         isLoading = true
-        playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []
+        await LibraryStore.shared.loadPlaylists(force: true)
         isLoading = false
     }
 }
@@ -134,14 +142,14 @@ struct PlaylistRow: View {
 // MARK: - Playlist Detail
 struct PlaylistDetailView: View {
     let playlist: Playlist
-    @EnvironmentObject var appState: AppState
-    @ObservedObject private var player = AudioPlayerService.shared
+    @Environment(AppState.self) var appState
+    private let player = AudioPlayerService.shared
     @Environment(\.appAccent) private var appAccent
     @State private var loadedPlaylist: Playlist? = nil
     @State private var isLoading = true
     @State private var isEditing = false
     @State private var editName = ""
-    @State private var playlists: [Playlist] = []
+    private var playlists: [Playlist] { LibraryStore.shared.playlists }
 
     var songs: [Song] { loadedPlaylist?.songs ?? [] }
 
@@ -237,8 +245,12 @@ struct PlaylistDetailView: View {
                                 showTrackNumber: false
                             ) {
                                 Task {
-                                    try? await SubsonicClient.shared.updatePlaylist(
-                                        id: playlist.id, indexesToRemove: [idx])
+                                    do {
+                                        try await SubsonicClient.shared.updatePlaylist(
+                                            id: playlist.id, indexesToRemove: [idx])
+                                    } catch {
+                                        Messages.shared.showFailure("remove “\(song.title)”", error)
+                                    }
                                     await reload()
                                 }
                             }
@@ -254,14 +266,20 @@ struct PlaylistDetailView: View {
         .padding(.top, AppLayout.detailTopPadding)
         .padding(.horizontal, AppLayout.horizontalPadding)
         .task {
+            async let playlistsLoaded: Void = LibraryStore.shared.loadPlaylists()
             await reload()
-            playlists = (try? await SubsonicClient.shared.getPlaylists()) ?? []
+            await playlistsLoaded
         }
         .alert("Rename Playlist", isPresented: $isEditing) {
             TextField("Name", text: $editName)
             Button("Save") {
                 Task {
-                    try? await SubsonicClient.shared.updatePlaylist(id: playlist.id, name: editName)
+                    do {
+                        try await SubsonicClient.shared.updatePlaylist(id: playlist.id, name: editName)
+                        await LibraryStore.shared.loadPlaylists(force: true)
+                    } catch {
+                        Messages.shared.showFailure("rename the playlist", error)
+                    }
                     await reload()
                 }
             }
@@ -271,7 +289,11 @@ struct PlaylistDetailView: View {
 
     private func reload() async {
         isLoading = true
-        loadedPlaylist = try? await SubsonicClient.shared.getPlaylist(id: playlist.id)
+        do {
+            loadedPlaylist = try await SubsonicClient.shared.getPlaylist(id: playlist.id)
+        } catch {
+            Messages.shared.showFailure("load “\(playlist.name)”", error)
+        }
         isLoading = false
     }
 }

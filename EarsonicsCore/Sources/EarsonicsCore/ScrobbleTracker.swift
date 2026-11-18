@@ -1,4 +1,4 @@
-// Services/ScrobbleTracker.swift
+// EarsonicsCore/ScrobbleTracker.swift
 import Foundation
 
 /// Decides when one play of a track counts as "played" on the server,
@@ -10,44 +10,44 @@ import Foundation
 /// Only continuous listening counts. Seeking ahead doesn't, so skipping to the
 /// end of a track isn't a play; seeking back and listening again does count
 /// towards the threshold, but a single play is only ever submitted once.
-struct ScrobbleTracker {
+public nonisolated struct ScrobbleTracker: Sendable {
     /// The queue slot being listened to (one tracker per play of a slot).
-    let entryID: UUID
-    let songID: String
+    public let entryID: UUID
+    public let songID: String
     /// When this play started; sent with the submission so the server
     /// records the play at the right time.
-    let startedAt: Date
-    private(set) var duration: Double
-    private(set) var listened: Double = 0
-    private(set) var submitted = false
+    public let startedAt: Date
+    public private(set) var duration: Double
+    public private(set) var listened: Double = 0
+    public private(set) var submitted = false
     private var lastPosition: Double?
 
-    static let minimumTrackLength: Double = 30
-    static let maximumThreshold: Double = 240
+    public static let minimumTrackLength: Double = 30
+    public static let maximumThreshold: Double = 240
     /// The player reports its position every half second; anything larger
     /// than this between two reports is a seek (or a stall), not listening.
-    static let maximumTickGap: Double = 2
+    public static let maximumTickGap: Double = 2
 
-    init(entryID: UUID, songID: String, duration: Double?, startedAt: Date = Date()) {
+    public init(entryID: UUID, songID: String, duration: Double?, startedAt: Date = Date()) {
         self.entryID = entryID
         self.songID = songID
         self.duration = duration ?? 0
         self.startedAt = startedAt
     }
 
-    var isEligible: Bool { duration > Self.minimumTrackLength }
-    var threshold: Double { min(duration / 2, Self.maximumThreshold) }
+    public var isEligible: Bool { duration > Self.minimumTrackLength }
+    public var threshold: Double { min(duration / 2, Self.maximumThreshold) }
 
     /// The server's metadata can lack a duration; the player learns the real
     /// one once the track loads.
-    mutating func updateDuration(_ seconds: Double) {
+    public mutating func updateDuration(_ seconds: Double) {
         guard seconds.isFinite, seconds > 0 else { return }
         duration = seconds
     }
 
     /// Records a playback position. Returns true exactly once per play: when
     /// listening first crosses the threshold.
-    mutating func record(position: Double) -> Bool {
+    public mutating func record(position: Double) -> Bool {
         guard position.isFinite else { return false }
         defer { lastPosition = position }
         guard let last = lastPosition else { return false }

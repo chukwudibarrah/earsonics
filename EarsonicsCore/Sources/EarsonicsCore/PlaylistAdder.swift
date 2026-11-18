@@ -1,32 +1,33 @@
-// Services/PlaylistAdder.swift
-import SwiftUI
-import Combine
+// EarsonicsCore/PlaylistAdder.swift
+import Foundation
+import Observation
 
 /// Adds songs to playlists from anywhere in the app. Before adding, it checks
 /// which songs the playlist already holds and asks for confirmation instead of
 /// silently creating duplicates; afterwards it reports the outcome in a brief
-/// banner. The confirmation alert and the banner are presented once, at the
+/// banner (`Messages`). The confirmation alert and the banner are presented once, at the
 /// app root (`ContentView`), so every "Add to playlist" entry point behaves
 /// the same way.
 @MainActor
-final class PlaylistAdder: ObservableObject {
-    static let shared = PlaylistAdder()
+@Observable
+public final class PlaylistAdder {
+    public static let shared = PlaylistAdder()
 
     /// An add waiting for confirmation because some (or all) of its songs are
     /// already in the playlist.
-    struct PendingAdd: Identifiable {
-        let id = UUID()
-        let playlist: Playlist
-        let songIDs: [String]
-        let newSongIDs: [String]
+    public struct PendingAdd: Identifiable, Sendable {
+        public let id = UUID()
+        public let playlist: Playlist
+        public let songIDs: [String]
+        public let newSongIDs: [String]
 
-        var duplicateCount: Int { songIDs.count - newSongIDs.count }
+        public var duplicateCount: Int { songIDs.count - newSongIDs.count }
 
-        var title: String {
+        public var title: String {
             newSongIDs.isEmpty ? "Already in Playlist" : "Some Songs Already Added"
         }
 
-        var message: String {
+        public var message: String {
             let name = "“\(playlist.name)”"
             if songIDs.count == 1 { return "This song is already in \(name)." }
             if newSongIDs.isEmpty { return "All \(songIDs.count) songs are already in \(name)." }
@@ -34,12 +35,10 @@ final class PlaylistAdder: ObservableObject {
         }
     }
 
-    @Published var pending: PendingAdd?
-    @Published private(set) var banner: String?
-    private var bannerTask: Task<Void, Never>?
+    public var pending: PendingAdd?
 
     /// Adds songs, asking first if any are already in the playlist.
-    func add(songIDs: [String], to playlist: Playlist) async {
+    public func add(songIDs: [String], to playlist: Playlist) async {
         guard !songIDs.isEmpty else { return }
         let existing: Set<String>
         do {
@@ -59,7 +58,7 @@ final class PlaylistAdder: ObservableObject {
 
     /// Adds a whole album. Album-list results don't include tracks, so the
     /// album is fetched first.
-    func addAlbum(id: String, to playlist: Playlist) async {
+    public func addAlbum(id: String, to playlist: Playlist) async {
         do {
             let songs = try await SubsonicClient.shared.getAlbum(id: id).songs ?? []
             await add(songIDs: songs.map(\.id), to: playlist)
@@ -69,16 +68,17 @@ final class PlaylistAdder: ObservableObject {
     }
 
     /// Resolves a pending confirmation.
-    func confirm(_ add: PendingAdd, includeDuplicates: Bool) {
+    public func confirm(_ add: PendingAdd, includeDuplicates: Bool) {
         pending = nil
         Task { await commit(includeDuplicates ? add.songIDs : add.newSongIDs, to: add.playlist) }
     }
 
     /// Creates a playlist containing `songIDs` and reports the outcome.
-    func create(name: String, songIDs: [String]) async -> Playlist? {
+    public func create(name: String, songIDs: [String]) async -> Playlist? {
         do {
             let playlist = try await SubsonicClient.shared.createPlaylist(name: name, songIds: songIDs)
             showBanner("Created “\(name)”")
+            await LibraryStore.shared.loadPlaylists(force: true)
             return playlist
         } catch {
             showBanner("Couldn’t create “\(name)”. \(error.localizedDescription)")
@@ -90,6 +90,7 @@ final class PlaylistAdder: ObservableObject {
         guard !songIDs.isEmpty else { return }
         do {
             try await SubsonicClient.shared.updatePlaylist(id: playlist.id, songIdsToAdd: songIDs)
+            Task { await LibraryStore.shared.loadPlaylists(force: true) }   // song counts changed
             showBanner(songIDs.count == 1
                        ? "Added to “\(playlist.name)”"
                        : "Added \(songIDs.count) songs to “\(playlist.name)”")
@@ -99,12 +100,6 @@ final class PlaylistAdder: ObservableObject {
     }
 
     private func showBanner(_ message: String) {
-        bannerTask?.cancel()
-        banner = message
-        bannerTask = Task {
-            try? await Task.sleep(for: .seconds(3))
-            guard !Task.isCancelled else { return }
-            banner = nil
-        }
+        Messages.shared.show(message)
     }
 }

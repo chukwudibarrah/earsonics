@@ -1,12 +1,14 @@
 import Foundation
 import Testing
 @testable import earsonics
+@testable import EarsonicsCore
 
-/// Requests against the public Navidrome demo (no playback). Needs network.
+/// Requests against the test server (`TestServer`; no playback). Needs network.
 @MainActor
 @Suite("Demo server integration")
 struct DemoServerIntegrationTests {
-    let demo = Server(name: "Demo", url: "https://demo.navidrome.org", username: "demo", password: "demo")
+    let demo = Server(name: "Test server", url: TestServer.details.url,
+                      username: TestServer.details.username, password: TestServer.details.password)
 
     @Test(arguments: [QueueContinuation.similarSongs, .sameArtist, .similarArtists, .sameGenre, .random])
     func everyAutoplayChoiceFindsSongs(_ choice: QueueContinuation) async throws {

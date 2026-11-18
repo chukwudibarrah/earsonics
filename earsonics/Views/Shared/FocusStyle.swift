@@ -1,5 +1,6 @@
 // Views/Shared/FocusStyle.swift
 import SwiftUI
+import EarsonicsCore
 
 extension Color {
     static let focusFill = Color(white: 0.14)

@@ -1,20 +1,19 @@
-// Services/SubsonicClient.swift
+// EarsonicsCore/SubsonicClient.swift
 import Foundation
 import CryptoKit
-import Combine
 
 // MARK: - Subsonic REST API Client
-class SubsonicClient: ObservableObject {
-    static let shared = SubsonicClient()
+public final class SubsonicClient {
+    public static let shared = SubsonicClient()
 
     private let apiVersion = "1.16.1"
     /// Sent as the `c` parameter; servers show it as the player name, and
     /// report it as `changedBy` on saved play queues.
-    static let clientName = "earsonics"
+    public nonisolated static let clientName = "earsonics"
     private let jsonFormat  = "json"
 
     // Current server (set by AppState)
-    var server: Server?
+    public var server: Server?
 
     /// Dedicated session for API calls. The timeout stays generous on purpose:
     /// a slow server (disk spinning up, remote link) can legitimately take a
@@ -33,27 +32,12 @@ class SubsonicClient: ObservableObject {
     private let decoder: JSONDecoder = {
         let d = JSONDecoder()
         d.keyDecodingStrategy = .convertFromSnakeCase
-        let iso = ISO8601DateFormatter()
-        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         d.dateDecodingStrategy = .custom { decoder in
-            let container = try decoder.singleValueContainer()
-            let str = try container.decode(String.self)
-            if let date = iso.date(from: str) { return date }
-            // fallback
-            let iso2 = ISO8601DateFormatter()
-            if let date = iso2.date(from: str) { return date }
-            
-            // Subsonic standard uses different custom date formats
-            let formatter1 = DateFormatter()
-            formatter1.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
-            if let date = formatter1.date(from: str) { return date }
-            
-            let formatter2 = DateFormatter()
-            formatter2.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-            if let date = formatter2.date(from: str) { return date }
-
-            // Just fail gracefully without throwing a hard exception if possible
-            return Date(timeIntervalSince1970: 0) 
+            let text = try decoder.singleValueContainer().decode(String.self)
+            // A date the parser can't read mustn't fail the whole response
+            // (one odd "created" date would hide an entire album list), so it
+            // becomes the earliest date instead.
+            return SubsonicClient.parseTimestamp(text) ?? Date(timeIntervalSince1970: 0)
         }
         return d
     }()
@@ -83,7 +67,7 @@ class SubsonicClient: ObservableObject {
     }
 
     // MARK: - URL builder
-    func url(endpoint: String, params: [URLQueryItem] = [], server srv: Server? = nil) -> URL? {
+    public func url(endpoint: String, params: [URLQueryItem] = [], server srv: Server? = nil) -> URL? {
         guard let s = srv ?? server else { return nil }
         var comps = URLComponents(string: "\(s.baseURL)/rest/\(endpoint)")
         var items = authParams(for: s)
@@ -95,14 +79,14 @@ class SubsonicClient: ObservableObject {
     // MARK: - Stream URL
     /// Builds a stream URL for the given quality. `.original` requests the raw
     /// library file; the MP3 qualities ask the server to transcode.
-    func streamURL(songId: String, quality: StreamQuality = .original, server srv: Server? = nil) -> URL? {
+    public func streamURL(songId: String, quality: StreamQuality = .original, server srv: Server? = nil) -> URL? {
         var params = [URLQueryItem(name: "id", value: songId)]
         params.append(contentsOf: quality.streamParams)
         return url(endpoint: "stream.view", params: params, server: srv)
     }
 
     // MARK: - Cover Art URL
-    func coverArtURL(id: String, size: Int? = nil, server srv: Server? = nil) -> URL? {
+    public func coverArtURL(id: String, size: Int? = nil, server srv: Server? = nil) -> URL? {
         var params = [URLQueryItem(name: "id", value: id)]
         if let s = size { params.append(URLQueryItem(name: "size", value: "\(s)")) }
         return url(endpoint: "getCoverArt.view", params: params, server: srv)
@@ -123,7 +107,11 @@ class SubsonicClient: ObservableObject {
         } catch let error as URLError where error.code == .appTransportSecurityRequiresSecureConnection {
             throw SubsonicError.insecureConnectionBlocked
         }
-        // Parse subsonic response wrapper
+        return try decodeResponse(data)
+    }
+
+    /// Decodes a server reply, turning a "failed" status into an error.
+    public func decodeResponse(_ data: Data) throws -> SubsonicResponseBody {
         let wrapper = try decoder.decode(SubsonicResponse<SubsonicResponseBody>.self, from: data)
         guard wrapper.subsonicResponse.status == "ok" else {
             let error = wrapper.subsonicResponse.error
@@ -230,7 +218,7 @@ class SubsonicClient: ObservableObject {
     /// `application/x-www-form-urlencoded` body. Stricter than URL query
     /// encoding: `+`, `&` and `=` inside values must be escaped too, or the
     /// server would read `+` as a space and split values at `&`/`=`.
-    static func formEncoded(_ items: [URLQueryItem]) -> String {
+    public nonisolated static func formEncoded(_ items: [URLQueryItem]) -> String {
         // ASCII unreserved characters only (`.alphanumerics` would let
         // non-ASCII letters through unescaped).
         let allowed = CharacterSet(charactersIn:
@@ -243,20 +231,20 @@ class SubsonicClient: ObservableObject {
     }
 
     // MARK: - Ping
-    func ping(server srv: Server) async throws -> Bool {
+    public func ping(server srv: Server) async throws -> Bool {
         let r = try await fetch(endpoint: "ping.view", server: srv)
         return r.status == "ok"
     }
 
     // MARK: - Artists
-    func getArtists(server srv: Server? = nil) async throws -> [Artist] {
+    public func getArtists(server srv: Server? = nil) async throws -> [Artist] {
         let r = try await fetch(endpoint: "getArtists.view", server: srv)
         let indexes = r.artists?.index ?? []
         return indexes.flatMap { $0.artist ?? [] }
     }
 
     // MARK: - Artist detail
-    func getArtist(id: String, server srv: Server? = nil) async throws -> Artist {
+    public func getArtist(id: String, server srv: Server? = nil) async throws -> Artist {
         let r = try await fetch(endpoint: "getArtist.view",
                                 params: [URLQueryItem(name: "id", value: id)], server: srv)
         guard let artist = r.artist else { throw SubsonicError.missingData }
@@ -264,14 +252,14 @@ class SubsonicClient: ObservableObject {
     }
 
     // MARK: - Artist albums
-    func getArtistAlbums(artistId: String, server srv: Server? = nil) async throws -> [Album] {
+    public func getArtistAlbums(artistId: String, server srv: Server? = nil) async throws -> [Album] {
         let r = try await fetch(endpoint: "getArtist.view",
                                 params: [URLQueryItem(name: "id", value: artistId)], server: srv)
         return r.artist?.albumList ?? []
     }
 
     // MARK: - Album detail
-    func getAlbum(id: String, server srv: Server? = nil) async throws -> Album {
+    public func getAlbum(id: String, server srv: Server? = nil) async throws -> Album {
         let r = try await fetch(endpoint: "getAlbum.view",
                                 params: [URLQueryItem(name: "id", value: id)], server: srv)
         guard let album = r.album else { throw SubsonicError.missingData }
@@ -279,7 +267,7 @@ class SubsonicClient: ObservableObject {
     }
 
     // MARK: - Recent / Random Albums
-    func getAlbumList(type: String = "recent", size: Int = 50, offset: Int = 0, server srv: Server? = nil) async throws -> [Album] {
+    public func getAlbumList(type: String = "recent", size: Int = 50, offset: Int = 0, server srv: Server? = nil) async throws -> [Album] {
         let r = try await fetch(endpoint: "getAlbumList2.view",
                                 params: [URLQueryItem(name: "type", value: type),
                                          URLQueryItem(name: "size", value: "\(size)"),
@@ -289,7 +277,7 @@ class SubsonicClient: ObservableObject {
     }
 
     // MARK: - Song detail
-    func getSong(id: String, server srv: Server? = nil) async throws -> Song {
+    public func getSong(id: String, server srv: Server? = nil) async throws -> Song {
         let r = try await fetch(endpoint: "getSong.view",
                                 params: [URLQueryItem(name: "id", value: id)], server: srv)
         guard let song = r.song else { throw SubsonicError.missingData }
@@ -297,19 +285,19 @@ class SubsonicClient: ObservableObject {
     }
 
     // MARK: - Playlists
-    func getPlaylists(server srv: Server? = nil) async throws -> [Playlist] {
+    public func getPlaylists(server srv: Server? = nil) async throws -> [Playlist] {
         let r = try await fetch(endpoint: "getPlaylists.view", server: srv)
         return r.playlists?.playlist ?? []
     }
 
-    func getPlaylist(id: String, server srv: Server? = nil) async throws -> Playlist {
+    public func getPlaylist(id: String, server srv: Server? = nil) async throws -> Playlist {
         let r = try await fetch(endpoint: "getPlaylist.view",
                                 params: [URLQueryItem(name: "id", value: id)], server: srv)
         guard let pl = r.playlist else { throw SubsonicError.missingData }
         return pl
     }
 
-    func createPlaylist(name: String, songIds: [String] = [], server srv: Server? = nil) async throws -> Playlist {
+    public func createPlaylist(name: String, songIds: [String] = [], server srv: Server? = nil) async throws -> Playlist {
         var params = [URLQueryItem(name: "name", value: name)]
         params += songIds.map { URLQueryItem(name: "songId", value: $0) }
         let r = try await fetch(endpoint: "createPlaylist.view", params: params, server: srv, hedged: false)
@@ -317,7 +305,7 @@ class SubsonicClient: ObservableObject {
         return pl
     }
 
-    func updatePlaylist(id: String, name: String? = nil, comment: String? = nil,
+    public func updatePlaylist(id: String, name: String? = nil, comment: String? = nil,
                         songIdsToAdd: [String] = [], indexesToRemove: [Int] = [],
                         server srv: Server? = nil) async throws {
         var params = [URLQueryItem(name: "playlistId", value: id)]
@@ -328,18 +316,18 @@ class SubsonicClient: ObservableObject {
         _ = try await fetch(endpoint: "updatePlaylist.view", params: params, server: srv, hedged: false)
     }
 
-    func deletePlaylist(id: String, server srv: Server? = nil) async throws {
+    public func deletePlaylist(id: String, server srv: Server? = nil) async throws {
         _ = try await fetch(endpoint: "deletePlaylist.view",
                             params: [URLQueryItem(name: "id", value: id)], server: srv, hedged: false)
     }
 
     // MARK: - Starred
-    func getStarred(server srv: Server? = nil) async throws -> (artists: [Artist], albums: [Album], songs: [Song]) {
+    public func getStarred(server srv: Server? = nil) async throws -> (artists: [Artist], albums: [Album], songs: [Song]) {
         let r = try await fetch(endpoint: "getStarred2.view", server: srv)
         return (r.starred2?.artist ?? [], r.starred2?.album ?? [], r.starred2?.song ?? [])
     }
 
-    func star(songId: String? = nil, albumId: String? = nil, artistId: String? = nil, server srv: Server? = nil) async throws {
+    public func star(songId: String? = nil, albumId: String? = nil, artistId: String? = nil, server srv: Server? = nil) async throws {
         var params: [URLQueryItem] = []
         if let id = songId   { params.append(URLQueryItem(name: "id", value: id)) }
         if let id = albumId  { params.append(URLQueryItem(name: "albumId", value: id)) }
@@ -347,7 +335,7 @@ class SubsonicClient: ObservableObject {
         _ = try await fetch(endpoint: "star.view", params: params, server: srv, hedged: false)
     }
 
-    func unstar(songId: String? = nil, albumId: String? = nil, artistId: String? = nil, server srv: Server? = nil) async throws {
+    public func unstar(songId: String? = nil, albumId: String? = nil, artistId: String? = nil, server srv: Server? = nil) async throws {
         var params: [URLQueryItem] = []
         if let id = songId   { params.append(URLQueryItem(name: "id", value: id)) }
         if let id = albumId  { params.append(URLQueryItem(name: "albumId", value: id)) }
@@ -358,7 +346,7 @@ class SubsonicClient: ObservableObject {
     // MARK: - Scrobble
     /// `submission: false` reports "now playing"; `true` records a play.
     /// `time` is when the play started (the server records the play then).
-    func scrobble(id: String, submission: Bool = true, time: Date? = nil, server srv: Server? = nil) async throws {
+    public func scrobble(id: String, submission: Bool = true, time: Date? = nil, server srv: Server? = nil) async throws {
         var params = [URLQueryItem(name: "id", value: id),
                       URLQueryItem(name: "submission", value: submission ? "true" : "false")]
         if let time {
@@ -373,7 +361,7 @@ class SubsonicClient: ObservableObject {
     /// cached, so the next call asks again.
     private var extensionsByServer: [UUID: Set<String>] = [:]
 
-    func openSubsonicExtensions(server srv: Server) async -> Set<String> {
+    public func openSubsonicExtensions(server srv: Server) async -> Set<String> {
         if let known = extensionsByServer[srv.id] { return known }
         do {
             let r = try await fetch(endpoint: "getOpenSubsonicExtensions.view", server: srv)
@@ -390,24 +378,24 @@ class SubsonicClient: ObservableObject {
 
     // MARK: - Play queue
     /// A play queue saved on the server, by this or any other Subsonic app.
-    struct RemotePlayQueue {
-        let songs: [Song]
-        let currentIndex: Int
+    public nonisolated struct RemotePlayQueue: Sendable {
+        public let songs: [Song]
+        public let currentIndex: Int
         /// Seconds into the current song.
-        let position: Double
-        let changed: Date?
+        public let position: Double
+        public let changed: Date?
         /// Client name of the app that saved it (its `c` parameter).
-        let changedBy: String?
+        public let changedBy: String?
     }
 
     /// Without `formPost`, the queue travels in the URL, which proxies in front
     /// of a server commonly cap at around 8 KB; this many ids stays well under.
-    static let maxQueueIDsInURL = 200
+    public static let maxQueueIDsInURL = 200
 
     /// The server's saved queue, or nil if it has none. Uses the index-based
     /// endpoint when available: with duplicate songs, the id-based one can't
     /// say which copy is current.
-    func getPlayQueue(server srv: Server) async throws -> RemotePlayQueue? {
+    public func getPlayQueue(server srv: Server) async throws -> RemotePlayQueue? {
         let extensions = await openSubsonicExtensions(server: srv)
         let body: RemotePlayQueueBody?
         let byIndex = extensions.contains("indexBasedQueue")
@@ -429,7 +417,7 @@ class SubsonicClient: ObservableObject {
     }
 
     /// Saves the queue on the server. An empty list clears it.
-    func savePlayQueue(songIDs: [String], currentIndex: Int, position: Double, server srv: Server) async throws {
+    public func savePlayQueue(songIDs: [String], currentIndex: Int, position: Double, server srv: Server) async throws {
         let extensions = await openSubsonicExtensions(server: srv)
         let post = extensions.contains("formPost")
         let byIndex = extensions.contains("indexBasedQueue")
@@ -454,11 +442,11 @@ class SubsonicClient: ObservableObject {
                             params: params, server: srv, hedged: false, post: post)
     }
 
-    /// Parses a server timestamp. Servers send anything from no fraction to
-    /// nanoseconds (Navidrome: `2026-11-01T12:52:06.49936326Z`); the fraction
-    /// is cut to milliseconds so parsing doesn't depend on how many digits a
-    /// given OS release's `ISO8601DateFormatter` accepts.
-    nonisolated static func parseTimestamp(_ string: String) -> Date? {
+    /// Parses a server timestamp — used for every date the server sends.
+    /// Servers send anything from no fraction to nanoseconds (Navidrome:
+    /// `2026-11-01T12:52:06.49936326Z`); the fraction is cut to milliseconds
+    /// so parsing doesn't depend on how many digits the parser accepts.
+    public nonisolated static func parseTimestamp(_ string: String) -> Date? {
         var text = string
         if let dot = text.firstIndex(of: "."),
            let zone = text[dot...].firstIndex(where: { $0 == "Z" || $0 == "+" || $0 == "-" }) {
@@ -466,13 +454,25 @@ class SubsonicClient: ObservableObject {
             let millis = String(digits.prefix(3)).padding(toLength: 3, withPad: "0", startingAt: 0)
             text.replaceSubrange(text.index(after: dot)..<zone, with: millis)
         }
-        let fractional = ISO8601DateFormatter()
-        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return fractional.date(from: text) ?? ISO8601DateFormatter().date(from: text)
+        if let date = try? isoWithFraction.parse(text) { return date }
+        if let date = try? isoPlain.parse(text) { return date }
+        // Rare older formats, such as an offset without a colon ("+0100").
+        let legacy = DateFormatter()
+        legacy.locale = Locale(identifier: "en_US_POSIX")
+        for format in ["yyyy-MM-dd'T'HH:mm:ss.SSSZ", "yyyy-MM-dd'T'HH:mm:ssZ"] {
+            legacy.dateFormat = format
+            if let date = legacy.date(from: text) { return date }
+        }
+        return nil
     }
 
+    /// Created once and shared: format styles are thread-safe values, unlike
+    /// the formatters this used to create for every date.
+    nonisolated private static let isoWithFraction = Date.ISO8601FormatStyle(includingFractionalSeconds: true)
+    nonisolated private static let isoPlain = Date.ISO8601FormatStyle()
+
     // MARK: - Lyrics
-    func getLyrics(artist: String? = nil, title: String? = nil, server srv: Server? = nil) async throws -> Lyrics? {
+    public func getLyrics(artist: String? = nil, title: String? = nil, server srv: Server? = nil) async throws -> Lyrics? {
         var params: [URLQueryItem] = []
         if let a = artist { params.append(URLQueryItem(name: "artist", value: a)) }
         if let t = title  { params.append(URLQueryItem(name: "title", value: t)) }
@@ -480,14 +480,14 @@ class SubsonicClient: ObservableObject {
         return r.lyrics
     }
 
-    func getLyricsBySongId(id: String, server srv: Server? = nil) async throws -> [StructuredLyrics] {
+    public func getLyricsBySongId(id: String, server srv: Server? = nil) async throws -> [StructuredLyrics] {
         let r = try await fetch(endpoint: "getLyricsBySongId.view",
                                 params: [URLQueryItem(name: "id", value: id)], server: srv)
         return r.lyricsList?.structuredLyrics ?? []
     }
 
     // MARK: - Search
-    func search(query: String, artistCount: Int = 10, albumCount: Int = 10, songCount: Int = 20,
+    public func search(query: String, artistCount: Int = 10, albumCount: Int = 10, songCount: Int = 20,
                 songOffset: Int = 0, server srv: Server? = nil) async throws -> SearchResult {
         let params: [URLQueryItem] = [
             URLQueryItem(name: "query", value: query),
@@ -505,13 +505,13 @@ class SubsonicClient: ObservableObject {
     }
 
     // MARK: - Genres
-    func getGenres(server srv: Server? = nil) async throws -> [Genre] {
+    public func getGenres(server srv: Server? = nil) async throws -> [Genre] {
         let r = try await fetch(endpoint: "getGenres.view", server: srv)
         return r.genres?.genre ?? []
     }
 
     // MARK: - Songs by genre
-    func getSongsByGenre(genre: String, count: Int = 50, offset: Int = 0, server srv: Server? = nil) async throws -> [Song] {
+    public func getSongsByGenre(genre: String, count: Int = 50, offset: Int = 0, server srv: Server? = nil) async throws -> [Song] {
         let r = try await fetch(endpoint: "getSongsByGenre.view",
                                 params: [URLQueryItem(name: "genre", value: genre),
                                          URLQueryItem(name: "count", value: "\(count)"),
@@ -521,7 +521,7 @@ class SubsonicClient: ObservableObject {
     }
 
     // MARK: - Random songs
-    func getRandomSongs(size: Int = 50, genre: String? = nil, server srv: Server? = nil) async throws -> [Song] {
+    public func getRandomSongs(size: Int = 50, genre: String? = nil, server srv: Server? = nil) async throws -> [Song] {
         var params = [URLQueryItem(name: "size", value: "\(size)")]
         if let genre { params.append(URLQueryItem(name: "genre", value: genre)) }
         let r = try await fetch(endpoint: "getRandomSongs.view", params: params, server: srv)
@@ -531,7 +531,7 @@ class SubsonicClient: ObservableObject {
     // MARK: - Similar / top songs
     /// Songs similar to a song (or an artist, given an artist id). Servers
     /// work this out from external metadata (e.g. Last.fm), so it can be empty.
-    func getSimilarSongs(id: String, count: Int = 50, server srv: Server? = nil) async throws -> [Song] {
+    public func getSimilarSongs(id: String, count: Int = 50, server srv: Server? = nil) async throws -> [Song] {
         let r = try await fetch(endpoint: "getSimilarSongs2.view",
                                 params: [URLQueryItem(name: "id", value: id),
                                          URLQueryItem(name: "count", value: "\(count)")], server: srv)
@@ -540,7 +540,7 @@ class SubsonicClient: ObservableObject {
 
     /// An artist's most popular songs, by artist name (the parameter every
     /// server supports). Often short or empty without external metadata.
-    func getTopSongs(artist: String, count: Int = 50, server srv: Server? = nil) async throws -> [Song] {
+    public func getTopSongs(artist: String, count: Int = 50, server srv: Server? = nil) async throws -> [Song] {
         let r = try await fetch(endpoint: "getTopSongs.view",
                                 params: [URLQueryItem(name: "artist", value: artist),
                                          URLQueryItem(name: "count", value: "\(count)")], server: srv)
@@ -548,7 +548,7 @@ class SubsonicClient: ObservableObject {
     }
 
     /// Artists the server considers similar (can be empty).
-    func getSimilarArtists(artistId: String, count: Int = 10, server srv: Server? = nil) async throws -> [Artist] {
+    public func getSimilarArtists(artistId: String, count: Int = 10, server srv: Server? = nil) async throws -> [Artist] {
         let r = try await fetch(endpoint: "getArtistInfo2.view",
                                 params: [URLQueryItem(name: "id", value: artistId),
                                          URLQueryItem(name: "count", value: "\(count)")], server: srv)
@@ -557,14 +557,14 @@ class SubsonicClient: ObservableObject {
 }
 
 // MARK: - Errors
-enum SubsonicError: LocalizedError {
+public enum SubsonicError: LocalizedError, Sendable {
     case invalidURL
     case httpError(Int)
     case serverError(code: Int?, message: String)
     case missingData
     case insecureConnectionBlocked
 
-    var errorDescription: String? {
+    public var errorDescription: String? {
         switch self {
         case .invalidURL: return "Invalid server URL"
         case .httpError(404):
@@ -595,181 +595,181 @@ enum SubsonicError: LocalizedError {
 }
 
 // MARK: - Response Wrappers
-struct SubsonicResponse<T: Decodable>: Decodable {
-    let subsonicResponse: T
+public nonisolated struct SubsonicResponse<T: Decodable>: Decodable {
+    public let subsonicResponse: T
 
     // The actual JSON key is "subsonic-response" (hyphen), NOT underscore.
     // convertFromSnakeCase only handles underscores, so we need explicit CodingKeys.
-    enum CodingKeys: String, CodingKey {
+    public nonisolated enum CodingKeys: String, CodingKey, Sendable {
         case subsonicResponse = "subsonic-response"
     }
 }
 
-struct SubsonicError_: Decodable {
-    let code: Int?
-    let message: String?
+public nonisolated struct SubsonicError_: Decodable, Sendable {
+    public let code: Int?
+    public let message: String?
 }
 
 // A catch-all response body covering all possible fields
-struct SubsonicResponseBody: Decodable {
-    let status: String
-    let version: String?
-    let error: SubsonicError_?
+public nonisolated struct SubsonicResponseBody: Decodable, Sendable {
+    public let status: String
+    public let version: String?
+    public let error: SubsonicError_?
 
     // Browse
-    let artists: ArtistsWrapper?
-    let artist: ArtistDetail?
-    let album: AlbumDetail?
-    let song: Song?
+    public let artists: ArtistsWrapper?
+    public let artist: ArtistDetail?
+    public let album: AlbumDetail?
+    public let song: Song?
 
     // Album lists
-    let albumList2: AlbumListWrapper?
+    public let albumList2: AlbumListWrapper?
 
     // Playlists
-    let playlists: PlaylistsWrapper?
-    let playlist: Playlist?
+    public let playlists: PlaylistsWrapper?
+    public let playlist: Playlist?
 
     // Starred
-    let starred2: Starred2?
+    public let starred2: Starred2?
 
     // Search
-    let searchResult3: SearchResult3?
+    public let searchResult3: SearchResult3?
 
     // Lyrics
-    let lyrics: Lyrics?
-    let lyricsList: LyricsListWrapper?
+    public let lyrics: Lyrics?
+    public let lyricsList: LyricsListWrapper?
 
     // Genres
-    let genres: GenresWrapper?
-    let songsByGenre: SongsByGenreWrapper?
-    let randomSongs: RandomSongsWrapper?
+    public let genres: GenresWrapper?
+    public let songsByGenre: SongsByGenreWrapper?
+    public let randomSongs: RandomSongsWrapper?
 
     // Similar / top songs
-    let similarSongs2: SongListWrapper?
-    let topSongs: SongListWrapper?
-    let artistInfo2: ArtistInfoWrapper?
+    public let similarSongs2: SongListWrapper?
+    public let topSongs: SongListWrapper?
+    public let artistInfo2: ArtistInfoWrapper?
 
     // Play queue
-    let playQueue: RemotePlayQueueBody?
-    let playQueueByIndex: RemotePlayQueueBody?
+    public let playQueue: RemotePlayQueueBody?
+    public let playQueueByIndex: RemotePlayQueueBody?
 
     // OpenSubsonic
-    let openSubsonicExtensions: [OpenSubsonicExtension]?
+    public let openSubsonicExtensions: [OpenSubsonicExtension]?
 }
 
 /// `getPlayQueue` / `getPlayQueueByIndex`. `changed` stays a string: its
 /// nanosecond precision is parsed by `SubsonicClient.parseTimestamp`.
-struct RemotePlayQueueBody: Decodable {
-    let current: String?
-    let currentIndex: Int?
-    let position: Int64?
-    let changed: String?
-    let changedBy: String?
-    let entry: [Song]?
+public nonisolated struct RemotePlayQueueBody: Decodable, Sendable {
+    public let current: String?
+    public let currentIndex: Int?
+    public let position: Int64?
+    public let changed: String?
+    public let changedBy: String?
+    public let entry: [Song]?
 }
 
-struct SongListWrapper: Decodable {
-    let song: [Song]?
+public nonisolated struct SongListWrapper: Decodable, Sendable {
+    public let song: [Song]?
 }
 
-struct ArtistInfoWrapper: Decodable {
-    let similarArtist: [Artist]?
+public nonisolated struct ArtistInfoWrapper: Decodable, Sendable {
+    public let similarArtist: [Artist]?
 }
 
-struct OpenSubsonicExtension: Decodable {
-    let name: String
-    let versions: [Int]?
+public nonisolated struct OpenSubsonicExtension: Decodable, Sendable {
+    public let name: String
+    public let versions: [Int]?
 }
 
 // MARK: - Nested response types
-struct ArtistsWrapper: Decodable {
-    let index: [ArtistIndex]?
-    struct ArtistIndex: Decodable {
-        let name: String?
-        let artist: [Artist]?
+public nonisolated struct ArtistsWrapper: Decodable, Sendable {
+    public let index: [ArtistIndex]?
+    public nonisolated struct ArtistIndex: Decodable, Sendable {
+        public let name: String?
+        public let artist: [Artist]?
     }
 }
 
-struct ArtistDetail: Decodable {
-    let id: String
-    let name: String
-    let albumCount: Int?
-    let coverArt: String?
-    var starred: Date?
-    let album: [Album]?
+public nonisolated struct ArtistDetail: Decodable, Sendable {
+    public let id: String
+    public let name: String
+    public let albumCount: Int?
+    public let coverArt: String?
+    public var starred: Date?
+    public let album: [Album]?
 
-    var albumList: [Album] { album ?? [] }
+    public var albumList: [Album] { album ?? [] }
 
     // Expose as Artist model
-    var asArtist: Artist {
+    public var asArtist: Artist {
         Artist(id: id, name: name, albumCount: albumCount, coverArt: coverArt, starred: starred)
     }
 }
 
-struct AlbumDetail: Decodable {
-    let id: String
-    let name: String
-    let artist: String?
-    let artistId: String?
-    let coverArt: String?
-    let songCount: Int?
-    let duration: Int?
-    let year: Int?
-    let genre: String?
-    var starred: Date?
-    let song: [Song]?
+public nonisolated struct AlbumDetail: Decodable, Sendable {
+    public let id: String
+    public let name: String
+    public let artist: String?
+    public let artistId: String?
+    public let coverArt: String?
+    public let songCount: Int?
+    public let duration: Int?
+    public let year: Int?
+    public let genre: String?
+    public var starred: Date?
+    public let song: [Song]?
 
-    var asAlbum: Album {
+    public var asAlbum: Album {
         Album(id: id, name: name, artist: artist, artistId: artistId,
               coverArt: coverArt, songCount: songCount, duration: duration,
               year: year, genre: genre, starred: starred, songs: song)
     }
 }
 
-struct AlbumListWrapper: Decodable {
-    let album: [Album]?
+public nonisolated struct AlbumListWrapper: Decodable, Sendable {
+    public let album: [Album]?
 }
 
-struct PlaylistsWrapper: Decodable {
-    let playlist: [Playlist]?
+public nonisolated struct PlaylistsWrapper: Decodable, Sendable {
+    public let playlist: [Playlist]?
 }
 
-struct Starred2: Decodable {
-    let artist: [Artist]?
-    let album: [Album]?
-    let song: [Song]?
+public nonisolated struct Starred2: Decodable, Sendable {
+    public let artist: [Artist]?
+    public let album: [Album]?
+    public let song: [Song]?
 }
 
-struct SearchResult3: Decodable {
-    let artist: [Artist]?
-    let album: [Album]?
-    let song: [Song]?
+public nonisolated struct SearchResult3: Decodable, Sendable {
+    public let artist: [Artist]?
+    public let album: [Album]?
+    public let song: [Song]?
 }
 
-struct LyricsListWrapper: Decodable {
-    let structuredLyrics: [StructuredLyrics]?
+public nonisolated struct LyricsListWrapper: Decodable, Sendable {
+    public let structuredLyrics: [StructuredLyrics]?
 }
 
-struct GenresWrapper: Decodable {
-    let genre: [Genre]?
+public nonisolated struct GenresWrapper: Decodable, Sendable {
+    public let genre: [Genre]?
 }
 
-struct SongsByGenreWrapper: Decodable {
-    let song: [Song]?
+public nonisolated struct SongsByGenreWrapper: Decodable, Sendable {
+    public let song: [Song]?
 }
 
-struct RandomSongsWrapper: Decodable {
-    let song: [Song]?
+public nonisolated struct RandomSongsWrapper: Decodable, Sendable {
+    public let song: [Song]?
 }
 
 // Extend Artist for nested Decodable inside ArtistDetail
-extension Artist {
+nonisolated extension Artist {
     // Already Codable
 }
 
 // Album: add songs from AlbumDetail
-extension Album {
-    init(from detail: AlbumDetail) {
+nonisolated extension Album {
+    public init(from detail: AlbumDetail) {
         self.init(id: detail.id, name: detail.name, artist: detail.artist,
                   artistId: detail.artistId, coverArt: detail.coverArt,
                   songCount: detail.songCount, duration: detail.duration,
