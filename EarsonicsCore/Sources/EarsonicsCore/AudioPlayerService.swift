@@ -62,8 +62,13 @@ public final class AudioPlayerService: NSObject {
     /// Set in Settings; read live.
     private var appCrossfadeDuration: Double { UserDefaults.standard.double(forKey: PlaybackPreferences.crossfadeKey) }
     public var normalizeVolume: Bool = UserDefaults.standard.object(forKey: "normalizeVolume") as? Bool ?? true {
-        didSet { UserDefaults.standard.set(normalizeVolume, forKey: "normalizeVolume") }
+        didSet {
+            UserDefaults.standard.set(normalizeVolume, forKey: "normalizeVolume")
+            refreshVolume()
+        }
     }
+    /// Eases the playing song to a new level when it's measured early on.
+    @ObservationIgnored private var volumeRamp: Task<Void, Never>?
 
     // Transition State additions
     @ObservationIgnored private var fadeOutVolume: Float = 1.0
@@ -136,6 +141,9 @@ public final class AudioPlayerService: NSObject {
         setupItemNotifications()
         setupAudioSessionObservers()
         setupRemoteCommandCenter()
+        LoudnessStore.shared.onMeasured = { [weak self] songId, serverID in
+            self?.loudnessMeasured(songId: songId, serverID: serverID)
+        }
     }
 
     // Runs on the main actor, where the display link lives.
@@ -349,14 +357,48 @@ public final class AudioPlayerService: NSObject {
         rebuildPlayerItems()
     }
 
-    // MARK: - Target Volume helper
+    // MARK: - Volume normalisation
+    /// The song's volume: its Replay Gain tags, else its on-device
+    /// measurement, else a safe guess (see `VolumeNormalisation`). The old
+    /// version could only turn songs down, so quiet songs stayed quiet, and
+    /// untagged songs (most of a typical library) played at full volume.
     private func getTargetVolume(for song: Song?) -> Float {
-        guard normalizeVolume, let gain = song?.replayGain?.trackGain else { return 1.0 }
+        guard normalizeVolume, let song else { return 1.0 }
+        let measured = server.flatMap { LoudnessStore.shared.measurement(songId: song.id, serverID: $0.id) }
+        let gain = VolumeNormalisation.gain(for: song, mode: .current, measured: measured)
+        return VolumeNormalisation.volume(forGain: gain.dB)
+    }
 
-        let scalar = pow(10.0, gain / 20.0)
-        let peak = song?.replayGain?.trackPeak ?? 0.0
-        let peakSafeScalar = peak > 0 ? min(scalar, 1.0 / peak) : scalar
-        return Float(min(peakSafeScalar, 1.0))
+    /// Applies the current normalisation settings to the playing song now,
+    /// rather than from the next song (Settings calls this on a change).
+    public func refreshVolume() {
+        guard transitionState != .crossfading else { return }
+        rampVolume(to: getTargetVolume(for: currentSong), over: 0.5)
+    }
+
+    /// A song was just measured. If it's the one playing and it started
+    /// moments ago, ease it to its level; later in the song a change would be
+    /// noticeable, so the level waits for the next play.
+    private func loudnessMeasured(songId: String, serverID: UUID) {
+        guard normalizeVolume, transitionState != .crossfading, currentSong?.id == songId,
+              server?.id == serverID, currentTime < 20 else { return }
+        rampVolume(to: getTargetVolume(for: currentSong), over: 1.5)
+    }
+
+    private func rampVolume(to target: Float, over seconds: Double) {
+        volumeRamp?.cancel()
+        let deck = activeDeck
+        let start = deck.volume
+        guard abs(start - target) > 0.001 else { return }
+        volumeRamp = Task { [weak self] in
+            let steps = max(Int(seconds / 0.05), 1)
+            for step in 1...steps {
+                try? await Task.sleep(for: .milliseconds(50))
+                guard !Task.isCancelled, let self, self.transitionState != .crossfading,
+                      self.activeDeck === deck else { return }
+                deck.volume = start + (target - start) * Float(step) / Float(steps)
+            }
+        }
     }
 
     // MARK: - Player item construction / teardown
@@ -374,6 +416,8 @@ public final class AudioPlayerService: NSObject {
 
         let ext = AudioCache.fileExtension(quality: quality, songSuffix: song.suffix, contentType: song.contentType)
         if let cached = AudioCache.cachedFileURL(for: song.id, serverID: srv.id, quality: quality, fileExtension: ext) {
+            // Songs cached before measuring existed, or measured since.
+            LoudnessStore.shared.measureIfNeeded(fileURL: cached, songId: song.id, serverID: srv.id)
             return AVPlayerItem(url: cached)
         }
 
@@ -447,6 +491,7 @@ public final class AudioPlayerService: NSObject {
         setItem(nil, on: deckB)
 
         activeDeck = deckA
+        volumeRamp?.cancel()
         activeDeck.volume = getTargetVolume(for: currentSong)
         playbackError = nil
         // Until the new item's first time tick, show the new track's start
@@ -624,6 +669,7 @@ public final class AudioPlayerService: NSObject {
 
         transitionState = .crossfading
         hasUpdatedMetadataDuringFade = false
+        volumeRamp?.cancel()
 
         fadeOutVolume = getTargetVolume(for: currentSong)
         fadeInVolume = getTargetVolume(for: nextSong)

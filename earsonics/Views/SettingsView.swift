@@ -89,7 +89,8 @@ struct SettingsView: View {
                         Text("Normalise volume")
                     }
                     if appState.player.normalizeVolume {
-                        SettingsNote("Uses Replay Gain metadata to equalise volume between tracks and prevent loud peaks.")
+                        SettingsChoiceRow(choice: .normalisation)
+                        SettingsNote("Evens out volume between songs. Uses Replay Gain tags from your server where songs have them; other songs are measured on this Apple TV as they download, so a song’s first play may adjust in its first few seconds. Overall volume is a little lower, to leave room to turn quiet songs up.")
                     }
 
                     Toggle(isOn: $appState.preventScreenSaver) {
@@ -370,6 +371,7 @@ enum SettingsChoice: Hashable {
     case afterAlbum
     case afterPlaylist
     case launch
+    case normalisation
 
     var title: String {
         switch self {
@@ -377,6 +379,7 @@ enum SettingsChoice: Hashable {
         case .afterAlbum:    return "When an album ends"
         case .afterPlaylist: return "When a playlist or mix ends"
         case .launch:        return "On launch"
+        case .normalisation: return "Balance volume"
         }
     }
 
@@ -387,6 +390,7 @@ enum SettingsChoice: Hashable {
         case .afterAlbum:    return PlaybackPreferences.afterAlbumKey
         case .afterPlaylist: return PlaybackPreferences.afterPlaylistKey
         case .launch:        return PlaybackPreferences.launchBehaviourKey
+        case .normalisation: return VolumeNormalisation.modeKey
         }
     }
 
@@ -396,6 +400,7 @@ enum SettingsChoice: Hashable {
         case .afterAlbum:    return QueueContinuation.defaultAfterAlbum.rawValue
         case .afterPlaylist: return QueueContinuation.defaultAfterPlaylist.rawValue
         case .launch:        return QueueLaunchBehaviour.restorePaused.rawValue
+        case .normalisation: return VolumeNormalisation.Mode.track.rawValue
         }
     }
 
@@ -408,6 +413,8 @@ enum SettingsChoice: Hashable {
             return QueueContinuation.allCases.map { ($0.rawValue, $0.displayName) }
         case .launch:
             return QueueLaunchBehaviour.allCases.map { ($0.rawValue, $0.displayName) }
+        case .normalisation:
+            return VolumeNormalisation.Mode.allCases.map { ($0.rawValue, $0.displayName) }
         }
     }
 
@@ -457,6 +464,9 @@ struct SettingsChoiceList: View {
                 ForEach(choice.options, id: \.value) { option in
                     Button {
                         value = option.value
+                        // The player reads this live; apply it to the song
+                        // playing now, not just from the next one.
+                        if choice == .normalisation { AudioPlayerService.shared.refreshVolume() }
                         dismiss()
                     } label: {
                         HStack {
