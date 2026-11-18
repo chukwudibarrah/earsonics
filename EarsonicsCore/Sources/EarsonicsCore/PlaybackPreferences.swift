@@ -25,6 +25,13 @@ public enum PlaybackPreferences: Sendable {
             .flatMap(QueueLaunchBehaviour.init(rawValue:)) ?? .restorePaused
     }
 
+    /// What plays when this queue runs out. A genre mix carries on with more
+    /// from its genre, unless the user chose to stop after mixes.
+    public static func continuation(for context: PlayContext) -> QueueContinuation {
+        let chosen = continuation(for: context.group)
+        return context.genreName != nil && chosen != .stop ? .sameGenre : chosen
+    }
+
     /// What plays when a queue from this kind of source runs out.
     public static func continuation(for group: PlayContext.Group) -> QueueContinuation {
         switch group {

@@ -9,7 +9,7 @@ class RemoteTestCase: XCTestCase {
 
     var app: XCUIApplication!
     let remote = XCUIRemote.shared
-    let tabOrder = ["Search", "Home", "Artists", "Tracks", "Playlists", "Favourites", "Settings"]
+    let tabOrder = ["Search", "Home", "Artists", "Genres", "Tracks", "Playlists", "Favourites", "Settings"]
 
     static let demoEnvironment = [
         "EARSONICS_UITEST_SERVER_URL": TestServer.details.url,

@@ -13,7 +13,7 @@ final class NowPlayingFocusUITests: RemoteTestCase {
 
         // Where focus lands on each tab, plus the spots reported not to work:
         // Home's third album and Tracks' Shuffle play (moves right first).
-        let cases: [(tab: String, rights: Int)] = [("Home", 0), ("Home", 2), ("Artists", 0), ("Tracks", 0),
+        let cases: [(tab: String, rights: Int)] = [("Home", 0), ("Home", 2), ("Artists", 0), ("Genres", 0), ("Tracks", 0),
                                                    ("Tracks", 1), ("Playlists", 0), ("Favourites", 0), ("Settings", 0)]
         for (tab, rights) in cases {
             selectTabFromRoot(tab)

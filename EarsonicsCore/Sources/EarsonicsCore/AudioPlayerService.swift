@@ -1028,7 +1028,7 @@ public final class AudioPlayerService: NSObject {
     /// (repeat already decides what comes next).
     private var continuation: QueueContinuation {
         guard repeatMode == .off else { return .stop }
-        return PlaybackPreferences.continuation(for: playQueue.context.group)
+        return PlaybackPreferences.continuation(for: playQueue.context)
     }
 
     private func requestAutoplayIfNeeded() {
@@ -1036,7 +1036,7 @@ public final class AudioPlayerService: NSObject {
               let entry = playQueue.current, autoplayFetchedFor != entry.id, let srv = server else { return }
         autoplayFetchedFor = entry.id
         let choice = continuation
-        let seed = Autoplay.Seed(entry.song)
+        let seed = Autoplay.Seed(entry.song, genre: playQueue.context.genreName)
         let played = playedSongIDs.union(playQueue.songs.map(\.id))
         autoplayTask = Task { [weak self] in
             let batch = await Autoplay(source: .server(srv)).nextBatch(for: choice, seed: seed, excluding: played)

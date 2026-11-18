@@ -16,11 +16,13 @@ public struct Autoplay {
         public let artistName: String?
         public let genre: String?
 
-        public init(_ song: Song) {
+        /// `genre` overrides the song's own: a genre mix continues with its
+        /// genre, and a song can be tagged with several.
+        public init(_ song: Song, genre: String? = nil) {
             songID = song.id
             artistID = song.artistId
             artistName = song.artist
-            genre = song.genre
+            self.genre = genre ?? song.genre
         }
     }
 
