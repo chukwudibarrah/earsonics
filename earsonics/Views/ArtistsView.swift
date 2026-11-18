@@ -44,20 +44,51 @@ struct ArtistsView: View {
                     .padding(60)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 2) {
-                            ForEach(filtered) { artist in
-                                NavigationLink(value: artist) {
-                                    ArtistRow(artist: artist)
+                    // A search field like the Search tab's, which opens the
+                    // full-screen keyboard. `.searchable` drew tvOS's inline
+                    // keyboard across the very top of the screen, under the
+                    // page title and the Now Playing button.
+                    VStack(spacing: 0) {
+                        HStack {
+                            Image(systemName: "magnifyingglass").foregroundColor(.secondary)
+                            TextField("Search artists", text: $searchText)
+                                .font(.title3)
+                                .autocapitalization(.none)
+                            if !searchText.isEmpty {
+                                Button { searchText = "" } label: {
+                                    Image(systemName: "xmark.circle.fill").foregroundColor(.secondary)
                                 }
-                                .buttonStyle(CardlessButtonStyle())
+                                .buttonStyle(AccentIconButtonStyle())
+                                .accessibilityLabel("Clear search")
                             }
                         }
-                        .padding(.top, 20)
+                        .padding(16)
+                        .background(Color.white.opacity(0.1))
+                        .cornerRadius(12)
                         .padding(.horizontal, AppLayout.horizontalPadding)
-                        .padding(.bottom, 100)
+                        .padding(.top, AppLayout.contentTopPadding)
+
+                        if filtered.isEmpty {
+                            Text("No artists match “\(searchText)”")
+                                .font(.title3)
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else {
+                            ScrollView {
+                                LazyVStack(spacing: 2) {
+                                    ForEach(filtered) { artist in
+                                        NavigationLink(value: artist) {
+                                            ArtistRow(artist: artist)
+                                        }
+                                        .buttonStyle(CardlessButtonStyle())
+                                    }
+                                }
+                                .padding(.top, 20)
+                                .padding(.horizontal, AppLayout.horizontalPadding)
+                                .padding(.bottom, 100)
+                            }
+                        }
                     }
-                    .searchable(text: $searchText, prompt: "Search artists")
                 }
             }
             .navigationDestination(for: Artist.self) { artist in

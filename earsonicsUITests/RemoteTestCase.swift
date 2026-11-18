@@ -52,7 +52,7 @@ class RemoteTestCase: XCTestCase {
 
     func openFirstArtistFromArtistsTab() {
         selectTabFromRoot("Artists")
-        // Focus lands in the search field's keyboard; move down to the list.
+        // Focus may land on the search field; move down to the list.
         for _ in 0..<10 where !focused.label.localizedCaseInsensitiveContains("album") {
             press(.down)
         }
