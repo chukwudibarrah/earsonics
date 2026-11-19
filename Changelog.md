@@ -1,7 +1,5 @@
 ## 1.11: Genres, even volume & easier navigation
 
-1.10 wasn't released on its own: its changes (below) arrive together with these.
-
 - **Genres.** A new Genres tab in the sidebar shows every genre on your server, largest first, each with one of its album covers and its song and album counts. Each genre has Play, Shuffle (a random pick from the whole genre) and its albums. When a genre mix ends it carries on with more from the same genre, unless "When a playlist or mix ends" is set to Stop.
 - **Volume is now actually even between songs.** "Normalise volume" only used Replay Gain tags, and most libraries are only partly tagged (one test library: 2.5% of songs). Untagged songs played at full volume, and tags could only turn songs down, never up. Songs are now measured on the Apple TV as they download, using the same loudness standard Replay Gain uses (EBU R128), and the measurements are remembered. Tags are still used when present. Everything plays 4 dB quieter, to leave room to turn quiet songs up, and songs not yet measured play at a typical level instead of full volume. A new "Balance volume" setting chooses song by song (best for shuffles) or by album (keeps an album's own loud and quiet moments, using album tags). Changes apply straight away, not from the next song.
 - **Up reaches Now Playing from anywhere.** Pressing Up from the top of any page now reaches the Now Playing button in the corner. It used to work only from items directly below it, on the right; from Tracks' Play and Shuffle buttons it couldn't be reached at all.
