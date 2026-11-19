@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		E5C0E5C0E5C0E5C0E5C00003 /* EarsonicsCore in Frameworks */ = {isa = PBXBuildFile; productRef = E5C0E5C0E5C0E5C0E5C00002 /* EarsonicsCore */; };
+		E5C0E5C0E5C0E5C0E5C00012 /* EarsonicsCore in Frameworks */ = {isa = PBXBuildFile; productRef = E5C0E5C0E5C0E5C0E5C00011 /* EarsonicsCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,13 +26,32 @@
 			remoteGlobalIDString = 830BB8F02FA618AC00613C0D;
 			remoteInfo = earsonics;
 		};
+		E5C0E5C0E5C0E5C0E5C00020 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 830BB8E92FA618AC00613C0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A331345630AEB37900D4DA41;
+			remoteInfo = "earsonics-iOS";
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		830BB8F12FA618AC00613C0D /* earsonics.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = earsonics.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		830BB8FE2FA618AE00613C0D /* earsonicsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = earsonicsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		830BB9082FA618AE00613C0D /* earsonicsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = earsonicsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A331345730AEB37900D4DA41 /* earsonics-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "earsonics-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A33134DD30AEB45900D4DA41 /* earsonics-iOSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "earsonics-iOSUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A331364F30AEB6B000D4DA41 /* Exceptions for "earsonics-iOS" folder in "earsonics-iOS" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A331345630AEB37900D4DA41 /* earsonics-iOS */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		830BB8F32FA618AC00613C0D /* earsonics */ = {
@@ -47,6 +67,24 @@
 		830BB90B2FA618AE00613C0D /* earsonicsUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = earsonicsUITests;
+			sourceTree = "<group>";
+		};
+		A331345830AEB37900D4DA41 /* earsonics-iOS */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A331364F30AEB6B000D4DA41 /* Exceptions for "earsonics-iOS" folder in "earsonics-iOS" target */,
+			);
+			path = "earsonics-iOS";
+			sourceTree = "<group>";
+		};
+		A33134DE30AEB45900D4DA41 /* earsonics-iOSUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "earsonics-iOSUITests";
+			sourceTree = "<group>";
+		};
+		E5C0E5C0E5C0E5C0E5C00010 /* SharedApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SharedApp;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -74,6 +112,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A331345430AEB37900D4DA41 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E5C0E5C0E5C0E5C0E5C00012 /* EarsonicsCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A33134DA30AEB45900D4DA41 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -83,6 +136,9 @@
 				830BB8F32FA618AC00613C0D /* earsonics */,
 				830BB9012FA618AE00613C0D /* earsonicsTests */,
 				830BB90B2FA618AE00613C0D /* earsonicsUITests */,
+				A331345830AEB37900D4DA41 /* earsonics-iOS */,
+				E5C0E5C0E5C0E5C0E5C00010 /* SharedApp */,
+				A33134DE30AEB45900D4DA41 /* earsonics-iOSUITests */,
 				830BB8F22FA618AC00613C0D /* Products */,
 			);
 			sourceTree = "<group>";
@@ -93,6 +149,8 @@
 				830BB8F12FA618AC00613C0D /* earsonics.app */,
 				830BB8FE2FA618AE00613C0D /* earsonicsTests.xctest */,
 				830BB9082FA618AE00613C0D /* earsonicsUITests.xctest */,
+				A331345730AEB37900D4DA41 /* earsonics-iOS.app */,
+				A33134DD30AEB45900D4DA41 /* earsonics-iOSUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -114,6 +172,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				830BB8F32FA618AC00613C0D /* earsonics */,
+				E5C0E5C0E5C0E5C0E5C00010 /* SharedApp */,
 			);
 			name = earsonics;
 			packageProductDependencies = (
@@ -169,6 +228,53 @@
 			productReference = 830BB9082FA618AE00613C0D /* earsonicsUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		A331345630AEB37900D4DA41 /* earsonics-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A331346130AEB37A00D4DA41 /* Build configuration list for PBXNativeTarget "earsonics-iOS" */;
+			buildPhases = (
+				A331345330AEB37900D4DA41 /* Sources */,
+				A331345430AEB37900D4DA41 /* Frameworks */,
+				A331345530AEB37900D4DA41 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				A331345830AEB37900D4DA41 /* earsonics-iOS */,
+				E5C0E5C0E5C0E5C0E5C00010 /* SharedApp */,
+			);
+			name = "earsonics-iOS";
+			packageProductDependencies = (
+				E5C0E5C0E5C0E5C0E5C00011 /* EarsonicsCore */,
+			);
+			productName = "earsonics-iOS";
+			productReference = A331345730AEB37900D4DA41 /* earsonics-iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A33134DC30AEB45900D4DA41 /* earsonics-iOSUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A33134E130AEB45900D4DA41 /* Build configuration list for PBXNativeTarget "earsonics-iOSUITests" */;
+			buildPhases = (
+				A33134D930AEB45900D4DA41 /* Sources */,
+				A33134DA30AEB45900D4DA41 /* Frameworks */,
+				A33134DB30AEB45900D4DA41 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E5C0E5C0E5C0E5C0E5C00021 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A33134DE30AEB45900D4DA41 /* earsonics-iOSUITests */,
+			);
+			name = "earsonics-iOSUITests";
+			packageProductDependencies = (
+			);
+			productName = "earsonics-iOSUITests";
+			productReference = A33134DD30AEB45900D4DA41 /* earsonics-iOSUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -176,7 +282,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2640;
+				LastSwiftUpdateCheck = 2720;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
 					830BB8F02FA618AC00613C0D = {
@@ -189,6 +295,12 @@
 					830BB9072FA618AE00613C0D = {
 						CreatedOnToolsVersion = 26.4;
 						TestTargetID = 830BB8F02FA618AC00613C0D;
+					};
+					A331345630AEB37900D4DA41 = {
+						CreatedOnToolsVersion = 27.2;
+					};
+					A33134DC30AEB45900D4DA41 = {
+						CreatedOnToolsVersion = 27.2;
 					};
 				};
 			};
@@ -212,6 +324,8 @@
 				830BB8F02FA618AC00613C0D /* earsonics */,
 				830BB8FD2FA618AE00613C0D /* earsonicsTests */,
 				830BB9072FA618AE00613C0D /* earsonicsUITests */,
+				A331345630AEB37900D4DA41 /* earsonics-iOS */,
+				A33134DC30AEB45900D4DA41 /* earsonics-iOSUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -232,6 +346,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		830BB9062FA618AE00613C0D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A331345530AEB37900D4DA41 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A33134DB30AEB45900D4DA41 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -262,6 +390,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		A331345330AEB37900D4DA41 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A33134D930AEB45900D4DA41 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -274,6 +416,11 @@
 			isa = PBXTargetDependency;
 			target = 830BB8F02FA618AC00613C0D /* earsonics */;
 			targetProxy = 830BB9092FA618AE00613C0D /* PBXContainerItemProxy */;
+		};
+		E5C0E5C0E5C0E5C0E5C00021 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A331345630AEB37900D4DA41 /* earsonics-iOS */;
+			targetProxy = E5C0E5C0E5C0E5C0E5C00020 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -549,6 +696,130 @@
 			};
 			name = Release;
 		};
+		A331345F30AEB37A00D4DA41 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "earsonics-iOS/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = earsonics;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "earsonics connects to your music server, which may be on your home network (for example a NAS or computer running Navidrome).";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wonderworks.earsonics;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A331346030AEB37A00D4DA41 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "earsonics-iOS/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = earsonics;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "earsonics connects to your music server, which may be on your home network (for example a NAS or computer running Navidrome).";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				MARKETING_VERSION = 2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wonderworks.earsonics;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A33134E230AEB45900D4DA41 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.wonderworks.earsonics-iOSUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "earsonics-iOS";
+			};
+			name = Debug;
+		};
+		A33134E330AEB45900D4DA41 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.wonderworks.earsonics-iOSUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "earsonics-iOS";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -588,6 +859,24 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		A331346130AEB37A00D4DA41 /* Build configuration list for PBXNativeTarget "earsonics-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A331345F30AEB37A00D4DA41 /* Debug */,
+				A331346030AEB37A00D4DA41 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A33134E130AEB45900D4DA41 /* Build configuration list for PBXNativeTarget "earsonics-iOSUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A33134E230AEB45900D4DA41 /* Debug */,
+				A33134E330AEB45900D4DA41 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -599,6 +888,10 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		E5C0E5C0E5C0E5C0E5C00002 /* EarsonicsCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = EarsonicsCore;
+		};
+		E5C0E5C0E5C0E5C0E5C00011 /* EarsonicsCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = EarsonicsCore;
 		};

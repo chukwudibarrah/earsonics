@@ -10,7 +10,7 @@ import Foundation
 /// That file is git-ignored: the repository is public, so a real address or
 /// password must never be committed. Without the file, tests use the public
 /// Navidrome demo, which anyone can use and change (see `isPublicDemo`).
-/// `earsonicsTests/TestServer.swift` is a copy of this file for the unit tests.
+/// Copies: `earsonicsTests/` and `earsonics-iOSUITests/` (each test target has its own).
 enum TestServer {
     struct Details: Decodable {
         let url: String

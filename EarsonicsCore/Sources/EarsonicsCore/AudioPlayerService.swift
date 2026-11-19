@@ -166,6 +166,17 @@ public final class AudioPlayerService: NSObject {
                 print("Audio session error: \(error)")
             }
         }
+        #else
+        // iPhone/iPad: a long-form music player, so audio keeps playing when
+        // the phone locks or is set to silent, and AirPlay 2 treats it as
+        // music. Only the category is set here: activating the session at
+        // launch would stop whatever else is playing just by opening the
+        // app. AVPlayer activates it when playback starts.
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, policy: .longFormAudio)
+        } catch {
+            print("Audio session error: \(error)")
+        }
         #endif
     }
 

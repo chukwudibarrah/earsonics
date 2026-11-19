@@ -142,6 +142,11 @@ public final class ServerStore {
             isEphemeral = true
             return
         }
+        // UI tests of first-run sign-in: no servers, and nothing saved.
+        if env["EARSONICS_UITEST_NO_SERVERS"] == "1" {
+            isEphemeral = true
+            return
+        }
         if let url = env["EARSONICS_UITEST_SERVER_URL"],
            let username = env["EARSONICS_UITEST_USERNAME"],
            let password = env["EARSONICS_UITEST_PASSWORD"] {
