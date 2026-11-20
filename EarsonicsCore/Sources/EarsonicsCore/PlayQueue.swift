@@ -265,6 +265,33 @@ public nonisolated struct PlayQueue: Codable, Equatable, Sendable {
     }
 
     /// Moves slots; the current slot keeps playing at its new index.
+    // MARK: Up Next
+    // Screens show only the songs after the current one ("Up Next"), so
+    // their positions start at 0 there. These convert to queue positions.
+
+    /// Queue positions for positions in Up Next.
+    public func entryOffsets(fromUpNext offsets: IndexSet) -> IndexSet {
+        IndexSet(offsets.map { $0 + currentIndex + 1 }.filter { $0 < entries.count })
+    }
+
+    /// Moves songs within Up Next (positions as Up Next shows them).
+    public mutating func moveUpNext(fromOffsets source: IndexSet, toOffset destination: Int) {
+        move(fromOffsets: entryOffsets(fromUpNext: source),
+             toOffset: min(destination + currentIndex + 1, entries.count))
+    }
+
+    /// Moves the song at `index` (a queue position after the current song)
+    /// so it plays next.
+    public mutating func moveToPlayNext(entryAt index: Int) {
+        guard index > currentIndex + 1, index < entries.count else { return }
+        move(fromOffsets: [index], toOffset: currentIndex + 1)
+    }
+
+    /// Queue positions of everything after the current song.
+    public var upNextOffsets: IndexSet {
+        IndexSet(integersIn: min(currentIndex + 1, entries.count)..<entries.count)
+    }
+
     public mutating func move(fromOffsets source: IndexSet, toOffset destination: Int) {
         var positions = Array(entries.indices)
         positions.moveElements(fromOffsets: source, toOffset: destination)
