@@ -13,11 +13,15 @@ A new app on the same App Store listing as the Apple TV app (universal purchase)
 - A separate stream quality for mobile data and Wi-Fi.
 - Queue editing: remove, play next and reorder.
 
+### After 2.0: one look for Apple TV and iPhone
+
+Bring the iPhone app's visual style to the Apple TV app (the midnight palette with a light option, rounded cards, section subtitles, icon tiles and count pills in Library) so the two feel like one product. Keep what makes the TV app work with a remote: focus-driven layouts, the floating Now Playing pill, and simple screens. Settings get the card look with every section open, since collapsing cards costs extra clicks on a remote.
+
 ### 2.1: CarPlay
 
 - Browse recently played music, playlists, albums, artists and downloads in the car, with CarPlay's Now Playing screen.
 - Uses the same queue and downloads as the iPhone app, so offline music plays without signal.
-- Depends on Apple granting the CarPlay audio entitlement.
+- The CarPlay entitlement has been granted.
 
 ### 3.0: Mac
 

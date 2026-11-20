@@ -30,7 +30,8 @@ final class PhoneFoundationUITests: XCTestCase {
         for _ in 0..<4 where !(element.exists && element.isHittable) { app.swipeUp() }
     }
 
-    /// Signed in: the newest albums load, one plays, and pause works.
+    /// Signed in: Home loads, an album opens and plays, and the mini player
+    /// pauses it.
     @MainActor
     func testBrowseAndPlay() throws {
         let app = makeApp()
@@ -44,13 +45,18 @@ final class PhoneFoundationUITests: XCTestCase {
         app.launch()
         dismissSystemAlerts(waiting: 4)   // they appear a moment after launch
 
-        XCTAssertTrue(app.navigationBars["Just arrived"].waitForExistence(timeout: 15), "the album list didn't appear")
-        let album = app.collectionViews.buttons.firstMatch
-        XCTAssertTrue(album.waitForExistence(timeout: 15), "no albums loaded")
+        XCTAssertTrue(app.navigationBars["Home"].waitForExistence(timeout: 15), "Home didn't appear")
+        let album = app.buttons.matching(identifier: "albumCard").firstMatch
+        XCTAssertTrue(album.waitForExistence(timeout: 20), "no albums on Home")
         album.tap()
 
+        let play = app.buttons["Play"]
+        XCTAssertTrue(play.waitForExistence(timeout: 15), "the album page didn't open")
+        XCTAssertTrue(waitUntil(timeout: 15) { play.isEnabled }, "the album's songs didn't load")
+        play.tap()
+
         let pause = app.buttons["Pause"]
-        XCTAssertTrue(pause.waitForExistence(timeout: 30), "playback didn't start")
+        XCTAssertTrue(pause.waitForExistence(timeout: 30), "playback didn't start (no Pause in the mini player)")
         pause.tap()
         XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 10), "pause didn't work")
     }
@@ -83,7 +89,17 @@ final class PhoneFoundationUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Connected successfully"].waitForExistence(timeout: 15), "the connection test failed")
         reveal(save, in: app)
         save.tap()
-        XCTAssertTrue(app.navigationBars["Just arrived"].waitForExistence(timeout: 15), "signing in didn't open the library")
+        XCTAssertTrue(app.navigationBars["Home"].waitForExistence(timeout: 15), "signing in didn't open the library")
+    }
+
+    @MainActor
+    private func waitUntil(timeout: TimeInterval, _ condition: () -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if condition() { return true }
+            Thread.sleep(forTimeInterval: 0.25)
+        }
+        return condition()
     }
 
     @MainActor
