@@ -4,6 +4,7 @@
 - **Home:** a summary card, Quick Picks (Favourites, Recently Played) and shelves for Recently Added, Recently Played, On Repeat, Playlists, Genres and Discover.
 - **Library:** Favourites, Recently Played, Recently Added, Songs, Albums (sortable), Artists, Genres and Playlists (with New Playlist). Album, artist, playlist and genre pages have Play and Shuffle; long-press a song or album for Play Next, Add to Queue, Favourite, Add to Playlist and links to the album or artist.
 - **Now Playing:** tap the mini player for the full screen: artwork, scrubbing, shuffle and repeat, favourite, the AirPlay picker (AirPlay 2 speakers, HomePod, Bluetooth) and the volume slider, with lyrics (synced ones follow the song; tap a line to jump to it) and the queue. Side by side on iPad and an unfolded iPhone Duo. Lock Screen and Control Center show the song with its artwork and controls.
+- **Edit what's up next:** in the queue, swipe left to remove a song, swipe right to play it next, drag (or tap Edit) to reorder, or clear Up Next. The song that's playing keeps going.
 - **Search** with quick starts from your genres and playlists, and recent searches.
 - **Settings:** servers, playback (quality, crossfade, even volume), queue, appearance (System, Dark or Light, and the highlight colour), storage and About.
 - **Layouts for every screen size:** a tab bar on iPhone, and a sidebar with the library's sections on iPad. Pages lay out side by side when there's room, and it adapts as you fold or unfold an iPhone Duo or resize an iPad window.

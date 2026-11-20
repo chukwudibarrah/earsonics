@@ -895,6 +895,32 @@ public final class AudioPlayerService: NSObject {
         revalidatePrewarm()
     }
 
+    /// Removes songs from Up Next (positions as Up Next shows them).
+    public func removeFromUpNext(at offsets: IndexSet) {
+        removeFromQueue(at: playQueue.entryOffsets(fromUpNext: offsets))
+    }
+
+    /// Reorders Up Next (positions as Up Next shows them).
+    public func moveUpNext(from source: IndexSet, to destination: Int) {
+        if transitionState == .crossfading { settleTransition() }
+        playQueue.moveUpNext(fromOffsets: source, toOffset: destination)
+        revalidatePrewarm()
+    }
+
+    /// Makes the song at queue position `index` play next.
+    public func playNext(entryAt index: Int) {
+        if transitionState == .crossfading { settleTransition() }
+        playQueue.moveToPlayNext(entryAt: index)
+        revalidatePrewarm()
+    }
+
+    /// Empties Up Next; the current song keeps playing.
+    public func clearUpNext() {
+        let offsets = playQueue.upNextOffsets
+        guard !offsets.isEmpty else { return }
+        removeFromQueue(at: offsets)
+    }
+
     // MARK: - Shuffle
     public func toggleShuffle() {
         if transitionState == .crossfading { settleTransition() }

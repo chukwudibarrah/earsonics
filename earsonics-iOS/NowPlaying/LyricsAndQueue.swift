@@ -87,14 +87,18 @@ struct LyricsPanel: View {
     }
 }
 
-/// What's playing and what's next. Tap a song to play it. Songs added
-/// automatically when the queue ran out are marked Autoplay.
+/// What's playing and what's next. Tap a song to play it; swipe to remove
+/// it or play it next; drag (or tap Edit) to reorder; Clear empties Up Next.
+/// Songs added automatically when the queue ran out are marked Autoplay.
 struct QueuePanel: View {
     private let player = AudioPlayerService.shared
+    @State private var editMode = EditMode.inactive
+    @State private var confirmsClear = false
 
     var body: some View {
         let entries = player.playQueue.entries
         let current = player.playQueue.currentIndex
+        let upNext = Array(entries.indices.dropFirst(current + 1))
         ScrollViewReader { proxy in
             List {
                 if entries.indices.contains(current) {
@@ -102,16 +106,49 @@ struct QueuePanel: View {
                         row(entries[current], index: current, isCurrent: true)
                     }
                 }
-                let upcoming = Array(entries.indices.dropFirst(current + 1))
-                Section(upcoming.isEmpty ? "Nothing up next" : "Up Next") {
-                    ForEach(upcoming, id: \.self) { index in
+                Section {
+                    ForEach(upNext, id: \.self) { index in
                         row(entries[index], index: index, isCurrent: false)
+                            .swipeActions(edge: .trailing) {
+                                Button("Remove", systemImage: "minus.circle", role: .destructive) {
+                                    player.removeFromQueue(at: [index])
+                                }
+                            }
+                            .swipeActions(edge: .leading) {
+                                if index > current + 1 {
+                                    Button("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward") {
+                                        player.playNext(entryAt: index)
+                                    }
+                                    .tint(.accentColor)
+                                }
+                            }
                     }
+                    .onMove { source, destination in player.moveUpNext(from: source, to: destination) }
+                    .onDelete { offsets in player.removeFromUpNext(at: offsets) }
+                } header: {
+                    HStack {
+                        Text(upNext.isEmpty ? "Nothing up next" : "Up Next")
+                        Spacer()
+                        if !upNext.isEmpty {
+                            Button("Clear") { confirmsClear = true }
+                            Button(editMode.isEditing ? "Done" : "Edit") {
+                                withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+                            }
+                        }
+                    }
+                    .textCase(nil)
                 }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
+            .environment(\.editMode, $editMode)
+            .accessibilityIdentifier("queueList")
             .onAppear { proxy.scrollTo(current, anchor: .top) }
+            .confirmationDialog("Clear Up Next?", isPresented: $confirmsClear, titleVisibility: .visible) {
+                Button("Clear \(upNext.count.counted("song"))", role: .destructive) { player.clearUpNext() }
+            } message: {
+                Text("The song that’s playing keeps going.")
+            }
         }
     }
 
@@ -137,9 +174,12 @@ struct QueuePanel: View {
                         .background(.white.opacity(0.12), in: Capsule())
                 }
             }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .listRowBackground(Color.clear)
+        .accessibilityLabel("\(entry.song.title), \(entry.song.artist ?? "")\(entry.isAutoplay ? ", autoplay" : "")")
+        .accessibilityHint(isCurrent ? "" : "Plays this song")
         .id(index)
     }
 }
