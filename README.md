@@ -125,4 +125,4 @@ See [`about.md`](about.md), [`terms-and-conditions.md`](terms-and-conditions.md)
 
 ## Support
 
-If earsonics is useful to you, you can [buy me a coffee](https://buymeacoffee.com/cbarrah) (there's also a QR code in the Apple TV app's Settings → About). Never required, always appreciated.
+If earsonics is useful to you, you can [buy me a coffee](https://buymeacoffee.com/cbarrah) (it's also in the app's Settings → About). Never required, always appreciated.

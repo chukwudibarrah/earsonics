@@ -110,6 +110,7 @@ struct SettingsView: View {
                 SettingsCard(title: "About", subtitle: "earsonics \(appVersion)", summary: nil) {
                     Button("Rate earsonics") { requestReview() }
                     Link("Write a Review", destination: URL(string: "https://apps.apple.com/app/id6766037499?action=write-review")!)
+                    Link("Buy Me a Coffee", destination: URL(string: "https://buymeacoffee.com/cbarrah")!)
                     Link("Privacy Policy", destination: URL(string: "https://github.com/chukwudibarrah/earsonics/blob/main/privacy-policy.md")!)
                     Link("Source Code on GitHub", destination: URL(string: "https://github.com/chukwudibarrah/earsonics")!)
                 }

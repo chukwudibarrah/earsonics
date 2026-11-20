@@ -214,19 +214,19 @@ struct SettingsView: View {
                         showDonationQR = true
                     } label: {
                         HStack {
-                            Text("QR code me a coffee")
+                            Text("Buy me a coffee")
                             Spacer()
                             Text("Show QR").foregroundColor(.secondary)
                         }
                     }
                     .sheet(isPresented: $showDonationQR) {
                         VStack(spacing: 40) {
-                            Text("Scan to donate a coffee!")
+                            Text("Enjoying earsonics? Scan to buy me a coffee. Never required, always appreciated.")
                                 .font(.subheadline)
-                            Image("paypalme")
-                                .resizable()
-                                .scaledToFit()
+                                .multilineTextAlignment(.center)
+                            QRCodeImage(text: AppLinks.buyMeACoffee.absoluteString)
                                 .frame(width: 500, height: 500)
+                                .accessibilityLabel("QR code for the earsonics Buy Me a Coffee page")
                             Button("Close") { showDonationQR = false }
                         }
                         .padding()

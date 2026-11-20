@@ -7,6 +7,8 @@ import EarsonicsCore
 enum AppLinks {
     /// The App Store "write a review" page for earsonics.
     static let writeReview = URL(string: "https://apps.apple.com/app/id6766037499?action=write-review")!
+    /// The developer's Buy Me a Coffee page.
+    static let buyMeACoffee = URL(string: "https://buymeacoffee.com/cbarrah")!
 }
 
 /// A QR code for `text`, drawn crisp at any size (black on white, with the
