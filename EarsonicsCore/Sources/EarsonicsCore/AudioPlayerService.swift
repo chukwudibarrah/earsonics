@@ -418,18 +418,28 @@ public final class AudioPlayerService: NSObject {
     /// setting. Plays from the cache file on a hit; otherwise streams through the
     /// caching resource loader (unless caching is disabled).
     private func makePlayerItem(for song: Song, server srv: Server) -> AVPlayerItem? {
-        let quality = StreamQuality.current
+        // A downloaded copy plays first: it works offline and costs no data.
+        if let downloaded = DownloadStore.shared.localFile(songId: song.id, serverID: srv.id) {
+            LoudnessStore.shared.measureIfNeeded(fileURL: downloaded, songId: song.id, serverID: srv.id)
+            return AVPlayerItem(url: downloaded)
+        }
+        // On mobile data or in Low Data Mode, the mobile-data quality.
+        let quality = StreamQuality.forStreaming
         guard let streamURL = SubsonicClient.shared.streamURL(songId: song.id, quality: quality, server: srv) else {
             return nil
         }
         let cachingEnabled = UserDefaults.standard.object(forKey: "audioCacheEnabled") as? Bool ?? true
         guard cachingEnabled else { return AVPlayerItem(url: streamURL) }
 
-        let ext = AudioCache.fileExtension(quality: quality, songSuffix: song.suffix, contentType: song.contentType)
-        if let cached = AudioCache.cachedFileURL(for: song.id, serverID: srv.id, quality: quality, fileExtension: ext) {
-            // Songs cached before measuring existed, or measured since.
-            LoudnessStore.shared.measureIfNeeded(fileURL: cached, songId: song.id, serverID: srv.id)
-            return AVPlayerItem(url: cached)
+        // Any cached copy is free to play, so on mobile data a copy cached
+        // at the Wi-Fi quality beats streaming again.
+        for cacheQuality in quality == StreamQuality.current ? [quality] : [quality, StreamQuality.current] {
+            let cacheExt = AudioCache.fileExtension(quality: cacheQuality, songSuffix: song.suffix, contentType: song.contentType)
+            if let cached = AudioCache.cachedFileURL(for: song.id, serverID: srv.id, quality: cacheQuality, fileExtension: cacheExt) {
+                // Songs cached before measuring existed, or measured since.
+                LoudnessStore.shared.measureIfNeeded(fileURL: cached, songId: song.id, serverID: srv.id)
+                return AVPlayerItem(url: cached)
+            }
         }
 
         // Swap the scheme to a custom one so AVFoundation routes byte requests

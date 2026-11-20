@@ -74,6 +74,8 @@ struct SongList: View {
     var context: PlayContext = .mix
     var showsTrackNumbers = false
     var groupsByDisc = false
+    /// The page, for mix lists (see `PlaySource`).
+    var source: String? = nil
 
     var body: some View {
         let discs = Set(songs.compactMap(\.discNumber))
@@ -89,7 +91,8 @@ struct SongList: View {
                 } else if index > 0 {
                     Divider().padding(.leading, showsTrackNumbers ? 42 : 62)
                 }
-                SongRow(song: song, index: index, songs: songs, context: context, showsTrackNumber: showsTrackNumbers)
+                SongRow(song: song, index: index, songs: songs, context: context, showsTrackNumber: showsTrackNumbers,
+                        source: source)
             }
         }
         .card(cornerRadius: 22, padding: 12)
@@ -116,10 +119,10 @@ struct AlbumDetailView: View {
             DetailHeader(coverArt: shown?.coverArt, title: shown?.name ?? "",
                          subtitle: shown?.artistId.map { .artistID(id: $0, name: shown?.artist ?? "") },
                          subtitleText: shown?.artist, detail: detailLine) {
-                HStack(spacing: 12) {
-                    PlayShuffleButtons(play: { Playback.play(songs, shuffle: false, context: .album(id: albumID)) },
-                                       shuffle: { Playback.play(songs, shuffle: true, context: .album(id: albumID)) },
-                                       isBusy: album == nil)
+                PlayShuffleRow(play: { Playback.play(songs, shuffle: false, context: .album(id: albumID)) },
+                               shuffle: { Playback.play(songs, shuffle: true, context: .album(id: albumID)) },
+                               isBusy: album == nil, context: .album(id: albumID)) {
+                    CollectionDownloadButton(collection: album.map { $0.downloadCollection(songs: songs) }, songs: songs)
                     Button(isStarred ? "Remove from Favourites" : "Add to Favourites",
                            systemImage: isStarred ? "heart.fill" : "heart") {
                         Task { await LibraryStore.shared.toggleStar(.album, id: albumID, isStarred: isStarred) }
@@ -187,7 +190,7 @@ struct ArtistDetailView: View {
                     HStack(spacing: 12) {
                         PlayShuffleButtons(play: { Task { await playAll(shuffle: false) } },
                                            shuffle: { Task { await playAll(shuffle: true) } },
-                                           isBusy: isFetching || albums.isEmpty)
+                                           isBusy: isFetching || albums.isEmpty, context: .artist(id: artistID))
                         Button(isStarred ? "Remove from Favourites" : "Add to Favourites",
                                systemImage: isStarred ? "heart.fill" : "heart") {
                             Task { await LibraryStore.shared.toggleStar(.artist, id: artistID, isStarred: isStarred) }
@@ -260,10 +263,12 @@ struct PlaylistDetailView: View {
         DetailLayout {
             DetailHeader(coverArt: playlist.coverArt, placeholder: "music.note.list", title: loaded?.name ?? playlist.name,
                          subtitleText: playlist.comment, detail: (loaded ?? playlist).summary) {
-                PlayShuffleButtons(play: { Playback.play(songs, shuffle: false, context: .playlist(id: playlist.id)) },
-                                   shuffle: { Playback.play(songs, shuffle: true, context: .playlist(id: playlist.id)) },
-                                   isBusy: loaded == nil)
-                    .frame(maxWidth: 480)
+                PlayShuffleRow(play: { Playback.play(songs, shuffle: false, context: .playlist(id: playlist.id)) },
+                               shuffle: { Playback.play(songs, shuffle: true, context: .playlist(id: playlist.id)) },
+                               isBusy: loaded == nil, context: .playlist(id: playlist.id)) {
+                    CollectionDownloadButton(collection: loaded.map { $0.downloadCollection(songs: songs) }, songs: songs)
+                }
+                .frame(maxWidth: 540)
             }
         } content: {
             if loaded == nil {
@@ -301,7 +306,8 @@ struct GenreDetailView: View {
                     Text(genre.countsText).foregroundStyle(Palette.secondaryText)
                 }
                 PlayShuffleButtons(play: { Task { await play(shuffle: false) } },
-                                   shuffle: { Task { await play(shuffle: true) } }, isBusy: isFetching)
+                                   shuffle: { Task { await play(shuffle: true) } }, isBusy: isFetching,
+                                   context: .genre(name: genre.value))
                     .frame(maxWidth: 480)
                 if !albums.isEmpty {
                     SectionHeader(title: "Albums")

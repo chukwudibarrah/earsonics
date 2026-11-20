@@ -75,4 +75,37 @@ public nonisolated enum StreamQuality: String, CaseIterable, Identifiable, Senda
         let raw = UserDefaults.standard.string(forKey: defaultsKey)
         return raw.flatMap(StreamQuality.init(rawValue:)) ?? .original
     }
+
+    /// Mobile-data choice (iPhone/iPad): a quality, or `sameAsWiFiValue`.
+    public static let cellularKey = "streamQualityCellular"
+    public static let sameAsWiFiValue = "sameAsWiFi"
+    /// Quality for downloads (iPhone/iPad).
+    public static let downloadKey = "downloadQuality"
+
+    /// The quality to stream at right now: the mobile-data choice on mobile
+    /// data or in Low Data Mode, otherwise `current`. Unset on iPhone/iPad
+    /// means MP3 320 kbps on mobile data; elsewhere it means "same as Wi-Fi".
+    public static var forStreaming: StreamQuality {
+        guard NetworkMonitor.shared.isCostly else { return current }
+        return cellularChoice ?? current
+    }
+
+    /// The mobile-data setting itself; nil means "same as Wi-Fi".
+    public static var cellularChoice: StreamQuality? {
+        switch UserDefaults.standard.string(forKey: cellularKey) {
+        case sameAsWiFiValue?: return nil
+        case let raw?: return StreamQuality(rawValue: raw)
+        case nil:
+            #if os(iOS)
+            return .mp3_320
+            #else
+            return nil
+            #endif
+        }
+    }
+
+    /// The quality new downloads use (MP3 320 kbps unless chosen otherwise).
+    public static var forDownloads: StreamQuality {
+        UserDefaults.standard.string(forKey: downloadKey).flatMap(StreamQuality.init(rawValue:)) ?? .mp3_320
+    }
 }

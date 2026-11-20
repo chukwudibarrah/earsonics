@@ -26,13 +26,30 @@ struct Artwork: View {
                 }
             }
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            .task(id: id) { await load() }
+            .task(id: "\(id ?? "")#\(DownloadStore.shared.artworkVersion)") { await load() }
             .accessibilityHidden(true)
     }
 
     private func load() async {
-        guard let id, let server = SubsonicClient.shared.server,
-              let url = SubsonicClient.shared.coverArtURL(id: id, size: pixels, server: server) else {
+        guard let id, let server = SubsonicClient.shared.server else {
+            image = nil
+            return
+        }
+        // A downloaded album's cover is on the device: no network needed.
+        if let file = DownloadStore.shared.artworkFile(id: id, serverID: server.id) {
+            let side = CGFloat(pixels)
+            let saved = await Task.detached(priority: .userInitiated) { () async -> UIImage? in
+                guard let full = UIImage(contentsOfFile: file.path), full.size.width > 0, full.size.height > 0 else { return nil }
+                let scale = min(1, side / max(full.size.width, full.size.height))
+                return await full.byPreparingThumbnail(ofSize: CGSize(width: full.size.width * scale,
+                                                                      height: full.size.height * scale)) ?? full
+            }.value
+            if let saved {
+                image = saved
+                return
+            }
+        }
+        guard let url = SubsonicClient.shared.coverArtURL(id: id, size: pixels, server: server) else {
             image = nil
             return
         }
@@ -98,23 +115,29 @@ extension Playlist {
     }
 }
 
-/// A genre's name and size over one of its album covers.
+/// A genre's name and size, beside one of its album covers.
 struct GenreCard: View {
     let genre: Genre
     let coverArt: String?
+    /// Off for narrow cards (the Home shelf), where a cover leaves the name
+    /// no room.
+    var showsCover = true
 
     var body: some View {
         NavigationLink(value: Route.genre(genre)) {
             HStack(spacing: 14) {
-                Artwork(id: coverArt, pixels: 240, cornerRadius: 12, placeholderSymbol: "guitars")
-                    .frame(width: 72, height: 72)
+                if showsCover {
+                    Artwork(id: coverArt, pixels: 240, cornerRadius: 12, placeholderSymbol: "guitars")
+                        .frame(width: 72, height: 72)
+                }
                 VStack(alignment: .leading, spacing: 4) {
                     Text(genre.value).font(.headline).lineLimit(2)
-                    Text(genre.countsText).font(.subheadline).foregroundStyle(Palette.secondaryText).lineLimit(1)
+                    Text(genre.countsText).font(.subheadline).foregroundStyle(Palette.secondaryText).lineLimit(showsCover ? 1 : 2)
                 }
                 Spacer(minLength: 0)
             }
-            .card(cornerRadius: 20, padding: 10)
+            .frame(minHeight: 72)
+            .card(cornerRadius: 20, padding: showsCover ? 10 : 16)
             .contentShape(RoundedRectangle(cornerRadius: 20))
         }
         .buttonStyle(.plain)

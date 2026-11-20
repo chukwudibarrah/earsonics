@@ -151,16 +151,14 @@ private struct NowPlayingBackground: View {
 private struct Scrubber: View {
     private let player = AudioPlayerService.shared
     @State private var dragValue: Double?
+    @State private var settle: Task<Void, Never>?
 
     var body: some View {
         let total = max(player.duration, 1)
         let current = dragValue ?? player.currentTime
         VStack(spacing: 4) {
-            Slider(value: Binding(get: { min(current, total) }, set: { dragValue = $0 }), in: 0...total) { editing in
-                if !editing, let value = dragValue {
-                    player.seek(to: value)
-                    dragValue = nil
-                }
+            Slider(value: Binding(get: { min(current, total) }, set: drag), in: 0...total) { editing in
+                if !editing, let value = dragValue { commit(value) }
             }
             .accessibilityLabel("Position")
             .accessibilityValue("\(Self.time(current)) of \(Self.time(total))")
@@ -171,6 +169,29 @@ private struct Scrubber: View {
             }
             .font(.caption.monospacedDigit())
             .foregroundStyle(.secondary)
+        }
+    }
+
+    /// The slider doesn't always report the end of a drag, so a seek also
+    /// happens once the thumb has rested for a moment.
+    private func drag(to value: Double) {
+        dragValue = value
+        settle?.cancel()
+        settle = Task {
+            try? await Task.sleep(for: .milliseconds(350))
+            guard !Task.isCancelled else { return }
+            commit(value)
+        }
+    }
+
+    private func commit(_ value: Double) {
+        settle?.cancel()
+        player.seek(to: value)
+        // Keep showing where it was dragged until the player catches up.
+        settle = Task {
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
+            dragValue = nil
         }
     }
 

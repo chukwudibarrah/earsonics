@@ -32,6 +32,11 @@ final class LibraryCounts {
         case .artists:    artists?.counted("artist")
         case .genres:     genres?.counted("genre")
         case .playlists:  LibraryStore.shared.playlists.count.counted("playlist")
+        case .downloads:
+            SubsonicClient.shared.server.flatMap { server in
+                let count = DownloadStore.shared.downloadedSongs(serverID: server.id).count
+                return count > 0 ? count.counted("song") : nil
+            }
         case .recentlyPlayed, .recentlyAdded, .albums: nil
         }
     }

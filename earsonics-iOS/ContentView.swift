@@ -88,6 +88,10 @@ private struct MainTabs: View {
         // Folding an iPhone Duo or narrowing an iPad window removes the
         // sidebar shortcuts: keep the person on the same part of the library
         // by opening it inside the Library tab.
+        // Picks up downloads left unfinished when the app was last closed.
+        .task(id: appState.activeServerID) {
+            if let server = appState.serverStore.activeServer { await DownloadStore.shared.resumePending(server: server) }
+        }
         .onChange(of: isWide) { _, wide in
             if !wide, case .section(let section) = selection {
                 libraryPath = [.section(section)]
