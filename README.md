@@ -13,6 +13,10 @@
   This repository is the app's full source.
 </p>
 
+<p align="center">
+  <a href="https://buymeacoffee.com/cbarrah"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-cbarrah-FFDD00?logo=buymeacoffee&logoColor=black" alt="Buy me a coffee"></a>
+</p>
+
 ## Features
 
 - Browse by artist, album, genre, and playlist, with a Home screen of shelves (Just arrived, Keep spinning, Recently played, Discover)
@@ -121,4 +125,4 @@ See [`about.md`](about.md), [`terms-and-conditions.md`](terms-and-conditions.md)
 
 ## Support
 
-If earsonics is useful to you, there's an optional "buy me a coffee" link in the app's Settings → About section. Never required, always appreciated.
+If earsonics is useful to you, you can [buy me a coffee](https://buymeacoffee.com/cbarrah) (it's also in the app's Settings → About). Never required, always appreciated.

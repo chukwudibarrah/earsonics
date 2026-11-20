@@ -9,6 +9,7 @@
 - **Mobile data:** a separate streaming quality for mobile data and Low Data Mode (MP3 320 kbps unless you choose otherwise, or Same as Wi-Fi), a download quality, and Download over mobile data (off by default, so downloads wait for Wi-Fi). Songs already cached or downloaded play from the device instead of streaming again.
 - **Play becomes Pause** on a page while what it plays is playing (albums, artists, playlists, genres, Songs, Favourites and Downloads), and Resume once paused.
 - **Servers:** switch, edit (the pencil) or add servers from Settings › Servers.
+- **Buy Me a Coffee** in Settings › About on iPhone and iPad. On Apple TV, the About QR code now opens the same page instead of PayPal.
 - **Search** with quick starts from your genres and playlists, and recent searches.
 - **Settings:** servers, playback (quality, crossfade, even volume), queue, appearance (System, Dark or Light, and the highlight colour), downloads, storage and About.
 - **Layouts for every screen size:** a tab bar on iPhone, and a sidebar with the library's sections on iPad. Pages lay out side by side when there's room, and it adapts as you fold or unfold an iPhone Duo or resize an iPad window.
