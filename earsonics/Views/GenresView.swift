@@ -80,23 +80,6 @@ struct GenresView: View {
     }
 }
 
-/// The cover shown for each genre: the first album with artwork in the
-/// genre's (alphabetical) album list, so a genre always shows the same one.
-/// Looked up once per genre, when its tile first comes on screen.
-@MainActor @Observable
-final class GenreCovers {
-    private(set) var coverArt: [String: String] = [:]
-    @ObservationIgnored private var requested: Set<String> = []
-
-    func load(_ genre: String) async {
-        guard requested.insert(genre).inserted else { return }
-        let albums = (try? await SubsonicClient.shared.getAlbumsByGenre(genre: genre, size: 10)) ?? []
-        if let cover = albums.first(where: { $0.coverArt != nil })?.coverArt {
-            coverArt[genre] = cover
-        }
-    }
-}
-
 /// A genre's name and size, with one of its album covers: sharp on the
 /// left, blurred and darkened behind the text.
 struct GenreTile: View {
@@ -144,10 +127,7 @@ struct GenreTile: View {
         .cardSurface()
     }
 
-    static func counts(_ genre: Genre) -> String {
-        let songs = genre.songCount ?? 0, albums = genre.albumCount ?? 0
-        return "\(songs) \(songs == 1 ? "song" : "songs") · \(albums) \(albums == 1 ? "album" : "albums")"
-    }
+    static func counts(_ genre: Genre) -> String { genre.countsText }
 }
 
 /// A genre's page: Play and Shuffle for its songs, and its albums.

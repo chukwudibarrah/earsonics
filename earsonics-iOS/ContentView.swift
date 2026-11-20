@@ -2,199 +2,156 @@
 import SwiftUI
 import EarsonicsCore
 
-/// Stage 1 of the iPhone/iPad app: just enough to prove the foundation (sign
-/// in, browse, play) works on a phone. Stage 2 replaces it with the real tab
-/// bar (iPhone) and sidebar (iPad).
+/// The app's tabs. Library is always a tab (its hub page lists the
+/// sections); with room for a sidebar (iPad, an unfolded iPhone Duo) the
+/// sidebar also lists the sections themselves as shortcuts.
+enum AppTab: Hashable {
+    case home, search, library, settings
+    case section(LibrarySection)
+}
+
 struct ContentView: View {
     @Environment(AppState.self) private var appState
-    @State private var editingServer = false
-
-    var body: some View {
-        NavigationStack {
-            Group {
-                if appState.serverStore.activeServer == nil {
-                    ServerSignInView()
-                } else {
-                    NewestAlbumsList()
-                        .toolbar {
-                            Button("Server", systemImage: "server.rack") { editingServer = true }
-                        }
-                        .sheet(isPresented: $editingServer) {
-                            NavigationStack { ServerSignInView(editing: appState.serverStore.activeServer) }
-                        }
-                }
-            }
-        }
-        .safeAreaInset(edge: .bottom) { NowPlayingStrip() }
-    }
-}
-
-/// The server's newest albums; tapping one plays it.
-private struct NewestAlbumsList: View {
-    @Environment(AppState.self) private var appState
-    @State private var albums: [Album] = []
-    @State private var failure: String?
-
-    var body: some View {
-        List(albums) { album in
-            Button {
-                Task { await play(album) }
-            } label: {
-                HStack(spacing: 14) {
-                    CoverArtThumbnail(id: album.coverArt)
-                    VStack(alignment: .leading) {
-                        Text(album.name).font(.headline).lineLimit(1)
-                        Text(album.artist ?? "").font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
-                    }
-                }
-            }
-            .foregroundStyle(.primary)
-        }
-        .overlay {
-            if let failure { ContentUnavailableView("Couldn’t load albums", systemImage: "wifi.exclamationmark", description: Text(failure)) }
-        }
-        .navigationTitle("Just arrived")
-        .task(id: appState.activeServerID) { await load() }
-        .refreshable { await load() }
-    }
-
-    private func load() async {
-        do {
-            albums = try await SubsonicClient.shared.getAlbumList(type: "newest", size: 30)
-            failure = nil
-        } catch {
-            failure = error.localizedDescription
-        }
-    }
-
-    private func play(_ album: Album) async {
-        do {
-            let songs = try await SubsonicClient.shared.getAlbum(id: album.id).songs ?? []
-            guard !songs.isEmpty else { return }
-            AudioPlayerService.shared.load(songs: songs, startIndex: 0, context: .album(id: album.id))
-        } catch {
-            Messages.shared.showFailure("play “\(album.name)”", error)
-        }
-    }
-}
-
-/// A small cover, loaded through the shared artwork cache.
-private struct CoverArtThumbnail: View {
-    let id: String?
-    @State private var image: UIImage?
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @AppStorage(AppearanceChoice.key) private var appearance = AppearanceChoice.defaultValue
 
     var body: some View {
         Group {
-            if let image { Image(uiImage: image).resizable().scaledToFill() }
-            else { Color.secondary.opacity(0.2).overlay(Image(systemName: "music.note").foregroundStyle(.secondary)) }
+            if appState.serverStore.servers.isEmpty {
+                NavigationStack { ServerEditView(isFirstRun: true) }
+            } else {
+                MainTabs()
+            }
         }
-        .frame(width: 56, height: 56)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .task(id: id) {
-            guard let id, let server = SubsonicClient.shared.server,
-                  let url = SubsonicClient.shared.coverArtURL(id: id, size: 112, server: server) else { return }
-            image = await ImageCache.shared.image(for: id, size: 112, serverID: server.id, url: url)
+        .tint(appState.accentColor)
+        .environment(\.appAccent, appState.accentColor)
+        .preferredColorScheme(appearance.colorScheme)
+        .overlay(alignment: .top) { MessageBanner() }
+    }
+}
+
+private struct MainTabs: View {
+    @Environment(AppState.self) private var appState
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    private let player = AudioPlayerService.shared
+
+    @State private var selection: AppTab = .home
+    @State private var homePath = NavigationPath()
+    @State private var searchPath = NavigationPath()
+    @State private var libraryPath: [Route] = []
+    @State private var settingsPath = NavigationPath()
+    @State private var showsNowPlaying = false
+    @Namespace private var nowPlayingZoom
+
+    private var isWide: Bool { horizontalSizeClass == .regular }
+
+    var body: some View {
+        TabView(selection: $selection) {
+            Tab("Home", systemImage: "house.fill", value: AppTab.home) {
+                NavigationStack(path: $homePath) { HomeView().routeDestinations() }
+            }
+
+            Tab("Library", systemImage: "square.stack.fill", value: AppTab.library) {
+                NavigationStack(path: $libraryPath) { LibraryHubView().routeDestinations() }
+            }
+
+            TabSection("Your Library") {
+                ForEach(LibrarySection.allCases) { section in
+                    Tab(section.title, systemImage: section.systemImage, value: AppTab.section(section)) {
+                        NavigationStack { LibrarySectionView(section: section).routeDestinations() }
+                    }
+                    .tabPlacement(.sidebarOnly)
+                }
+            }
+            // Sidebar only: the Library tab already covers it in the tab bar.
+            .defaultVisibility(.hidden, for: .tabBar)
+            .hidden(!isWide)
+
+            Tab("Settings", systemImage: "gearshape.fill", value: AppTab.settings) {
+                NavigationStack(path: $settingsPath) { SettingsView().routeDestinations() }
+            }
+
+            Tab(value: AppTab.search, role: .search) {
+                NavigationStack(path: $searchPath) { SearchView().routeDestinations() }
+            }
+        }
+        .tabViewStyle(.sidebarAdaptable)
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .tabViewBottomAccessory(isEnabled: player.currentSong != nil) {
+            MiniPlayer { showsNowPlaying = true }
+                .matchedTransitionSource(id: "nowPlaying", in: nowPlayingZoom)
+        }
+        .fullScreenCover(isPresented: $showsNowPlaying) {
+            NowPlayingView()
+                .navigationTransition(.zoom(sourceID: "nowPlaying", in: nowPlayingZoom))
+        }
+        // Folding an iPhone Duo or narrowing an iPad window removes the
+        // sidebar shortcuts: keep the person on the same part of the library
+        // by opening it inside the Library tab.
+        .onChange(of: isWide) { _, wide in
+            if !wide, case .section(let section) = selection {
+                libraryPath = [.section(section)]
+                selection = .library
+            }
         }
     }
 }
 
-/// What's playing, with play/pause. Stage 3 replaces it with the mini
-/// player and full Now Playing screen.
-private struct NowPlayingStrip: View {
+/// The floating pill above the tab bar while something is playing. Tap it
+/// to open Now Playing; its buttons work on their own.
+struct MiniPlayer: View {
+    let open: () -> Void
+    @Environment(\.tabViewBottomAccessoryPlacement) private var placement
     private let player = AudioPlayerService.shared
 
     var body: some View {
         if let song = player.currentSong {
-            HStack {
-                VStack(alignment: .leading) {
-                    Text(song.title).font(.subheadline.bold()).lineLimit(1)
-                    Text(song.artist ?? "").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            HStack(spacing: 12) {
+                Artwork(id: song.coverArt, pixels: 120, cornerRadius: 8)
+                    .frame(width: 34, height: 34)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(song.title).font(.subheadline.weight(.semibold)).lineLimit(1)
+                    if placement != .inline {
+                        Text(song.artist ?? "").font(.caption).foregroundStyle(Palette.secondaryText).lineLimit(1)
+                    }
                 }
-                Spacer()
+                Spacer(minLength: 4)
                 Button(player.isPlaying ? "Pause" : "Play", systemImage: player.isPlaying ? "pause.fill" : "play.fill") {
                     player.togglePlayPause()
                 }
-                .labelStyle(.iconOnly)
-                .font(.title2)
+                .font(.title3)
+                if placement != .inline {
+                    Button("Next", systemImage: "forward.fill") { player.skipNext() }
+                        .font(.title3)
+                }
             }
-            .padding()
-            .background(.bar)
+            .labelStyle(.iconOnly)
+            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: open)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("Now playing: \(song.title), \(song.artist ?? "")")
+            .accessibilityAction(named: "Open Now Playing", open)
         }
     }
 }
 
-/// Add or edit a server. Same checks as the Apple TV editor; the password
-/// goes to the Keychain via ServerStore.
-struct ServerSignInView: View {
-    @Environment(AppState.self) private var appState
-    @Environment(\.dismiss) private var dismiss
-    var editing: Server? = nil
-
-    @State private var name = ""
-    @State private var url = "https://"
-    @State private var username = ""
-    @State private var password = ""
-    @State private var testResult: String?
-    @State private var isTesting = false
-
-    private var urlCheck: Server.URLCheck { Server.check(url: url) }
-    private var isValid: Bool { !name.isEmpty && urlCheck != .invalid && !username.isEmpty && !password.isEmpty }
+/// The app-wide message (an action's outcome, or why it failed).
+private struct MessageBanner: View {
+    private let messages = Messages.shared
 
     var body: some View {
-        Form {
-            Section("Server") {
-                TextField("Name", text: $name)
-                TextField("Address", text: $url)
-                    .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
-                if urlCheck == .unencryptedPublic {
-                    Text("This connection isn’t encrypted. Use https:// if your server supports it.").font(.footnote).foregroundStyle(.orange)
-                } else if urlCheck == .blockedHTTPDomain {
-                    Text("Unencrypted (http://) connections only work to local addresses such as 192.168.1.20. Use https://.").font(.footnote).foregroundStyle(.red)
-                }
-            }
-            Section("Account") {
-                TextField("Username", text: $username)
-                    .textInputAutocapitalization(.never).autocorrectionDisabled()
-                SecureField("Password", text: $password)
-            }
-            Section {
-                Button(isTesting ? "Testing…" : "Test connection") { Task { await test() } }
-                    .disabled(!isValid || isTesting)
-                if let testResult { Text(testResult).font(.footnote).foregroundStyle(.secondary) }
-                Button("Save") { save() }.disabled(!isValid)
-            }
+        if let banner = messages.banner {
+            Text(banner)
+                .font(.subheadline.weight(.medium))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
+                .glassEffect()
+                .padding(.top, 8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .allowsHitTesting(false)
         }
-        .navigationTitle(editing == nil ? "Add a server" : "Edit server")
-        .onAppear {
-            guard let editing else { return }
-            name = editing.name; url = editing.url; username = editing.username; password = editing.password
-        }
-    }
-
-    private func makeServer() -> Server {
-        if var server = editing {
-            server.name = name; server.url = url; server.username = username; server.password = password
-            return server
-        }
-        return Server(name: name, url: url, username: username, password: password)
-    }
-
-    private func test() async {
-        isTesting = true
-        defer { isTesting = false }
-        do {
-            testResult = try await SubsonicClient.shared.ping(server: makeServer()) ? "Connected successfully" : "The server didn’t respond as expected"
-        } catch {
-            testResult = error.localizedDescription
-        }
-    }
-
-    private func save() {
-        let server = makeServer()
-        if editing == nil { appState.serverStore.add(server) } else { appState.serverStore.update(server) }
-        appState.serverStore.activeServerID = server.id
-        appState.syncActiveServer()
-        dismiss()
     }
 }
 

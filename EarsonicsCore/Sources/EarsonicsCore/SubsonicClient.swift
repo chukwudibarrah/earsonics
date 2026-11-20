@@ -504,6 +504,15 @@ public final class SubsonicClient {
         )
     }
 
+    // MARK: - Library status
+    /// The server's song count and whether a scan is running (e.g. for a
+    /// library summary). Servers that don't report a count give nil.
+    public func getScanStatus(server srv: Server? = nil) async throws -> ScanStatus {
+        let r = try await fetch(endpoint: "getScanStatus.view", server: srv)
+        guard let status = r.scanStatus else { throw SubsonicError.missingData }
+        return status
+    }
+
     // MARK: - Genres
     public func getGenres(server srv: Server? = nil) async throws -> [Genre] {
         let r = try await fetch(endpoint: "getGenres.view", server: srv)
@@ -661,6 +670,9 @@ public nonisolated struct SubsonicResponseBody: Decodable, Sendable {
     public let topSongs: SongListWrapper?
     public let artistInfo2: ArtistInfoWrapper?
 
+    // Library scan
+    public let scanStatus: ScanStatus?
+
     // Play queue
     public let playQueue: RemotePlayQueueBody?
     public let playQueueByIndex: RemotePlayQueueBody?
@@ -760,6 +772,12 @@ public nonisolated struct SearchResult3: Decodable, Sendable {
 
 public nonisolated struct LyricsListWrapper: Decodable, Sendable {
     public let structuredLyrics: [StructuredLyrics]?
+}
+
+public nonisolated struct ScanStatus: Decodable, Sendable {
+    public let scanning: Bool
+    /// Songs in the library.
+    public let count: Int?
 }
 
 public nonisolated struct GenresWrapper: Decodable, Sendable {

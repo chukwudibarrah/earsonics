@@ -1,3 +1,13 @@
+## 2.0 (in progress): iPhone and iPad
+
+- **earsonics on iPhone and iPad**, on the same App Store listing as the Apple TV app. Music keeps playing when the phone locks or is set to silent, and opening the app doesn't stop whatever else is playing.
+- **Home:** a summary card, Quick Picks (Favourites, Recently Played) and shelves for Recently Added, Recently Played, On Repeat, Playlists, Genres and Discover.
+- **Library:** Favourites, Recently Played, Recently Added, Songs, Albums (sortable), Artists, Genres and Playlists (with New Playlist). Album, artist, playlist and genre pages have Play and Shuffle; long-press a song or album for Play Next, Add to Queue, Favourite, Add to Playlist and links to the album or artist.
+- **Now Playing:** tap the mini player for the full screen: artwork, scrubbing, shuffle and repeat, favourite, the AirPlay picker (AirPlay 2 speakers, HomePod, Bluetooth) and the volume slider, with lyrics (synced ones follow the song; tap a line to jump to it) and the queue. Side by side on iPad and an unfolded iPhone Duo. Lock Screen and Control Center show the song with its artwork and controls.
+- **Search** with quick starts from your genres and playlists, and recent searches.
+- **Settings:** servers, playback (quality, crossfade, even volume), queue, appearance (System, Dark or Light, and the highlight colour), storage and About.
+- **Layouts for every screen size:** a tab bar on iPhone, and a sidebar with the library's sections on iPad. Pages lay out side by side when there's room, and it adapts as you fold or unfold an iPhone Duo or resize an iPad window.
+
 ## 1.11: Genres, even volume & easier navigation
 
 - **Genres.** A new Genres tab in the sidebar shows every genre on your server, largest first, each with one of its album covers and its song and album counts. Each genre has Play, Shuffle (a random pick from the whole genre) and its albums. When a genre mix ends it carries on with more from the same genre, unless "When a playlist or mix ends" is set to Stop.
