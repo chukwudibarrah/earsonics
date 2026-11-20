@@ -1,5 +1,6 @@
 // earsonics-iOS/Theme/Theme.swift
 import SwiftUI
+import EarsonicsCore
 import UIKit
 
 /// The look the user picked in Settings. Dark by default: the app's midnight
@@ -142,21 +143,70 @@ struct PlayShuffleButtons: View {
     let play: () -> Void
     let shuffle: () -> Void
     var isBusy = false
+    /// What this page plays. While that's what's playing, Play becomes
+    /// Pause (and Resume when paused) instead of starting it over.
+    var context: PlayContext? = nil
+    /// For mix lists, the page's name (see `PlaySource`).
+    var source: String? = nil
+    private let player = AudioPlayerService.shared
+
+    private var isThisPlaying: Bool {
+        guard player.currentSong != nil else { return false }
+        if let source { return PlaySource.shared.isPlaying(source) }
+        guard let context, context != .mix else { return false }
+        return player.playQueue.context == context
+    }
 
     var body: some View {
         HStack(spacing: 12) {
-            Button(action: play) {
-                Label("Play", systemImage: "play.fill").frame(maxWidth: .infinity)
+            Button {
+                if isThisPlaying { player.togglePlayPause() } else { play() }
+            } label: {
+                Group {
+                    if isThisPlaying && player.isPlaying {
+                        Label("Pause", systemImage: "pause.fill")
+                    } else if isThisPlaying {
+                        Label("Resume", systemImage: "play.fill")
+                    } else {
+                        Label("Play", systemImage: "play.fill")
+                    }
+                }
+                .labelStyle(.titleAndIcon)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity)
             }
             .buttonStyle(.glassProminent)
             Button(action: shuffle) {
-                Label("Shuffle", systemImage: "shuffle").frame(maxWidth: .infinity)
+                Label("Shuffle", systemImage: "shuffle").labelStyle(.titleAndIcon).lineLimit(1).frame(maxWidth: .infinity)
             }
             .buttonStyle(.glass)
         }
         .controlSize(.large)
         .disabled(isBusy)
         .overlay { if isBusy { ProgressView() } }
+    }
+}
+
+/// Play and Shuffle with smaller round buttons beside them, or below them
+/// when the row would squeeze the labels.
+struct PlayShuffleRow<Extras: View>: View {
+    let play: () -> Void
+    let shuffle: () -> Void
+    var isBusy = false
+    var context: PlayContext? = nil
+    @ViewBuilder let extras: () -> Extras
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                PlayShuffleButtons(play: play, shuffle: shuffle, isBusy: isBusy, context: context).fixedSize()
+                extras()
+            }
+            VStack(spacing: 12) {
+                PlayShuffleButtons(play: play, shuffle: shuffle, isBusy: isBusy, context: context)
+                HStack(spacing: 12) { extras() }
+            }
+        }
     }
 }
 

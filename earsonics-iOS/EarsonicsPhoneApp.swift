@@ -11,5 +11,10 @@ struct EarsonicsPhoneApp: App {
             ContentView()
                 .environment(AppState.shared)
         }
+        // Downloads finish while the app is closed; the system relaunches it
+        // to hand them over.
+        .backgroundTask(.urlSession(DownloadEngine.sessionIdentifier)) {
+            await DownloadEngine.shared.backgroundEventsDelivered()
+        }
     }
 }

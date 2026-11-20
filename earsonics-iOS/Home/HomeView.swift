@@ -51,11 +51,11 @@ final class HomeModel {
 struct HomeView: View {
     @Environment(AppState.self) private var appState
     @State private var model = HomeModel()
-    @State private var covers = GenreCovers()
 
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 32) {
+                if !NetworkStatus.shared.isOnline { OfflineHint().padding(.horizontal) }
                 if let failure = model.failure, model.newest.isEmpty {
                     ContentUnavailableView {
                         Label("Couldn’t load your library", systemImage: "wifi.exclamationmark")
@@ -78,6 +78,10 @@ struct HomeView: View {
         .toolbarTitleDisplayMode(.inlineLarge)
         .refreshable { await model.load() }
         .task(id: appState.activeServerID) { await model.load() }
+        // Back online: fill in what couldn't load.
+        .onChange(of: NetworkStatus.shared.isOnline) { _, online in
+            if online, model.failure != nil { Task { await model.load() } }
+        }
     }
 
     @ViewBuilder private var content: some View {
@@ -106,8 +110,7 @@ struct HomeView: View {
         if !model.genres.isEmpty {
             Shelf(title: "Genres", subtitle: "Dive into a style", seeAll: .section(.genres),
                   items: Array(model.genres.prefix(12)), minCardWidth: 260) { genre in
-                GenreCard(genre: genre, coverArt: covers.coverArt[genre.value])
-                    .task { await covers.load(genre.value) }
+                GenreCard(genre: genre, coverArt: nil, showsCover: false)
             }
         }
         if !model.random.isEmpty {
@@ -210,6 +213,28 @@ private struct QuickPicks: View {
             }
             .card(cornerRadius: 22, padding: 10)
             .contentShape(RoundedRectangle(cornerRadius: 22))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// Shown on Home without a connection: downloads still play.
+private struct OfflineHint: View {
+    var body: some View {
+        NavigationLink(value: Route.section(.downloads)) {
+            HStack(spacing: 14) {
+                IconTile(systemImage: "wifi.slash")
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("You’re offline").font(.headline)
+                    Text("Your downloads still play.").font(.subheadline).foregroundStyle(Palette.secondaryText)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(Palette.secondaryText)
+            }
+            .card(cornerRadius: 22)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

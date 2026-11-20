@@ -12,6 +12,8 @@ struct SongRow: View {
     var context: PlayContext = .mix
     /// Show the track number instead of artwork (album pages).
     var showsTrackNumber = false
+    /// The page, for mix lists (see `PlaySource`).
+    var source: String? = nil
     private let player = AudioPlayerService.shared
 
     private var isCurrent: Bool { player.currentSong?.id == song.id }
@@ -19,6 +21,7 @@ struct SongRow: View {
     var body: some View {
         Button {
             player.load(songs: songs, startIndex: index, context: context)
+            PlaySource.shared.record(source)
         } label: {
             HStack(spacing: 14) {
                 if showsTrackNumber {
@@ -44,6 +47,7 @@ struct SongRow: View {
                     Text(song.artist ?? "").font(.subheadline).foregroundStyle(Palette.secondaryText).lineLimit(1)
                 }
                 Spacer(minLength: 8)
+                SongDownloadBadge(songId: song.id)
                 Text(song.durationFormatted)
                     .font(.subheadline.monospacedDigit())
                     .foregroundStyle(Palette.secondaryText)
@@ -71,6 +75,7 @@ struct SongMenu: View {
             Task { await LibraryStore.shared.toggleStar(.song, id: song.id, isStarred: isStarred) }
         }
         AddToPlaylistMenu(songIDs: [song.id])
+        SongDownloadMenuItem(song: song)
         Divider()
         if let albumId = song.albumId {
             NavigationLink(value: Route.albumID(id: albumId, name: song.album ?? "")) {
@@ -152,9 +157,34 @@ enum Playback {
         }
     }
 
-    static func play(_ songs: [Song], shuffle: Bool, context: PlayContext) {
+    /// `source` names the page for lists that play as a mix (Songs,
+    /// Favourites…), so the page can tell it's what's playing.
+    static func play(_ songs: [Song], shuffle: Bool, context: PlayContext, source: String? = nil) {
         guard !songs.isEmpty else { return }
         player.load(songs: songs, startIndex: shuffle ? Int.random(in: songs.indices) : 0,
                     shuffle: shuffle, context: context)
+        PlaySource.shared.record(source)
+    }
+}
+
+/// Which mix page started the current queue. Albums, artists, playlists and
+/// genres are known from the queue's context; a mix (Songs, Favourites,
+/// Downloads) isn't, so the page that played it is noted here. The note is
+/// tied to the queue's first entry, so it lapses as soon as anything else
+/// replaces the queue.
+@MainActor @Observable
+final class PlaySource {
+    static let shared = PlaySource()
+    private var key: String?
+    private var entryID: UUID?
+
+    func record(_ key: String?) {
+        self.key = key
+        entryID = key == nil ? nil : AudioPlayerService.shared.playQueue.entries.first?.id
+    }
+
+    func isPlaying(_ key: String) -> Bool {
+        guard key == self.key, let entryID else { return false }
+        return AudioPlayerService.shared.playQueue.entries.contains { $0.id == entryID }
     }
 }

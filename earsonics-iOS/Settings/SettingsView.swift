@@ -19,6 +19,11 @@ struct SettingsView: View {
     @AppStorage(PlaybackPreferences.syncQueueKey) private var syncQueue = true
     @AppStorage("audioCacheEnabled") private var cacheEnabled = true
     @AppStorage(AudioCache.limitKey) private var cacheLimitGB = 2
+    /// A quality's raw value, or "same as Wi-Fi". Unset means MP3 320.
+    @AppStorage(StreamQuality.cellularKey) private var cellularQuality = StreamQuality.mp3_320.rawValue
+    @AppStorage(StreamQuality.downloadKey) private var downloadQuality = StreamQuality.mp3_320
+    @AppStorage(DownloadStore.cellularDownloadsKey) private var downloadsOnCellular = false
+    @State private var confirmsRemoveDownloads = false
 
     @State private var musicCacheSize: Int64 = 0
     @State private var artworkCacheSize: Int64 = 0
@@ -33,16 +38,23 @@ struct SettingsView: View {
 
                 SettingsCard(title: "Playback", subtitle: "Quality, transitions and volume",
                              summary: "\(quality.displayName) · Crossfade \(Int(appState.crossfadeDuration))s · \(player.normalizeVolume ? "Even volume" : "Volume as recorded")") {
-                    Picker("Quality", selection: $quality) {
+                    Picker("Quality on Wi-Fi", selection: $quality) {
                         ForEach(StreamQuality.allCases) { Text($0.displayName).tag($0) }
                     }
-                    note("Streaming and cached copies use the same quality, so a replay sounds like the first play.")
+                    .settingsPicker("Quality on Wi-Fi")
+                    Picker("Quality on mobile data", selection: $cellularQuality) {
+                        Text("Same as Wi-Fi").tag(StreamQuality.sameAsWiFiValue)
+                        ForEach(StreamQuality.allCases) { Text($0.displayName).tag($0.rawValue) }
+                    }
+                    .settingsPicker("Quality on mobile data")
+                    note("Mobile data quality is also used in Low Data Mode. Songs already cached or downloaded play from this device instead.")
                     Stepper("Crossfade: \(Int(appState.crossfadeDuration))s", value: $appState.crossfadeDuration, in: 0...12, step: 1)
                     Toggle("Normalise volume", isOn: $player.normalizeVolume)
                     if player.normalizeVolume {
                         Picker("Balance volume", selection: $balance) {
                             ForEach(VolumeNormalisation.Mode.allCases) { Text($0.displayName).tag($0) }
                         }
+                        .settingsPicker("Balance volume")
                         .onChange(of: balance) { player.refreshVolume() }
                         note("Uses Replay Gain tags where songs have them, and measures the rest as they download.")
                     }
@@ -53,12 +65,15 @@ struct SettingsView: View {
                     Picker("When an album ends", selection: $afterAlbum) {
                         ForEach(QueueContinuation.allCases) { Text($0.displayName).tag($0) }
                     }
+                    .settingsPicker("When an album ends")
                     Picker("When a playlist or mix ends", selection: $afterPlaylist) {
                         ForEach(QueueContinuation.allCases) { Text($0.displayName).tag($0) }
                     }
+                    .settingsPicker("When a playlist or mix ends")
                     Picker("On launch", selection: $onLaunch) {
                         ForEach(QueueLaunchBehaviour.allCases) { Text($0.displayName).tag($0) }
                     }
+                    .settingsPicker("On launch")
                     Toggle("Sync queue with server", isOn: $syncQueue)
                     note(syncQueue ? "Your queue and position are saved on the server, so you can carry on in other Subsonic apps or on your Apple TV."
                                    : "Your queue is only saved on this device.")
@@ -69,6 +84,7 @@ struct SettingsView: View {
                     Picker("Theme", selection: $appearance) {
                         ForEach(AppearanceChoice.allCases) { Text($0.displayName).tag($0) }
                     }
+                    .settingsPicker("Theme")
                     .pickerStyle(.segmented)
                     HStack(spacing: 12) {
                         ForEach(AccentColorChoice.allCases) { choice in
@@ -88,6 +104,29 @@ struct SettingsView: View {
                             .accessibilityLabel(choice.displayName)
                             .accessibilityAddTraits(appState.accentChoice == choice ? .isSelected : [])
                         }
+                    }
+                }
+
+                SettingsCard(title: "Downloads", subtitle: "Music kept for offline listening",
+                             summary: "\(downloadSummary) · \(downloadQuality.displayName)") {
+                    Picker("Download quality", selection: $downloadQuality) {
+                        ForEach(StreamQuality.allCases) { Text($0.displayName).tag($0) }
+                    }
+                    .settingsPicker("Download quality")
+                    Toggle("Download over mobile data", isOn: $downloadsOnCellular)
+                        .onChange(of: downloadsOnCellular) {
+                            if let server = appState.serverStore.activeServer { DownloadStore.shared.restartPending(server: server) }
+                        }
+                    note("Changes apply to new downloads. Without mobile data, downloads wait for Wi-Fi.")
+                    if let server = appState.serverStore.activeServer,
+                       !DownloadStore.shared.index(for: server.id).entries.isEmpty {
+                        Button("Remove All Downloads", role: .destructive) { confirmsRemoveDownloads = true }
+                            .confirmationDialog("Remove all downloads?", isPresented: $confirmsRemoveDownloads,
+                                                titleVisibility: .visible) {
+                                Button("Remove All", role: .destructive) { DownloadStore.shared.removeAll(serverID: server.id) }
+                            } message: {
+                                Text("Frees \(downloadSummary) on this device. Your library isn’t changed.")
+                            }
                     }
                 }
 
@@ -123,9 +162,7 @@ struct SettingsView: View {
     }
 
     private var serverCard: some View {
-        NavigationLink {
-            ServerListView()
-        } label: {
+        NavigationLink(value: Route.servers) {
             HStack(spacing: 14) {
                 Circle()
                     .fill(appState.isConnected ? Color.green : Color.orange)
@@ -152,12 +189,15 @@ struct SettingsView: View {
         Text(text).font(.footnote).foregroundStyle(Palette.secondaryText)
     }
 
-    private func bytes(_ count: Int64) -> String {
-        ByteCountFormatter.string(fromByteCount: count, countStyle: .file)
-    }
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+    }
+
+    /// The active server's downloads, e.g. "1.2 GB".
+    private var downloadSummary: String {
+        guard let server = appState.serverStore.activeServer else { return bytes(0) }
+        return bytes(DownloadStore.shared.index(for: server.id).totalBytes)
     }
 
     private func refreshSizes() async {
@@ -219,37 +259,59 @@ struct ServerListView: View {
 
     var body: some View {
         List {
-            ForEach(appState.serverStore.servers) { server in
-                Button {
-                    appState.serverStore.activeServerID = server.id
-                    appState.syncActiveServer()
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(server.name).font(.headline)
-                            Text(server.username).font(.subheadline).foregroundStyle(Palette.secondaryText)
+            Section {
+                ForEach(appState.serverStore.servers) { server in
+                    let isActive = server.id == appState.serverStore.activeServer?.id
+                    HStack(spacing: 12) {
+                        Button {
+                            appState.serverStore.activeServerID = server.id
+                            appState.syncActiveServer()
+                        } label: {
+                            HStack {
+                                Image(systemName: isActive ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(isActive ? AnyShapeStyle(.tint) : AnyShapeStyle(Palette.secondaryText))
+                                VStack(alignment: .leading) {
+                                    Text(server.name).font(.headline)
+                                    Text("\(server.username) · \(isActive ? "In use" : "Tap to use")")
+                                        .font(.subheadline).foregroundStyle(Palette.secondaryText)
+                                }
+                                Spacer()
+                            }
+                            .contentShape(Rectangle())
                         }
-                        Spacer()
-                        if server.id == appState.serverStore.activeServer?.id {
-                            Image(systemName: "checkmark").foregroundStyle(.tint)
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(isActive ? .isSelected : [])
+                        Button("Edit \(server.name)", systemImage: "pencil") { editing = server }
+                            .labelStyle(.iconOnly)
+                            .buttonStyle(.glass)
+                    }
+                    .swipeActions {
+                        Button("Delete", role: .destructive) {
+                            appState.serverStore.delete(server)
+                            appState.syncActiveServer()
+                        }
+                        Button("Edit") { editing = server }
+                    }
+                    .contextMenu {
+                        Button("Edit", systemImage: "pencil") { editing = server }
+                        Button("Delete", systemImage: "trash", role: .destructive) {
+                            appState.serverStore.delete(server)
+                            appState.syncActiveServer()
                         }
                     }
+                    .listRowBackground(Palette.card)
                 }
-                .foregroundStyle(.primary)
-                .swipeActions {
-                    Button("Delete", role: .destructive) {
-                        appState.serverStore.delete(server)
-                        appState.syncActiveServer()
-                    }
-                    Button("Edit") { editing = server }
-                }
-                .listRowBackground(Palette.card)
+            } footer: {
+                Text("Tap a server to switch to it. Swipe left or touch and hold to delete one.")
+            }
+            Section {
+                Button("Add Server", systemImage: "plus.circle.fill") { isAdding = true }
+                    .listRowBackground(Palette.card)
             }
         }
         .scrollContentBackground(.hidden)
         .appBackground()
         .navigationTitle("Servers")
-        .toolbar { Button("Add Server", systemImage: "plus") { isAdding = true } }
         .sheet(isPresented: $isAdding) { NavigationStack { ServerEditView() } }
         .sheet(item: $editing) { server in NavigationStack { ServerEditView(editing: server) } }
     }
@@ -344,5 +406,13 @@ struct ServerEditView: View {
         appState.serverStore.activeServerID = server.id
         appState.syncActiveServer()
         dismiss()
+    }
+}
+
+extension View {
+    /// A Settings picker: its title on the left, the choice on the right
+    /// (a bare menu picker shows only the choice).
+    func settingsPicker(_ title: LocalizedStringKey) -> some View {
+        LabeledContent(title) { labelsHidden() }
     }
 }

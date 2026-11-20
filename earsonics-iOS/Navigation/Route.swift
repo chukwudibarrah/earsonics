@@ -14,6 +14,10 @@ enum Route: Hashable {
     case playlist(Playlist)
     case genre(Genre)
     case section(LibrarySection)
+    /// A downloaded album or playlist, read from the download index.
+    case downloaded(DownloadedCollection)
+    /// Settings › Servers.
+    case servers
 }
 
 /// The parts of the library: rows in the Library tab on iPhone, and sidebar
@@ -21,7 +25,7 @@ enum Route: Hashable {
 enum LibrarySection: String, CaseIterable, Identifiable, Hashable {
     case favourites, recentlyPlayed, recentlyAdded
     case songs, albums, artists, genres
-    case playlists
+    case playlists, downloads
 
     var id: String { rawValue }
 
@@ -35,6 +39,7 @@ enum LibrarySection: String, CaseIterable, Identifiable, Hashable {
         case .artists:        "Artists"
         case .genres:         "Genres"
         case .playlists:      "Playlists"
+        case .downloads:      "Downloads"
         }
     }
 
@@ -48,6 +53,7 @@ enum LibrarySection: String, CaseIterable, Identifiable, Hashable {
         case .artists:        "Artist pages and discographies"
         case .genres:         "Browse by style and mood"
         case .playlists:      "Saved sets from your server"
+        case .downloads:      "Music on this device, for offline listening"
         }
     }
 
@@ -61,6 +67,7 @@ enum LibrarySection: String, CaseIterable, Identifiable, Hashable {
         case .artists:        "music.mic"
         case .genres:         "square.grid.2x2.fill"
         case .playlists:      "music.note.list"
+        case .downloads:      "arrow.down.circle.fill"
         }
     }
 
@@ -68,7 +75,7 @@ enum LibrarySection: String, CaseIterable, Identifiable, Hashable {
     static let groups: [(title: String, subtitle: String, sections: [LibrarySection])] = [
         ("Favourites & History", "What you reach for most", [.favourites, .recentlyPlayed, .recentlyAdded]),
         ("Browse", "Move through the whole library", [.songs, .albums, .artists, .genres]),
-        ("Collections", "Saved sets and groupings", [.playlists]),
+        ("Collections", "Saved sets and groupings", [.playlists, .downloads]),
     ]
 }
 
@@ -84,6 +91,8 @@ extension View {
             case .playlist(let playlist):    PlaylistDetailView(playlist: playlist)
             case .genre(let genre):          GenreDetailView(genre: genre)
             case .section(let section):      LibrarySectionView(section: section)
+            case .downloaded(let collection): DownloadedCollectionView(collection: collection)
+            case .servers:                   ServerListView()
             }
         }
     }
@@ -103,6 +112,7 @@ struct LibrarySectionView: View {
         case .artists:        ArtistListView()
         case .genres:         GenreGridView()
         case .playlists:      PlaylistGridView()
+        case .downloads:      DownloadsView()
         }
     }
 }

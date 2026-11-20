@@ -109,15 +109,16 @@ struct AllSongsView: View {
     var body: some View {
         List {
             Section {
-                PlayShuffleButtons(play: { Playback.play(songs, shuffle: false, context: .mix) },
-                                   shuffle: { Playback.play(songs, shuffle: true, context: .mix) })
+                PlayShuffleButtons(play: { Playback.play(songs, shuffle: false, context: .mix, source: "allSongs") },
+                                   shuffle: { Playback.play(songs, shuffle: true, context: .mix, source: "allSongs") },
+                                   source: "allSongs")
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 12, trailing: 0))
                     .disabled(songs.isEmpty)
             }
             Section {
                 ForEach(Array(songs.enumerated()), id: \.element.id) { index, song in
-                    SongRow(song: song, index: index, songs: songs)
+                    SongRow(song: song, index: index, songs: songs, source: "allSongs")
                         .onAppear { if index == songs.count - 1 { Task { await loadMore() } } }
                 }
                 .listRowBackground(Palette.card)
@@ -302,13 +303,14 @@ struct FavouritesView: View {
                 switch kind {
                 case .songs:
                     if !songs.isEmpty {
-                        PlayShuffleButtons(play: { Playback.play(songs, shuffle: false, context: .mix) },
-                                           shuffle: { Playback.play(songs, shuffle: true, context: .mix) })
+                        PlayShuffleButtons(play: { Playback.play(songs, shuffle: false, context: .mix, source: "favourites") },
+                                           shuffle: { Playback.play(songs, shuffle: true, context: .mix, source: "favourites") },
+                                           source: "favourites")
                     }
                     LazyVStack(spacing: 0) {
                         ForEach(Array(songs.enumerated()), id: \.element.id) { index, song in
                             if index > 0 { Divider().padding(.leading, 62) }
-                            SongRow(song: song, index: index, songs: songs)
+                            SongRow(song: song, index: index, songs: songs, source: "favourites")
                         }
                     }
                     .card(cornerRadius: 22, padding: 12)

@@ -130,6 +130,52 @@ final class NowPlayingUITests: XCTestCase {
         XCTAssertTrue(row(titles[0]).exists, "clearing removed the playing song")
     }
 
+    /// Dragging the position thumb seeks, and the song carries on from
+    /// there (the slider doesn't always report the end of a drag).
+    @MainActor
+    func testScrubbing() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        addTeardownBlock { @MainActor in app.terminate() }
+        app.launchEnvironment = [
+            "EARSONICS_UITEST_SERVER_URL": TestServer.details.url,
+            "EARSONICS_UITEST_USERNAME": TestServer.details.username,
+            "EARSONICS_UITEST_PASSWORD": TestServer.details.password,
+            "EARSONICS_UITEST_CLEAR_LOCAL_QUEUE": "1",
+        ]
+        app.launchArguments = ["-queueLaunchBehaviour", "startFresh", "-syncQueueWithServer", "NO"]
+        app.launch()
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        if springboard.buttons["Not Now"].waitForExistence(timeout: 4) { springboard.buttons["Not Now"].tap() }
+
+        let album = app.buttons.matching(identifier: "albumCard").firstMatch
+        XCTAssertTrue(album.waitForExistence(timeout: 20), "no albums on Home")
+        album.tap()
+        let play = app.buttons["Play"]
+        XCTAssertTrue(play.waitForExistence(timeout: 15))
+        XCTAssertTrue(waitUntil(15) { play.isEnabled }, "the album's songs didn't load")
+        play.tap()
+        XCTAssertTrue(app.buttons["Pause"].waitForExistence(timeout: 15), "the album's Play didn't become Pause")
+        let miniPlayer = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH 'Now playing:'")).firstMatch
+        XCTAssertTrue(miniPlayer.waitForExistence(timeout: 20), "no mini player")
+        miniPlayer.tap()
+
+        let slider = app.sliders["Position"]
+        XCTAssertTrue(slider.waitForExistence(timeout: 10))
+        func seconds() -> Double {
+            let time = (slider.value as? String ?? "").components(separatedBy: " of ").first ?? ""
+            let parts = time.split(separator: ":").compactMap { Double($0) }
+            return parts.count == 2 ? parts[0] * 60 + parts[1] : -1
+        }
+        let start = slider.coordinate(withNormalizedOffset: CGVector(dx: 0.03, dy: 0.5))
+        start.press(forDuration: 0.5, thenDragTo: slider.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)),
+                    withVelocity: 150, thenHoldForDuration: 0.3)
+        let landed = seconds()
+        XCTAssertGreaterThan(landed, 30, "the drag didn't move the position")
+        XCTAssertTrue(waitUntil(10) { seconds() >= landed + 3 }, "the song didn't carry on from the new position")
+    }
+
     @MainActor
     private func waitUntil(_ timeout: TimeInterval, _ condition: () -> Bool) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)

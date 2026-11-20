@@ -55,10 +55,45 @@ final class PhoneFoundationUITests: XCTestCase {
         XCTAssertTrue(waitUntil(timeout: 15) { play.isEnabled }, "the album's songs didn't load")
         play.tap()
 
-        let pause = app.buttons["Pause"]
-        XCTAssertTrue(pause.waitForExistence(timeout: 30), "playback didn't start (no Pause in the mini player)")
-        pause.tap()
-        XCTAssertTrue(app.buttons["Play"].waitForExistence(timeout: 10), "pause didn't work")
+        // The album's Play becomes Pause, as does the mini player's button.
+        let pauses = app.buttons.matching(NSPredicate(format: "label == 'Pause'"))
+        XCTAssertTrue(waitUntil(timeout: 30) { pauses.count == 2 }, "playback didn't start (\(pauses.count) Pause buttons)")
+        pauses.firstMatch.tap()
+        // Paused: the album offers Resume (it's still this album's queue).
+        XCTAssertTrue(app.buttons["Resume"].waitForExistence(timeout: 10), "pause didn't work")
+        XCTAssertEqual(pauses.count, 0)
+    }
+
+    /// A list that plays as a mix (Library › Songs) knows it's what's
+    /// playing: Play becomes Pause, then Resume once paused.
+    @MainActor
+    func testSongsPagePlayBecomesPause() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        addTeardownBlock { @MainActor in app.terminate() }
+        app.launchEnvironment = [
+            "EARSONICS_UITEST_SERVER_URL": TestServer.details.url,
+            "EARSONICS_UITEST_USERNAME": TestServer.details.username,
+            "EARSONICS_UITEST_PASSWORD": TestServer.details.password,
+            "EARSONICS_UITEST_CLEAR_LOCAL_QUEUE": "1",
+        ]
+        app.launchArguments = ["-queueLaunchBehaviour", "startFresh", "-syncQueueWithServer", "NO"]
+        app.launch()
+        dismissSystemAlerts()
+
+        app.tabBars.buttons["Library"].tap()
+        let songsRow = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Songs'")).firstMatch
+        XCTAssertTrue(songsRow.waitForExistence(timeout: 15), "no Songs row in Library")
+        songsRow.tap()
+        let play = app.buttons["Play"]
+        XCTAssertTrue(play.waitForExistence(timeout: 20), "the Songs page didn't open")
+        XCTAssertTrue(waitUntil(timeout: 20) { play.isEnabled }, "the songs didn't load")
+        play.tap()
+
+        let pauses = app.buttons.matching(NSPredicate(format: "label == 'Pause'"))
+        XCTAssertTrue(waitUntil(timeout: 30) { pauses.count == 2 }, "the page's Play didn't become Pause")
+        pauses.firstMatch.tap()
+        XCTAssertTrue(app.buttons["Resume"].waitForExistence(timeout: 10), "pausing didn't offer Resume")
     }
 
     /// First run: no servers, so the sign-in form shows; signing in opens
