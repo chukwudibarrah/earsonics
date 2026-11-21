@@ -153,7 +153,8 @@ public final class ServerStore {
             isEphemeral = true
             // A fixed id, so the server's saved queue survives a relaunch
             // within a test.
-            let server = Server(id: Self.uiTestServerID, name: "UI Test Server",
+            // A name can be given for screenshots.
+            let server = Server(id: Self.uiTestServerID, name: env["EARSONICS_UITEST_SERVER_NAME"] ?? "UI Test Server",
                                 url: url, username: username, password: password)
             if env["EARSONICS_UITEST_CLEAR_LOCAL_QUEUE"] == "1" {
                 LocalQueueStore.delete(serverID: server.id)

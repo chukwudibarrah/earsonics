@@ -6,7 +6,9 @@ import EarsonicsCore
 /// the field is empty, and results grouped by kind as you type.
 struct SearchView: View {
     @Environment(AppState.self) private var appState
-    @State private var query = ""
+    /// The search field lives on the tab view (see `MainTabs`), which puts
+    /// it in the tab bar; this page shows what it finds.
+    @Binding var query: String
     @State private var results = SearchResult(artists: [], albums: [], songs: [])
     @State private var isSearching = false
     @State private var genres: [Genre] = []
@@ -30,7 +32,6 @@ struct SearchView: View {
         }
         .appBackground()
         .navigationTitle("Search")
-        .searchable(text: $query, prompt: "Albums, artists, songs")
         .onSubmit(of: .search) { remember(trimmed) }
         .task(id: trimmed) { await search() }
         .task(id: appState.activeServerID) {

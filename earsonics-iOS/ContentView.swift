@@ -41,6 +41,7 @@ private struct MainTabs: View {
     @State private var libraryPath: [Route] = []
     @State private var settingsPath = NavigationPath()
     @State private var showsNowPlaying = false
+    @State private var searchQuery = ""
     @Namespace private var nowPlayingZoom
 
     private var isWide: Bool { horizontalSizeClass == .regular }
@@ -72,10 +73,16 @@ private struct MainTabs: View {
             }
 
             Tab(value: AppTab.search, role: .search) {
-                NavigationStack(path: $searchPath) { SearchView().routeDestinations() }
+                NavigationStack(path: $searchPath) { SearchView(query: $searchQuery).routeDestinations() }
             }
         }
         .tabViewStyle(.sidebarAdaptable)
+        // On the tab view, so the field belongs to the Search tab: in the
+        // tab bar on iPhone, at the top on iPad. (Inside the tab's own
+        // stack it hid under the navigation bar until pulled down.)
+        .searchable(text: $searchQuery, prompt: "Albums, artists, songs")
+        // Choosing Search opens the field, ready to type.
+        .tabViewSearchActivation(.searchTabSelection)
         .tabBarMinimizeBehavior(.onScrollDown)
         .tabViewBottomAccessory(isEnabled: player.currentSong != nil) {
             MiniPlayer { showsNowPlaying = true }

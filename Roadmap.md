@@ -2,17 +2,6 @@
 
 Planned for upcoming versions. Order and contents may change; suggestions are welcome as GitHub issues.
 
-### 2.0: iPhone and iPad
-
-A new app on the same App Store listing as the Apple TV app (universal purchase).
-
-- Touch interface: a tab bar on iPhone, a sidebar on iPad, a mini player, and a full Now Playing screen with the queue and lyrics.
-- AirPlay: an output picker, including AirPlay 2 multi-room and HomePod.
-- Lock Screen and Control Center controls with artwork; playback continues when the phone locks.
-- Downloads: save albums and playlists for offline listening.
-- A separate stream quality for mobile data and Wi-Fi.
-- Queue editing: remove, play next and reorder.
-
 ### After 2.0: one look for Apple TV and iPhone
 
 Bring the iPhone app's visual style to the Apple TV app (the midnight palette with a light option, rounded cards, section subtitles, icon tiles and count pills in Library) so the two feel like one product. Keep what makes the TV app work with a remote: focus-driven layouts, the floating Now Playing pill, and simple screens. Settings get the card look with every section open, since collapsing cards costs extra clicks on a remote.

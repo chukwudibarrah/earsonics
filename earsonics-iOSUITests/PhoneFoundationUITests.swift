@@ -81,7 +81,7 @@ final class PhoneFoundationUITests: XCTestCase {
         app.launch()
         dismissSystemAlerts()
 
-        app.tabBars.buttons["Library"].tap()
+        app.tab("Library").tap()
         let songsRow = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Songs'")).firstMatch
         XCTAssertTrue(songsRow.waitForExistence(timeout: 15), "no Songs row in Library")
         songsRow.tap()
@@ -94,6 +94,37 @@ final class PhoneFoundationUITests: XCTestCase {
         XCTAssertTrue(waitUntil(timeout: 30) { pauses.count == 2 }, "the page's Play didn't become Pause")
         pauses.firstMatch.tap()
         XCTAssertTrue(app.buttons["Resume"].waitForExistence(timeout: 10), "pausing didn't offer Resume")
+    }
+
+    /// Choosing Search opens its field (it once hid under the navigation
+    /// bar until the page was pulled down), and typing finds the library.
+    @MainActor
+    func testSearchFieldOpensAndFinds() throws {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        addTeardownBlock { @MainActor in app.terminate() }
+        app.launchEnvironment = [
+            "EARSONICS_UITEST_SERVER_URL": TestServer.details.url,
+            "EARSONICS_UITEST_USERNAME": TestServer.details.username,
+            "EARSONICS_UITEST_PASSWORD": TestServer.details.password,
+        ]
+        app.launch()
+        dismissSystemAlerts()
+
+        // Search for a word from an album on Home, so there's a match.
+        let album = app.buttons.matching(identifier: "albumCard").firstMatch
+        XCTAssertTrue(album.waitForExistence(timeout: 20))
+        let albumName = album.label.components(separatedBy: ", ").first ?? ""
+        let word = albumName.components(separatedBy: CharacterSet.letters.inverted)
+            .max { $0.count < $1.count } ?? albumName
+        app.tab("Search").tap()
+        let field = app.searchFields["Albums, artists, songs"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "choosing Search didn't show its field")
+        // iPad shows the field without focusing it.
+        if app.keyboards.count == 0 { field.tap() }
+        field.typeText(word)
+        XCTAssertTrue(app.staticTexts["Albums"].waitForExistence(timeout: 15),
+                      "searching for a word from \"\(albumName)\" found no albums")
     }
 
     /// First run: no servers, so the sign-in form shows; signing in opens
