@@ -15,6 +15,10 @@ struct NowPlayingView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     private let player = AudioPlayerService.shared
     @State private var panel: Panel?
+    /// The screen's height: on a short one (a folded iPhone Duo, the
+    /// smallest iPhones) an open panel gets the room and the controls shrink.
+    @State private var height: CGFloat = 1000
+    private static let shortHeight: CGFloat = 760
 
     var body: some View {
         Group {
@@ -34,29 +38,37 @@ struct NowPlayingView: View {
                             Spacer(minLength: 0)
                         }
                         .frame(maxWidth: 540)
-                        panelView(panel ?? .lyrics)
+                        // The queue unless lyrics were asked for: many songs
+                        // have no lyrics, and the queue is always there.
+                        panelView(panel ?? .queue)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                     .padding(28)
                 } else {
                     VStack(spacing: 20) {
                         header
-                        if let panel {
+                        if let panel, height < Self.shortHeight {
                             panelView(panel)
                                 .frame(maxHeight: .infinity)
+                            compactControls(for: song)
+                        } else if let panel {
+                            panelView(panel)
+                                .frame(maxHeight: .infinity)
+                            controls(for: song)
                         } else {
                             Artwork(id: song.coverArt, pixels: 900, cornerRadius: 24)
                                 .aspectRatio(1, contentMode: .fit)
                                 .shadow(color: .black.opacity(0.35), radius: 24, y: 14)
                                 .frame(maxHeight: .infinity)
+                            controls(for: song)
                         }
-                        controls(for: song)
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
                 }
             }
         }
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
         .background { NowPlayingBackground(coverArt: player.currentSong?.coverArt) }
         .preferredColorScheme(.dark)
         // The queue ended or was cleared: nothing left to show.
@@ -110,8 +122,46 @@ struct NowPlayingView: View {
         }
     }
 
+    /// One strip under an open panel on a short screen: the song, previous,
+    /// play/pause and next, the position, and the panel buttons.
+    @ViewBuilder private func compactControls(for song: Song) -> some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 14) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(song.title).font(.headline).lineLimit(1)
+                    Text(song.artist ?? "").font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                Button("Previous", systemImage: "backward.fill") { player.skipPrevious() }
+                    .font(.title3)
+                    .accessibilityIdentifier("nowPlaying.previous")
+                Button(player.isPlaying ? "Pause" : "Play", systemImage: player.isPlaying ? "pause.circle.fill" : "play.circle.fill") {
+                    player.togglePlayPause()
+                }
+                .font(.system(size: 44))
+                .contentTransition(.symbolEffect(.replace))
+                .accessibilityIdentifier("nowPlaying.playPause")
+                Button("Next", systemImage: "forward.fill") { player.skipNext() }
+                    .font(.title3)
+                    .accessibilityIdentifier("nowPlaying.next")
+            }
+            .labelStyle(.iconOnly)
+            .buttonStyle(.plain)
+            Scrubber()
+            HStack {
+                panelButton(.lyrics, symbol: "quote.bubble", label: "Lyrics")
+                Spacer()
+                RoutePicker()
+                    .frame(width: 44, height: 44)
+                    .accessibilityLabel("AirPlay")
+                Spacer()
+                panelButton(.queue, symbol: "list.bullet", label: "Queue")
+            }
+        }
+    }
+
     private func panelButton(_ target: Panel, symbol: String, label: String) -> some View {
-        let isOn = panel == target || (horizontalSizeClass == .regular && panel == nil && target == .lyrics)
+        let isOn = panel == target || (horizontalSizeClass == .regular && panel == nil && target == .queue)
         return Button(label, systemImage: symbol) {
             withAnimation(.snappy) { panel = (panel == target) ? nil : target }
         }

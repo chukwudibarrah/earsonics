@@ -37,7 +37,7 @@ final class DownloadsUITests: XCTestCase {
                       "the album didn't finish downloading (\(download.label))")
 
         // Library › Downloads lists it.
-        app.tabBars.buttons["Library"].tap()
+        app.tab("Library").tap()
         let downloadsRow = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Downloads'")).firstMatch
         for _ in 0..<4 where !downloadsRow.isHittable { app.swipeUp() }
         XCTAssertTrue(downloadsRow.waitForExistence(timeout: 5), "no Downloads row in Library")
@@ -47,8 +47,8 @@ final class DownloadsUITests: XCTestCase {
 
         // Back on the album, remove it. Scrolling minimised the tab bar:
         // scroll back up to bring it out again.
-        let home = app.tabBars.buttons["Home"]
-        for _ in 0..<3 where !home.exists { app.swipeDown() }
+        for _ in 0..<3 where !app.tab("Home").isHittable { app.swipeDown() }
+        let home = app.tab("Home")
         XCTAssertTrue(home.waitForExistence(timeout: 5), "the tab bar didn't come back")
         home.tap()
         XCTAssertTrue(download.waitForExistence(timeout: 5))

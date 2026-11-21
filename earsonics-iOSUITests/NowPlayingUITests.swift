@@ -26,11 +26,10 @@ final class NowPlayingUITests: XCTestCase {
         let play = app.buttons["Play"]
         XCTAssertTrue(play.waitForExistence(timeout: 15))
         XCTAssertTrue(waitUntil(15) { play.isEnabled }, "the album's songs didn't load")
-        play.tap()
-
         // Open Now Playing from the mini player.
         let miniPlayer = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label BEGINSWITH 'Now playing:'")).firstMatch
+        play.tapToPlay(showing: miniPlayer)
         XCTAssertTrue(miniPlayer.waitForExistence(timeout: 20), "no mini player")
         let firstTitle = miniPlayer.label
         miniPlayer.tap()
@@ -86,9 +85,9 @@ final class NowPlayingUITests: XCTestCase {
         let tracks = app.buttons.matching(NSPredicate(format: "label MATCHES '.*, [0-9]+:[0-9]{2}$'"))
         XCTAssertGreaterThan(tracks.count, 3, "an album with fewer than four songs")
         let titles = (0..<4).map { tracks.element(boundBy: $0).label.components(separatedBy: ", ").first ?? "" }
-        play.tap()
         let miniPlayer = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label BEGINSWITH 'Now playing:'")).firstMatch
+        play.tapToPlay(showing: miniPlayer)
         XCTAssertTrue(miniPlayer.waitForExistence(timeout: 20))
         miniPlayer.tap()
         app.buttons["nowPlaying.playPause"].tap()   // pause: the test needs no sound
@@ -102,7 +101,11 @@ final class NowPlayingUITests: XCTestCase {
             list.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title + ", ")).firstMatch
         }
         func scrollTo(_ title: String) {
-            for _ in 0..<6 where !(row(title).exists && row(title).isHittable) { list.swipeUp() }
+            // Slowly, both ways: a quick swipe can carry a short list (an
+            // unfolded iPhone Duo's queue panel) past the row.
+            let visible = { row(title).exists && row(title).isHittable }
+            for _ in 0..<10 where !visible() { list.swipeUp(velocity: .slow) }
+            for _ in 0..<10 where !visible() { list.swipeDown(velocity: .slow) }
         }
         func upNextOrder() -> [String] {
             list.buttons.matching(NSPredicate(format: "label CONTAINS ', '")).allElementsBoundByIndex
@@ -154,11 +157,11 @@ final class NowPlayingUITests: XCTestCase {
         let play = app.buttons["Play"]
         XCTAssertTrue(play.waitForExistence(timeout: 15))
         XCTAssertTrue(waitUntil(15) { play.isEnabled }, "the album's songs didn't load")
-        play.tap()
-        XCTAssertTrue(app.buttons["Pause"].waitForExistence(timeout: 15), "the album's Play didn't become Pause")
         let miniPlayer = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label BEGINSWITH 'Now playing:'")).firstMatch
+        play.tapToPlay(showing: miniPlayer)
         XCTAssertTrue(miniPlayer.waitForExistence(timeout: 20), "no mini player")
+        XCTAssertTrue(app.buttons["Pause"].waitForExistence(timeout: 15), "the album's Play didn't become Pause")
         miniPlayer.tap()
 
         let slider = app.sliders["Position"]

@@ -1,16 +1,17 @@
-## 2.0 (in progress): iPhone and iPad
+## 2.0: iPhone and iPad
 
 - **earsonics on iPhone and iPad**, on the same App Store listing as the Apple TV app. Music keeps playing when the phone locks or is set to silent, and opening the app doesn't stop whatever else is playing.
 - **Home:** a summary card, Quick Picks (Favourites, Recently Played) and shelves for Recently Added, Recently Played, On Repeat, Playlists, Genres and Discover.
 - **Library:** Favourites, Recently Played, Recently Added, Songs, Albums (sortable), Artists, Genres and Playlists (with New Playlist). Album, artist, playlist and genre pages have Play and Shuffle; long-press a song or album for Play Next, Add to Queue, Favourite, Add to Playlist and links to the album or artist.
-- **Now Playing:** tap the mini player for the full screen: artwork, scrubbing, shuffle and repeat, favourite, the AirPlay picker (AirPlay 2 speakers, HomePod, Bluetooth) and the volume slider, with lyrics (synced ones follow the song; tap a line to jump to it) and the queue. Side by side on iPad and an unfolded iPhone Duo. Lock Screen and Control Center show the song with its artwork and controls.
+- **Now Playing:** tap the mini player for the full screen: artwork, scrubbing, shuffle and repeat, favourite, the AirPlay picker (AirPlay 2 speakers, HomePod, Bluetooth) and the volume slider, with lyrics (synced ones follow the song; tap a line to jump to it) and the queue. Side by side on iPad and an unfolded iPhone Duo, with the queue showing beside the controls; on short screens (a folded iPhone Duo, the smallest iPhones) the controls shrink to one strip while the queue or lyrics are open. Lock Screen and Control Center show the song with its artwork and controls.
 - **Edit what's up next:** in the queue, swipe left to remove a song, swipe right to play it next, drag (or tap Edit) to reorder, or clear Up Next. The song that's playing keeps going.
 - **Downloads for offline listening:** download an album or playlist from its page, or a song from its menu. Downloads carry on when you leave the app, and play without a connection (and without using data). Library › Downloads lists them, and Home points there when you're offline. Covers are saved with them. A song in two downloaded albums or playlists is stored once.
 - **Mobile data:** a separate streaming quality for mobile data and Low Data Mode (MP3 320 kbps unless you choose otherwise, or Same as Wi-Fi), a download quality, and Download over mobile data (off by default, so downloads wait for Wi-Fi). Songs already cached or downloaded play from the device instead of streaming again.
 - **Play becomes Pause** on a page while what it plays is playing (albums, artists, playlists, genres, Songs, Favourites and Downloads), and Resume once paused.
 - **Servers:** switch, edit (the pencil) or add servers from Settings › Servers.
+- **Apple TV:** the app now declares background audio, so music keeps playing when you switch to another app.
 - **Buy Me a Coffee** in Settings › About on iPhone and iPad. On Apple TV, the About QR code now opens the same page instead of PayPal.
-- **Search** with quick starts from your genres and playlists, and recent searches.
+- **Search** opens its field as soon as you choose it, with quick starts from your genres and playlists, and recent searches.
 - **Settings:** servers, playback (quality, crossfade, even volume), queue, appearance (System, Dark or Light, and the highlight colour), downloads, storage and About.
 - **Layouts for every screen size:** a tab bar on iPhone, and a sidebar with the library's sections on iPad. Pages lay out side by side when there's room, and it adapts as you fold or unfold an iPhone Duo or resize an iPad window.
 

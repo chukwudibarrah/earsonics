@@ -5,11 +5,11 @@
 <h1 align="center">earsonics</h1>
 
 <p align="center">
-  A native tvOS client for Subsonic-compatible music servers (Navidrome, Airsonic, Subsonic, Gonic, etc.), built with SwiftUI.
+  A native Apple TV, iPhone and iPad client for Subsonic-compatible music servers (Navidrome, Airsonic, Subsonic, Gonic, etc.), built with SwiftUI.
 </p>
 
 <p align="center">
-  <a href="https://apps.apple.com/app/id6766037499"><b>Get earsonics on the App Store for Apple TV</b></a><br>
+  <a href="https://apps.apple.com/app/id6766037499"><b>Get earsonics on the App Store</b></a><br>
   This repository is the app's full source.
 </p>
 

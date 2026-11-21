@@ -51,11 +51,21 @@
 			);
 			target = A331345630AEB37900D4DA41 /* earsonics-iOS */;
 		};
+		A384EA2730B0EE980000866B /* Exceptions for "earsonics" folder in "earsonics" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 830BB8F02FA618AC00613C0D /* earsonics */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		830BB8F32FA618AC00613C0D /* earsonics */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A384EA2730B0EE980000866B /* Exceptions for "earsonics" folder in "earsonics" target */,
+			);
 			path = earsonics;
 			sourceTree = "<group>";
 		};
@@ -557,6 +567,8 @@
 				DEVELOPMENT_TEAM = F777FR4486;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = earsonics/Info.plist;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UIBackgroundModes = audio;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -565,7 +577,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.11;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.wonderworks.earsonics;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -590,6 +602,8 @@
 				DEVELOPMENT_TEAM = F777FR4486;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = earsonics/Info.plist;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_UIBackgroundModes = audio;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -598,7 +612,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.11;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.wonderworks.earsonics;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -707,6 +721,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "earsonics-iOS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = earsonics;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "earsonics connects to your music server, which may be on your home network (for example a NAS or computer running Navidrome).";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -746,6 +761,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "earsonics-iOS/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = earsonics;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.music";
 				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "earsonics connects to your music server, which may be on your home network (for example a NAS or computer running Navidrome).";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
